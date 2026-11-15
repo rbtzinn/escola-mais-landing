@@ -5,18 +5,22 @@ Instruções do projeto para o Claude Code. Responda sempre em português do Bra
 ## Sobre o projeto
 
 <!-- Preencha quando definir o projeto -->
-- **Nome:** _a definir_
-- **Objetivo:** _a definir_
-- **Stack:** _a definir (o primeiro plano no plan mode deve propor a stack)_
+- **Nome:** Escola+ (landing page de apresentação)
+- **Objetivo:** apresentar visualmente a plataforma de gestão de escolas públicas (municipais e estaduais) para secretarias de educação, diretores e coordenadores. Só front-end: sem backend, sem login, dados fictícios; o formulário de demonstração não envia nada.
+- **Stack:** Next.js 16 (App Router) + React 19 + TypeScript (strict) + Tailwind CSS v4 (tokens em `src/app/globals.css`), ESLint, Prettier, Vitest + Testing Library. Deploy na Vercel (sem variáveis de ambiente).
+- **Estrutura:** `src/components/sections` (uma seção por arquivo), `src/components/ui` (componentes próprios e acessíveis: Listbox, Combobox, Accordion, Modal, Toast), `src/components/layout`, `src/data` (textos e opções), `src/hooks`, `src/lib`, `tests/`.
+- **Regras de UI:** nunca usar `<select>`, `alert()`, `confirm()` nem `<dialog>` nativo; usar os componentes de `ui/`. Animações respeitam `prefers-reduced-motion`. Cores só via tokens (`bg-bg`, `text-fg`, `text-primary`...), com tema claro/escuro.
 
 ## Comandos
 
 <!-- Atualize quando a stack for escolhida -->
-- Instalar: `_a definir_`
-- Rodar em dev: `_a definir_`
-- Testes: `_a definir_`
-- Lint: `_a definir_`
-- Checagem de tipos: `_a definir_`
+- Instalar: `npm install`
+- Rodar em dev: `npm run dev` (http://localhost:3000)
+- Build de produção: `npm run build` e `npm run start`
+- Testes: `npm test` (`npm run test:watch` para modo contínuo)
+- Lint: `npm run lint`
+- Checagem de tipos: `npm run typecheck`
+- Formatar: `npm run format`
 
 ## Fluxo de trabalho (economia de tokens)
 
