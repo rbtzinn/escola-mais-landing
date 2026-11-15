@@ -1,0 +1,135 @@
+@import 'tailwindcss';
+
+/* Paleta "Verde ipê + índigo". Tokens claros por padrão; escuros em [data-theme='dark']. */
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --surface-muted: #f2eee6;
+  --border: #e4ded3;
+  --text: #1c1917;
+  --text-muted: #57534e;
+  --primary: #1f5f4a;
+  --on-primary: #ffffff;
+  --secondary: #3b3f8f;
+  --accent: #e8b321;
+  --on-accent: #1c1917;
+  --danger: #b42318;
+  --ring: #3b3f8f;
+  --shadow: 0 1px 2px rgb(28 25 23 / 0.06), 0 8px 24px -8px rgb(28 25 23 / 0.12);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #12100e;
+  --surface: #1c1a17;
+  --surface-muted: #24211d;
+  --border: #34302a;
+  --text: #f5f2ec;
+  --text-muted: #b8b1a6;
+  --primary: #7fd1ae;
+  --on-primary: #0e2a20;
+  --secondary: #a5a8f0;
+  --danger: #f97066;
+  --ring: #a5a8f0;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-fg: var(--text);
+  --color-fg-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+  --shadow-card: var(--shadow);
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Animação de entrada ao rolar. Só esconde se o JS estiver ativo (data-js no <html>). */
+[data-js] .reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 500ms ease-out var(--reveal-delay, 0ms),
+    transform 500ms ease-out var(--reveal-delay, 0ms);
+}
+[data-js] .reveal[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast-enter {
+  animation: toast-in 250ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-js] .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .toast-enter,
+  .fade-in {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
