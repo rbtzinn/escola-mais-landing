@@ -24,7 +24,13 @@ export type IconName =
   | 'school'
   | 'info'
   | 'calendar'
-  | 'inbox';
+  | 'inbox'
+  | 'sliders'
+  | 'share'
+  | 'up'
+  | 'down'
+  | 'home'
+  | 'copy';
 
 const PATHS: Record<IconName, string> = {
   sheet: 'M4 5h16v14H4zM4 10h16M9 5v14',
@@ -52,6 +58,12 @@ const PATHS: Record<IconName, string> = {
   info: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 11v5M12 8h.01',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
   inbox: 'M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5a3 3 0 006 0h5',
+  sliders: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
+  share: 'M12 15V3M8 7l4-4 4 4M5 12v8h14v-8',
+  up: 'M12 19V5M6 11l6-6 6 6',
+  down: 'M12 5v14M6 13l6 6 6-6',
+  home: 'M3 11l9-7 9 7M5 9.5V20h14V9.5M10 20v-5h4v5',
+  copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {

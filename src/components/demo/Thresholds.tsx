@@ -46,7 +46,7 @@ interface Props {
 /** Critérios do painel. Ao mudar, o painel é recalculado na hora. */
 export function Thresholds({ value, onChange }: Props) {
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4">
       {FIELDS.map(({ key, label }) => {
         const n = parseNumber(value[key]);
         const [min, max] = RANGES[key];
