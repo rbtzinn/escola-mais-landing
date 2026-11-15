@@ -16,7 +16,7 @@ export function GradesTable({ analysis }: { analysis: Analysis }) {
   return (
     <section
       aria-labelledby="notas-titulo"
-      className="rounded-2xl border border-border bg-surface p-5 sm:p-6"
+      className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-6"
     >
       <h3 id="notas-titulo" className="font-display text-xl font-bold">
         Notas por turma e disciplina
@@ -31,18 +31,18 @@ export function GradesTable({ analysis }: { analysis: Analysis }) {
             tabIndex={0}
             className="mt-4 overflow-x-auto"
           >
-            <table className="w-full min-w-max border-separate border-spacing-1 text-center text-sm">
+            <table className="w-full min-w-max border-separate border-spacing-0.5 text-center text-xs sm:border-spacing-1 sm:text-sm">
               <thead>
                 <tr>
-                  <th scope="col" className="px-3 py-2 text-left font-semibold">
+                  <th scope="col" className="px-2 py-1.5 text-left font-semibold sm:px-3 sm:py-2">
                     Turma
                   </th>
                   {disciplinas.map((d) => (
-                    <th key={d} scope="col" className="px-3 py-2 font-semibold">
+                    <th key={d} scope="col" className="px-2 py-1.5 font-semibold sm:px-3 sm:py-2">
                       {d}
                     </th>
                   ))}
-                  <th scope="col" className="px-3 py-2 font-semibold">
+                  <th scope="col" className="px-2 py-1.5 font-semibold sm:px-3 sm:py-2">
                     Média
                   </th>
                 </tr>
@@ -50,7 +50,7 @@ export function GradesTable({ analysis }: { analysis: Analysis }) {
               <tbody>
                 {turmas.map((t) => (
                   <tr key={t.turma}>
-                    <th scope="row" className="px-3 py-2 text-left font-semibold">
+                    <th scope="row" className="px-2 py-1.5 text-left font-semibold sm:px-3 sm:py-2">
                       {t.turma}
                     </th>
                     {disciplinas.map((d) => {
@@ -59,7 +59,7 @@ export function GradesTable({ analysis }: { analysis: Analysis }) {
                         <td
                           key={d}
                           className={clsx(
-                            'rounded-lg px-3 py-2 font-semibold',
+                            'rounded-lg px-2 py-1.5 font-semibold sm:px-3 sm:py-2',
                             tone(v, options.mediaMin),
                           )}
                         >
@@ -69,7 +69,7 @@ export function GradesTable({ analysis }: { analysis: Analysis }) {
                     })}
                     <td
                       className={clsx(
-                        'rounded-lg px-3 py-2 font-extrabold',
+                        'rounded-lg px-2 py-1.5 font-extrabold sm:px-3 sm:py-2',
                         tone(t.media, options.mediaMin),
                       )}
                     >

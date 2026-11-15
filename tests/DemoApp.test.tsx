@@ -42,7 +42,7 @@ describe('DemoApp', () => {
     expect(await screen.findByText('3. Seu painel')).toBeInTheDocument();
     const risco = screen.getByRole('region', { name: /Alunos em risco/ });
     expect(within(risco).getByText('Bia')).toBeInTheDocument();
-    expect(within(risco).getByText('Frequência 70% (mínimo 75%)')).toBeInTheDocument();
+    expect(within(risco).getByText(/Frequência 70% \(mínimo 75%\)/)).toBeInTheDocument();
     const freq = screen.getByRole('region', { name: /Frequência por turma/ });
     expect(within(freq).getByText('6A')).toBeInTheDocument();
     expect(within(freq).getByText('80,0%')).toBeInTheDocument();

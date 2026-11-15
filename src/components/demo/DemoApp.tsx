@@ -78,7 +78,7 @@ export function DemoApp() {
         </p>
       </div>
 
-      <div className="rounded-3xl border border-border bg-surface p-5 shadow-card sm:p-8">
+      <div className="rounded-3xl border border-border bg-surface p-3 shadow-card sm:p-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-xl font-bold" aria-live="polite">
             {TITLES[step]}
