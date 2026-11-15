@@ -8,11 +8,13 @@ const FOCUSABLE =
 /**
  * Prende o foco dentro do container enquanto ativo, bloqueia o scroll do body,
  * fecha com Esc e devolve o foco ao elemento que o tinha antes.
+ * `initialFocus` (seletor CSS) escolhe quem recebe o foco ao abrir; padrão: o primeiro focável.
  */
 export function useFocusTrap(
   ref: RefObject<HTMLElement | null>,
   active: boolean,
   onEscape: () => void,
+  initialFocus?: string,
 ) {
   useEffect(() => {
     if (!active) return;
@@ -23,7 +25,8 @@ export function useFocusTrap(
     document.body.style.overflow = 'hidden';
 
     const items = () => Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE));
-    (items()[0] ?? container).focus();
+    const start = initialFocus ? container.querySelector<HTMLElement>(initialFocus) : null;
+    (start ?? items()[0] ?? container).focus();
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

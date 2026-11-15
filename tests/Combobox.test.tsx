@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Combobox } from '@/components/ui/Combobox';
 import { UFS } from '@/data/options';
+import { mockMobile } from './helpers';
 
 function Harness() {
   const [v, setV] = useState('');
@@ -55,5 +56,37 @@ describe('Combobox', () => {
     await user.type(input, 'xx{Escape}');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(input).toHaveValue('PE — Pernambuco');
+  });
+});
+
+describe('Combobox no celular', () => {
+  beforeEach(() => mockMobile());
+
+  it('abre painel com busca, filtra e seleciona', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const trigger = screen.getByRole('button', { name: /UF/ });
+    await user.click(trigger);
+    const dialog = screen.getByRole('dialog', { name: 'UF' });
+    expect(dialog).toBeInTheDocument();
+    const search = screen.getByRole('combobox', { name: 'Buscar UF' });
+    expect(search).toHaveFocus();
+    await user.type(search, 'pern');
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveTextContent('PE — Pernambuco');
+  });
+
+  it('mostra mensagem sem resultado e fecha pelo X sem escolher', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const trigger = screen.getByRole('button', { name: /UF/ });
+    await user.click(trigger);
+    await user.type(screen.getByRole('combobox', { name: 'Buscar UF' }), 'zzz');
+    expect(screen.getByText('Nenhuma UF encontrada')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).not.toHaveTextContent('—');
   });
 });

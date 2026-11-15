@@ -4,8 +4,10 @@ import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 import { shouldOpenUp } from '@/lib/text';
 import { FieldError, FieldLabel, fieldClasses } from './Field';
+import { PickerPanel } from './PickerPanel';
 
 export interface Option {
   value: string;
@@ -26,6 +28,7 @@ interface Props {
 /**
  * Dropdown customizado (select-only combobox, padrão WAI-ARIA).
  * Teclado: Enter/Espaço/↓ abrem; ↑ ↓ Home End navegam; letras buscam; Esc fecha.
+ * Em celulares (< 640 px) as opções abrem num painel central com o fundo embaçado.
  */
 export function Listbox({
   id,
@@ -37,6 +40,7 @@ export function Listbox({
   placeholder = 'Selecione',
   error,
 }: Props) {
+  const mobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [openUp, setOpenUp] = useState(false);
   const [active, setActive] = useState(0);
@@ -46,7 +50,7 @@ export function Listbox({
   const listId = `${id}-list`;
   const selected = options.find((o) => o.value === value);
 
-  useClickOutside(root, () => setOpen(false), open);
+  useClickOutside(root, () => setOpen(false), open && !mobile);
 
   useEffect(() => {
     if (!open) return;
@@ -102,7 +106,7 @@ export function Listbox({
         setOpen(false);
         break;
       case 'Tab':
-        setOpen(false);
+        if (!mobile) setOpen(false);
         break;
       default:
         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
@@ -116,10 +120,31 @@ export function Listbox({
     }
   };
 
+  const optionItems = options.map((o, i) => (
+    <li
+      key={o.value}
+      id={`${id}-opt-${i}`}
+      role="option"
+      aria-selected={o.value === value}
+      onMouseDown={(e) => e.preventDefault()}
+      onMouseEnter={() => setActive(i)}
+      onClick={() => choose(i)}
+      className={clsx(
+        'flex min-h-11 cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-base',
+        i === active && 'bg-muted',
+        o.value === value && 'font-semibold text-primary',
+      )}
+    >
+      {o.label}
+      {o.value === value && <Icon name="check" size={18} />}
+    </li>
+  ));
+
   return (
     <div
       ref={root}
       onBlur={(e) => {
+        if (mobile) return; // o foco vai para o painel (portal)
         if (!root.current?.contains(e.relatedTarget as Node)) setOpen(false);
       }}
     >
@@ -154,7 +179,7 @@ export function Listbox({
             className={clsx('shrink-0 transition-transform', open && 'rotate-180')}
           />
         </button>
-        {open && (
+        {open && !mobile && (
           <ul
             id={listId}
             role="listbox"
@@ -165,28 +190,25 @@ export function Listbox({
               openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5',
             )}
           >
-            {options.map((o, i) => (
-              <li
-                key={o.value}
-                id={`${id}-opt-${i}`}
-                role="option"
-                aria-selected={o.value === value}
-                onMouseDown={(e) => e.preventDefault()}
-                onMouseEnter={() => setActive(i)}
-                onClick={() => choose(i)}
-                className={clsx(
-                  'flex min-h-11 cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-base',
-                  i === active && 'bg-muted',
-                  o.value === value && 'font-semibold text-primary',
-                )}
-              >
-                {o.label}
-                {o.value === value && <Icon name="check" size={18} />}
-              </li>
-            ))}
+            {optionItems}
           </ul>
         )}
       </div>
+      {open && mobile && (
+        <PickerPanel title={label} onClose={() => setOpen(false)} initialFocus="[role=listbox]">
+          <ul
+            id={listId}
+            role="listbox"
+            aria-labelledby={`${id}-label`}
+            aria-activedescendant={`${id}-opt-${active}`}
+            tabIndex={0}
+            onKeyDown={onKeyDown}
+            className="overflow-auto p-2 outline-none"
+          >
+            {optionItems}
+          </ul>
+        </PickerPanel>
+      )}
       <FieldError id={id} message={error} />
     </div>
   );
