@@ -133,3 +133,24 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* QR sempre escuro sobre claro (leitores de QR esperam esse contraste), mesmo no tema escuro. */
+.qr-light {
+  --surface: #ffffff;
+  --text: #1c1917;
+  --text-muted: #57534e;
+  --border: #e4ded3;
+}
+
+/* Impressão das carteirinhas: só a área de impressão aparece. */
+.print-only {
+  display: none;
+}
+@media print {
+  body > *:not(.print-only) {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+}
