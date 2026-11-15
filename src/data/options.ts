@@ -36,16 +36,16 @@ export const UFS: Option[] = UF_DATA.map(([sigla, nome]) => ({
 }));
 
 export const CARGOS: Option[] = [
-  { value: 'secretario', label: 'Secretário(a) de Educação' },
-  { value: 'diretor', label: 'Diretor(a) de escola' },
+  { value: 'diretor', label: 'Diretor(a)' },
+  { value: 'vice-diretor', label: 'Vice-diretor(a)' },
   { value: 'coordenador', label: 'Coordenador(a) pedagógico(a)' },
-  { value: 'tecnico', label: 'Técnico(a) da secretaria' },
+  { value: 'secretario-escolar', label: 'Secretário(a) escolar' },
   { value: 'outro', label: 'Outro' },
 ];
 
-export const PORTES: Option[] = [
-  { value: 'pequena', label: 'Pequena (até 20 escolas)' },
-  { value: 'media', label: 'Média (21 a 100 escolas)' },
-  { value: 'grande', label: 'Grande (101 a 500 escolas)' },
-  { value: 'muito-grande', label: 'Muito grande (mais de 500 escolas)' },
+export const TAMANHOS_ESCOLA: Option[] = [
+  { value: 'ate-200', label: 'Até 200 alunos' },
+  { value: '201-500', label: '201 a 500 alunos' },
+  { value: '501-1000', label: '501 a 1.000 alunos' },
+  { value: 'mais-1000', label: 'Mais de 1.000 alunos' },
 ];

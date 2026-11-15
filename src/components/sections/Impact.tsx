@@ -19,7 +19,7 @@ export function Impact() {
             id="impacto-titulo"
             className="mt-4 font-display text-3xl leading-tight font-extrabold text-balance sm:text-4xl"
           >
-            O tipo de resultado que a gestão com dados pode trazer
+            Quanto tempo uma escola pode ganhar
           </h2>
         </Reveal>
         <dl className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4">

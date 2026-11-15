@@ -15,7 +15,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-4 max-w-sm leading-relaxed text-fg-muted">
-            Gestão escolar mais simples e transparente para redes públicas municipais e estaduais.
+            Gestão escolar mais simples para quem cuida do dia a dia da escola pública.
           </p>
         </div>
         <nav aria-label="Rodapé">

@@ -12,7 +12,7 @@ export function Problems() {
           <SectionHeading
             id="problemas-titulo"
             eyebrow="O desafio"
-            title="Gerir uma rede de escolas não deveria depender de papel e planilhas soltas"
+            title="O dia a dia da gestão escolar não deveria depender de planilhas soltas e ligações"
           />
         </Reveal>
         <ul className="mt-12 grid gap-5 sm:grid-cols-2">

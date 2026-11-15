@@ -7,7 +7,7 @@ const valid = {
   cargo: 'diretor',
   municipio: 'Recife',
   uf: 'PE',
-  porte: 'media',
+  tamanho: '201-500',
 };
 
 describe('validateDemoForm', () => {
@@ -21,7 +21,7 @@ describe('validateDemoForm', () => {
       'email',
       'municipio',
       'nome',
-      'porte',
+      'tamanho',
       'uf',
     ]);
   });

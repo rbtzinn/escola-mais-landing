@@ -16,7 +16,7 @@ export function Hero() {
           <Reveal>
             <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-sm font-semibold text-fg-muted">
               <Icon name="school" size={18} className="text-primary" />
-              Feito para redes municipais e estaduais
+              Feito para direção e coordenação escolar
             </p>
           </Reveal>
           <Reveal delay={80}>
@@ -24,14 +24,14 @@ export function Hero() {
               id="hero-titulo"
               className="mt-6 font-display text-4xl leading-[1.08] font-extrabold text-balance sm:text-5xl lg:text-6xl"
             >
-              Gestão escolar pública mais <span className="text-primary">simples</span> e{' '}
-              <span className="text-secondary">transparente</span>.
+              Sua escola <span className="text-secondary">organizada</span>, sem passar o dia em{' '}
+              <span className="text-primary">planilhas</span>.
             </h1>
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-fg-muted sm:text-xl">
-              Frequência, indicadores, merenda, manutenção e prestação de contas em um só lugar, da
-              sala de aula à secretaria de educação.
+              Transforme planilhas em painéis, avise os pais automaticamente e identifique alunos em
+              risco, tudo em um só lugar.
             </p>
           </Reveal>
           <Reveal delay={240}>

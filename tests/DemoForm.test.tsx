@@ -35,8 +35,8 @@ describe('DemoForm', () => {
     await user.type(screen.getByRole('combobox', { name: 'UF' }), 'pern');
     await user.click(screen.getByRole('option', { name: /Pernambuco/ }));
 
-    await user.click(screen.getByRole('combobox', { name: /Porte/ }));
-    await user.click(screen.getByRole('option', { name: /Média/ }));
+    await user.click(screen.getByRole('combobox', { name: /Tamanho/ }));
+    await user.click(screen.getByRole('option', { name: /201 a 500/ }));
 
     await user.click(screen.getByRole('button', { name: 'Solicitar demonstração' }));
     expect(

@@ -5,14 +5,14 @@ const MONTHS = ['Mar', 'Abr', 'Mai', 'Jun', 'Ago', 'Set', 'Out', 'Nov'];
 
 const KPIS = [
   { label: 'Frequência', value: '92,4%', delta: '+1,8 p.p.', tone: 'text-primary' },
-  { label: 'Risco de evasão', value: '3,1%', delta: '−0,9 p.p.', tone: 'text-primary' },
+  { label: 'Alunos em risco', value: '18', delta: '−4 no mês', tone: 'text-primary' },
   { label: 'Média de notas', value: '7,2', delta: '+0,3', tone: 'text-primary' },
 ];
 
-const STOCK = [
-  { item: 'Arroz', pct: 78 },
-  { item: 'Feijão', pct: 46 },
-  { item: 'Leite', pct: 18 },
+const MESSAGES = [
+  { item: 'Aviso de falta', status: '42 enviadas', done: true },
+  { item: 'Reunião', status: '118 enviadas', done: true },
+  { item: 'Boletim', status: 'Aguardando', done: false },
 ];
 
 /** Painel ilustrativo feito só com HTML/SVG. Dados fictícios; oculto de leitores de tela. */
@@ -36,14 +36,14 @@ export function DashboardMockup() {
           <span className="size-2.5 rounded-full bg-border" />
           <span className="size-2.5 rounded-full bg-border" />
           <span className="ml-3 truncate text-xs font-medium text-fg-muted">
-            Painel da rede · Visão geral
+            Painel da escola · Visão geral
           </span>
         </div>
 
         <div className="p-4 sm:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <p className="font-display text-sm font-bold sm:text-base">
-              Rede municipal · 48 escolas
+              Escola Municipal Exemplo · 612 alunos
             </p>
             <Badge tone="accent">Dados ilustrativos</Badge>
           </div>
@@ -112,23 +112,20 @@ export function DashboardMockup() {
             </div>
 
             <div className="rounded-xl border border-border bg-bg p-3 sm:col-span-2">
-              <p className="mb-2 text-xs font-semibold text-fg-muted">Estoque da merenda</p>
+              <p className="mb-2 text-xs font-semibold text-fg-muted">Mensagens aos pais</p>
               <ul className="space-y-2.5">
-                {STOCK.map((s) => (
-                  <li key={s.item}>
+                {MESSAGES.map((m) => (
+                  <li key={m.item}>
                     <div className="mb-1 flex justify-between text-xs font-semibold">
-                      <span>{s.item}</span>
-                      <span className={s.pct < 25 ? 'text-danger' : 'text-fg-muted'}>
-                        {s.pct < 25 ? 'Baixo · ' : ''}
-                        {s.pct}%
-                      </span>
+                      <span>{m.item}</span>
+                      <span className="text-fg-muted">{m.status}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-border">
                       <div
                         className="h-full rounded-full"
                         style={{
-                          width: `${s.pct}%`,
-                          background: s.pct < 25 ? 'var(--danger)' : 'var(--primary)',
+                          width: m.done ? '100%' : '35%',
+                          background: m.done ? 'var(--primary)' : 'var(--accent)',
                         }}
                       />
                     </div>
@@ -140,9 +137,9 @@ export function DashboardMockup() {
         </div>
       </div>
       <figcaption className="sr-only">
-        Painel de exemplo com frequência de 92,4%, risco de evasão de 3,1%, média de notas 7,2,
-        gráfico de frequência mensal e estoque de merenda com leite em nível baixo. Todos os dados
-        são fictícios.
+        Painel de exemplo de uma escola com frequência de 92,4%, 18 alunos em risco, média de notas
+        7,2, gráfico de frequência mensal e mensagens aos pais: 42 avisos de falta e 118 convites de
+        reunião enviados, boletim aguardando. Todos os dados são fictícios.
       </figcaption>
     </figure>
   );

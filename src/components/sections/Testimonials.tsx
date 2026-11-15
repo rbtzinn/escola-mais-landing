@@ -13,7 +13,7 @@ export function Testimonials() {
           <SectionHeading
             id="depoimentos-titulo"
             eyebrow="Depoimentos"
-            title="O que gestores como você poderiam dizer"
+            title="O que gestores de escola poderiam dizer"
           />
           <Badge className="mt-5">Depoimentos ilustrativos, sem pessoas reais</Badge>
         </Reveal>

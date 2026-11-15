@@ -10,7 +10,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
-import { CARGOS, PORTES, UFS } from '@/data/options';
+import { CARGOS, TAMANHOS_ESCOLA, UFS } from '@/data/options';
 import { DEMO_BENEFITS } from '@/data/content';
 import {
   EMPTY_DEMO_FORM,
@@ -64,7 +64,7 @@ export function DemoForm() {
           <SectionHeading
             id="demo-titulo"
             eyebrow="Demonstração"
-            title="Veja o Escola+ com os dados da sua rede"
+            title="Veja o Escola+ com os dados da sua escola"
             description="Preencha o formulário e agende uma conversa com a nossa equipe."
           />
           <ul className="mt-8 space-y-4">
@@ -104,7 +104,7 @@ export function DemoForm() {
                   type="email"
                   autoComplete="email"
                   inputMode="email"
-                  placeholder="nome@secretaria.gov.br"
+                  placeholder="nome@escola.edu.br"
                   value={values.email}
                   onChange={set('email')}
                   error={errors.email}
@@ -142,13 +142,13 @@ export function DemoForm() {
               />
               <div className="sm:col-span-2">
                 <Listbox
-                  id={fieldId('porte')}
-                  name="porte"
-                  label="Porte da rede"
-                  options={PORTES}
-                  value={values.porte}
-                  onChange={set('porte')}
-                  error={errors.porte}
+                  id={fieldId('tamanho')}
+                  name="tamanho"
+                  label="Tamanho da escola"
+                  options={TAMANHOS_ESCOLA}
+                  value={values.tamanho}
+                  onChange={set('tamanho')}
+                  error={errors.tamanho}
                 />
               </div>
             </div>
