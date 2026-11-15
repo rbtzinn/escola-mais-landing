@@ -5,6 +5,7 @@ Instruções do projeto para o Claude Code. Responda sempre em português do Bra
 ## Sobre o projeto
 
 <!-- Preencha quando definir o projeto -->
+
 - **Nome:** Escola+ (landing page de apresentação)
 - **Objetivo:** apresentar visualmente a plataforma de gestão de escolas públicas (municipais e estaduais) para secretarias de educação, diretores e coordenadores. Só front-end: sem backend, sem login, dados fictícios; o formulário de demonstração não envia nada.
 - **Stack:** Next.js 16 (App Router) + React 19 + TypeScript (strict) + Tailwind CSS v4 (tokens em `src/app/globals.css`), ESLint, Prettier, Vitest + Testing Library. Deploy na Vercel (sem variáveis de ambiente).
@@ -14,6 +15,7 @@ Instruções do projeto para o Claude Code. Responda sempre em português do Bra
 ## Comandos
 
 <!-- Atualize quando a stack for escolhida -->
+
 - Instalar: `npm install`
 - Rodar em dev: `npm run dev` (http://localhost:3000)
 - Build de produção: `npm run build` e `npm run start`
@@ -32,7 +34,7 @@ Este projeto usa o modelo `opusplan`: **Opus no plan mode, Sonnet na execução.
    - passos numerados, pequenos e em ordem;
    - assinaturas de funções, tipos e contratos de API envolvidos;
    - casos de borda e como testar cada passo.
-   Antes de planejar, use o subagente `explorador` para mapear o código, em vez de ler muitos arquivos na conversa principal.
+     Antes de planejar, use o subagente `explorador` para mapear o código, em vez de ler muitos arquivos na conversa principal.
 2. **Executar (Sonnet):** siga o plano aprovado à risca. Se surgir uma decisão de arquitetura que o plano não cobre, pare e avise em vez de improvisar.
 3. **Verificar (Haiku):** ao terminar cada etapa, delegue para os subagentes:
    - `revisor-lint`: lint, formatação e tipos;
