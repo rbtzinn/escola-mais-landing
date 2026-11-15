@@ -2,11 +2,12 @@ import type { IconName } from '@/components/icons';
 import type { AccordionItem } from '@/components/ui/Accordion';
 
 export const NAV_LINKS = [
-  { href: '#problemas', label: 'Problemas' },
-  { href: '#funcionalidades', label: 'Funcionalidades' },
-  { href: '#como-funciona', label: 'Como funciona' },
-  { href: '#impacto', label: 'Impacto' },
-  { href: '#faq', label: 'Dúvidas' },
+  { href: '/#problemas', label: 'Problemas' },
+  { href: '/#funcionalidades', label: 'Funcionalidades' },
+  { href: '/#como-funciona', label: 'Como funciona' },
+  { href: '/#impacto', label: 'Impacto' },
+  { href: '/#faq', label: 'Dúvidas' },
+  { href: '/demo', label: 'Testar' },
 ];
 
 export const PROBLEMS: { icon: IconName; title: string; text: string }[] = [
@@ -41,7 +42,7 @@ export const FEATURES: { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'sheet',
     title: 'Planilhas viram dashboards',
-    text: 'Suba a planilha que a escola já usa e receba painéis de notas, faltas e turmas, e relatórios prontos para o conselho escolar e o PDDE.',
+    text: 'Suba a planilha que a escola já usa e receba painéis de notas, faltas e turmas, e relatórios prontos para o conselho escolar e o PDDE. Teste agora com a sua planilha.',
   },
   {
     icon: 'check',
@@ -87,7 +88,7 @@ export const STEPS = [
   },
   {
     title: 'Veja a escola em um painel',
-    text: 'Em minutos, os dados viram dashboards de turmas, frequência e notas, sem refazer nada.',
+    text: 'Em minutos, os dados viram dashboards de turmas, frequência e notas, sem refazer nada. Já dá para testar.',
   },
   {
     title: 'Deixe o Escola+ avisar',

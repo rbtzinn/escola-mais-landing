@@ -48,7 +48,7 @@ export function MobileMenu({ onClose }: { onClose: () => void }) {
           </a>
         ))}
       </nav>
-      <ButtonLink href="#demonstracao" onClick={onClose} className="mt-8">
+      <ButtonLink href="/#demonstracao" onClick={onClose} className="mt-8">
         Solicitar demonstração
       </ButtonLink>
     </div>,

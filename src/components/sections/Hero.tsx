@@ -40,8 +40,8 @@ export function Hero() {
                 Solicitar demonstração
                 <Icon name="arrow" size={20} />
               </ButtonLink>
-              <ButtonLink href="#funcionalidades" variant="secondary">
-                Ver funcionalidades
+              <ButtonLink href="/demo" variant="secondary">
+                Testar com sua planilha
               </ButtonLink>
             </div>
           </Reveal>

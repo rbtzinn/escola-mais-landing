@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Modal } from '@/components/ui/Modal';
@@ -46,12 +47,12 @@ export function Footer() {
               </button>
             </li>
             <li>
-              <a
-                href="#demonstracao"
+              <Link
+                href="/#demonstracao"
                 className="inline-flex min-h-9 items-center text-fg-muted hover:text-primary"
               >
                 Solicitar demonstração
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
