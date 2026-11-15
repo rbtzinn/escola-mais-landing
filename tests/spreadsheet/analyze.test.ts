@@ -86,7 +86,7 @@ describe('analyze', () => {
     const t = parseCsv('Aluno;Turma;Nota\nX;;5\n;6A;5\nY;6A;11\nZ;6A;7');
     const r = analyze(
       t,
-      { aluno: 0, turma: 1, faltas: null, atrasos: null, disciplinas: [2] },
+      { aluno: 0, turma: 1, faltas: null, atrasos: null, telefone: null, disciplinas: [2] },
       DEFAULT_OPTIONS,
     );
     expect(r.students.map((s) => s.aluno)).toEqual(['Y', 'Z']);

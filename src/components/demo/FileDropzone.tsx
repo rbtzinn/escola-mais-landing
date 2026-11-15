@@ -3,15 +3,18 @@
 import clsx from 'clsx';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
+import { Button } from '@/components/ui/Button';
 
 interface Props {
   onFile: (file: File) => void;
+  /** Abre o painel com a escola de exemplo, sem planilha. */
+  onSample: () => void;
   loading: boolean;
   error: string | null;
 }
 
 /** Área para escolher ou arrastar a planilha. O input nativo fica oculto; o rótulo é o botão. */
-export function FileDropzone({ onFile, loading, error }: Props) {
+export function FileDropzone({ onFile, onSample, loading, error }: Props) {
   const [dragging, setDragging] = useState(false);
 
   return (
@@ -60,6 +63,11 @@ export function FileDropzone({ onFile, loading, error }: Props) {
         >
           {loading ? 'Lendo planilha…' : 'Escolher arquivo'}
         </label>
+        <p className="mt-5 text-sm text-fg-muted">Sem planilha à mão?</p>
+        <Button variant="secondary" onClick={onSample} disabled={loading} className="mt-2">
+          <Icon name="school" size={20} />
+          Ver com escola de exemplo
+        </Button>
       </div>
 
       {error && (

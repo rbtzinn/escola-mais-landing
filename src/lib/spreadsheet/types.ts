@@ -10,6 +10,8 @@ export interface Mapping {
   turma: number | null;
   faltas: number | null;
   atrasos: number | null;
+  /** Telefone do responsável (opcional): usado no botão de WhatsApp. */
+  telefone: number | null;
   /** Colunas com uma nota (0 a 10) por disciplina. */
   disciplinas: number[];
 }
@@ -40,6 +42,8 @@ export interface Student {
   frequencia: number | null;
   media: number | null;
   notas: Record<string, number>;
+  /** Telefone do responsável como veio da planilha (ou null). */
+  telefone: string | null;
 }
 
 export interface ClassSummary {
