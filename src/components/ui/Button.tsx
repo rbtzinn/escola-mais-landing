@@ -12,6 +12,10 @@ const variants: Record<Variant, string> = {
   ghost: 'text-fg hover:bg-muted',
 };
 
+/** Classes do botão, para aplicar em outros elementos (ex.: o Link do Next, que não recarrega a página). */
+export const buttonClasses = (variant: Variant = 'primary', className?: string) =>
+  clsx(base, variants[variant], className);
+
 export function Button({
   variant = 'primary',
   className,

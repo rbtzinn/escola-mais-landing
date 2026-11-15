@@ -1,10 +1,13 @@
 'use client';
 
 import clsx from 'clsx';
+import Link from 'next/link';
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { pendingNotices } from '@/lib/attendance/records';
+import type { LateRecord } from '@/lib/attendance/types';
 import type { Comparison } from '@/lib/spreadsheet/compare';
 import type { Action } from '@/lib/spreadsheet/insights';
 import type { Analysis, Student } from '@/lib/spreadsheet/types';
@@ -41,10 +44,18 @@ interface Props {
   comparison: Comparison | null;
   hasLateColumn: boolean;
   compareProps: CompareProps;
+  /** Atrasos registrados hoje em /demo/registro. */
+  records?: LateRecord[];
 }
 
 /** Painel em 3 abas. No celular, as abas ficam fixas embaixo, como em um app. */
-export function Dashboard({ analysis, comparison, hasLateColumn, compareProps }: Props) {
+export function Dashboard({
+  analysis,
+  comparison,
+  hasLateColumn,
+  compareProps,
+  records = [],
+}: Props) {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('resumo');
   const [student, setStudent] = useState<Student | null>(null);
@@ -176,6 +187,7 @@ export function Dashboard({ analysis, comparison, hasLateColumn, compareProps }:
         {tab === 'resumo' && (
           <>
             <Verdict analysis={analysis} comparison={comparison} />
+            {records.length > 0 && <TodayLate records={records} />}
             <KpiCards analysis={analysis} comparison={comparison} />
             <TodayActions analysis={analysis} onAction={onAction} />
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -235,5 +247,32 @@ export function Dashboard({ analysis, comparison, hasLateColumn, compareProps }:
         onClose={() => setStudent(null)}
       />
     </div>
+  );
+}
+
+/** Atrasos registrados hoje (portaria, totem, professor, coordenação) e avisos que faltam mandar. */
+function TodayLate({ records }: { records: LateRecord[] }) {
+  const pendentes = pendingNotices(records).length;
+  return (
+    <Link
+      href="/demo/registro?canal=coordenacao"
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-primary"
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Icon name="calendar" size={20} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold">
+          Hoje: {records.length}{' '}
+          {records.length === 1 ? 'atraso registrado' : 'atrasos registrados'}
+        </span>
+        <span className={clsx('block text-sm', pendentes ? 'text-danger' : 'text-fg-muted')}>
+          {pendentes
+            ? `${pendentes} ${pendentes === 1 ? 'aviso pendente' : 'avisos pendentes'} para as famílias`
+            : 'Todos os avisos foram enviados ou dispensados'}
+        </span>
+      </span>
+      <Icon name="arrow" size={18} className="shrink-0 text-fg-muted" />
+    </Link>
   );
 }
