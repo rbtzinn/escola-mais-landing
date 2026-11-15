@@ -1,17 +1,21 @@
 'use client';
 
 import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '@/components/icons';
 import { ButtonLink } from '@/components/ui/Button';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { NAV_LINKS } from '@/data/content';
 
-/** Painel de navegação do celular: foco preso, Esc fecha, devolve o foco ao botão do menu. */
+/**
+ * Painel de navegação do celular: foco preso, Esc fecha, devolve o foco ao botão do menu.
+ * Renderizado no body: dentro do header, o backdrop-blur prenderia o `fixed` à altura dele.
+ */
 export function MobileMenu({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref, true, onClose);
 
-  return (
+  return createPortal(
     <div
       ref={ref}
       id="menu-mobile"
@@ -47,6 +51,7 @@ export function MobileMenu({ onClose }: { onClose: () => void }) {
       <ButtonLink href="#demonstracao" onClick={onClose} className="mt-8">
         Solicitar demonstração
       </ButtonLink>
-    </div>
+    </div>,
+    document.body,
   );
 }
