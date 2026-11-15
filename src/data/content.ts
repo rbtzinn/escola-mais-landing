@@ -17,18 +17,18 @@ export const PROBLEMS: { icon: IconName; title: string; text: string }[] = [
   },
   {
     icon: 'message',
-    title: 'Pais que só descobrem tarde',
-    text: 'Falta, reunião e boletim viram ligação, bilhete ou mensagem digitada uma a uma no WhatsApp.',
+    title: 'Pais que sobrecarregam a gestão',
+    text: 'Grupos de WhatsApp por série e dezenas de perguntas repetidas. É impossível responder a todo mundo a tempo.',
+  },
+  {
+    icon: 'inbox',
+    title: 'Demandas de todos os lados ao mesmo tempo',
+    text: 'Secretaria de Educação, GRE, famílias, professores e alunos pedindo coisas ao mesmo tempo, sem fila nem prioridade.',
   },
   {
     icon: 'paper',
-    title: 'Aluno em risco sem alerta',
-    text: 'Faltas seguidas e queda de nota só aparecem quando o aluno já está quase deixando a escola.',
-  },
-  {
-    icon: 'file',
-    title: 'Prestação de contas no sufoco',
-    text: 'Reunir dados para o conselho escolar, o PDDE e a secretaria vira correria no fim do prazo.',
+    title: 'Papelada e contagens manuais',
+    text: 'Declarações, contagem diária de alunos e de quem almoça, e horário refeito na mão quando um professor falta.',
   },
 ];
 
@@ -36,7 +36,7 @@ export const FEATURES: { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'message',
     title: 'Mensagens automáticas aos pais',
-    text: 'Avisos de falta, reunião, boletim e comunicados por WhatsApp ou SMS, com modelos prontos. Você aprova o que sai.',
+    text: 'Avisos de falta, reunião, boletim e comunicados por WhatsApp ou SMS, com modelos prontos. Respostas rápidas para as perguntas que se repetem.',
   },
   {
     icon: 'sheet',
@@ -45,18 +45,33 @@ export const FEATURES: { icon: IconName; title: string; text: string }[] = [
   },
   {
     icon: 'check',
-    title: 'Frequência e busca ativa',
-    text: 'Chamada digital para quem não tem sistema e importação de dados para quem já usa o SIEPE ou similar. Alertas de faltas seguidas e lista de busca ativa.',
+    title: 'Frequência, chegada e atrasos',
+    text: 'Contagem diária de alunos e registro de chegada, com aviso automático à família no 3º atraso. Quem já usa o SIEPE importa a exportação; quem não tem sistema usa a chamada digital.',
   },
   {
     icon: 'chart',
     title: 'Notas e alunos em risco',
-    text: 'Veja turmas e alunos com queda de desempenho e aja cedo, antes do fim do bimestre.',
+    text: 'Veja turmas e alunos com queda de desempenho e faltas seguidas, e faça a busca ativa antes do fim do bimestre.',
+  },
+  {
+    icon: 'inbox',
+    title: 'Painel de demandas',
+    text: 'Reúna pedidos da Secretaria, da GRE, das famílias e dos professores em uma fila com prazo, prioridade e responsável.',
+  },
+  {
+    icon: 'file',
+    title: 'Declarações e documentos',
+    text: 'Emita declarações em um clique e guarde documentos em um arquivo compartilhado, sem limite de computadores.',
+  },
+  {
+    icon: 'calendar',
+    title: 'Horário e professores',
+    text: 'Registre a frequência dos professores e reorganize o horário dos alunos na hora, quando alguém falta.',
   },
   {
     icon: 'utensils',
     title: 'Merenda e estoque',
-    text: 'Controle simples do que entra, sai e vence, com aviso antes de acabar.',
+    text: 'Contagem diária de quem almoça e controle do que entra, sai e vence, com aviso antes de acabar.',
   },
   {
     icon: 'wrench',
@@ -81,30 +96,30 @@ export const STEPS = [
 ];
 
 export const IMPACT: { value: number; prefix?: string; suffix?: string; label: string }[] = [
-  { value: 12, suffix: ' h', label: 'a menos por semana em planilhas' },
+  { value: 12, suffix: ' h', label: 'a menos por semana em planilhas e papelada' },
   { value: 85, suffix: '%', label: 'das famílias avisadas no mesmo dia' },
-  { value: 30, suffix: '%', label: 'mais rápido para achar aluno em risco' },
-  { value: 3, suffix: ' min', label: 'para gerar um relatório' },
+  { value: 60, suffix: '%', label: 'menos mensagens repetidas no WhatsApp' },
+  { value: 1, suffix: ' min', label: 'para emitir uma declaração' },
 ];
 
 export const TESTIMONIALS = [
   {
     quote:
-      'Eu passava a sexta inteira juntando planilhas. Agora subo os arquivos e o painel da escola já está pronto na segunda.',
-    role: 'Diretora de escola municipal',
-    context: 'Ensino fundamental',
+      'Antes, o que chegava da Secretaria, da GRE e das famílias se misturava no WhatsApp. Agora tudo entra em uma fila, com prazo e responsável.',
+    role: 'Diretor de escola estadual',
+    context: 'Escola técnica',
   },
   {
     quote:
-      'Os pais recebem o aviso de falta no mesmo dia, sem ninguém precisar ligar. A busca ativa ficou muito mais rápida.',
-    role: 'Coordenador pedagógico de escola estadual',
-    context: 'Ensino médio',
-  },
-  {
-    quote:
-      'Na hora de prestar contas ao conselho escolar, o relatório já sai organizado. É só conferir e imprimir.',
+      'A declaração que levava a manhã sai em minutos, e a contagem do dia fecha sem papel. A secretaria respira.',
     role: 'Secretária escolar',
     context: 'Escola de 600 alunos',
+  },
+  {
+    quote:
+      'Os pais recebem o aviso sozinhos e, quando um professor falta, refaço o horário dos alunos na hora, sem planilha.',
+    role: 'Coordenadora pedagógica',
+    context: 'Ensino médio',
   },
 ];
 
@@ -140,6 +155,12 @@ export const FAQ: AccordionItem[] = [
       'Os registros básicos funcionam sem conexão e sincronizam quando o sinal volta, pensando em escolas com internet limitada.',
   },
   {
+    id: 'documentos',
+    question: 'Onde ficam os documentos da escola?',
+    answer:
+      'Em um arquivo compartilhado da própria escola, com controle de acesso por perfil e sem limite de computadores. Cada arquivo tem uma única versão, o que evita duplicatas.',
+  },
+  {
     id: 'custo',
     question: 'Quanto custa?',
     answer:
@@ -150,5 +171,5 @@ export const FAQ: AccordionItem[] = [
 export const DEMO_BENEFITS = [
   'Apresentação de cerca de 30 minutos, online',
   'Painel montado com a planilha da sua escola',
-  'Exemplo das mensagens automáticas para os pais',
+  'Exemplo das mensagens automáticas e do painel de demandas',
 ];

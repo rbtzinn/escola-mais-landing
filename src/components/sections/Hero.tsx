@@ -30,8 +30,8 @@ export function Hero() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-fg-muted sm:text-xl">
-              Transforme planilhas em painéis, avise os pais automaticamente e identifique alunos em
-              risco, tudo em um só lugar.
+              Transforme planilhas em painéis, responda aos pais com menos esforço e organize
+              demandas, declarações e horários em um só lugar.
             </p>
           </Reveal>
           <Reveal delay={240}>

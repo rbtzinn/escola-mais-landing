@@ -6,6 +6,8 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 - Planilhas que viram dashboards e relatórios prontos.
 - Frequência e busca ativa: chamada digital para quem não tem sistema, ou importação de dados para quem já usa o SIEPE ou similar (sem integração oficial).
 - Notas e alunos em risco.
+- Painel de demandas (Secretaria, GRE, famílias e professores).
+- Declarações e documentos, e horário/frequência dos professores.
 - Merenda e estoque.
 - Manutenção e ocorrências.
 
@@ -51,18 +53,18 @@ Nenhuma. O `.env.example` só tem comentários. Se algum dia for preciso, copie-
 
 Ordem em `src/app/page.tsx`. Cabeçalho e rodapé ficam fora de `<main>`.
 
-| Seção (id)                                | Componente                                                     | O que mostra                                                                                                                     |
-| ----------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Cabeçalho                                 | `src/components/layout/Header.tsx`                             | Menu, troca de tema e menu mobile                                                                                                |
-| Hero (`#topo`)                            | `src/components/sections/Hero.tsx` (usa `DashboardMockup.tsx`) | Proposta de valor, botões e painel ilustrativo com dados fictícios                                                               |
-| Problemas (`#problemas`)                  | `src/components/sections/Problems.tsx`                         | Planilhas soltas, pais avisados tarde, aluno em risco sem alerta e prestação de contas                                           |
-| Funcionalidades (`#funcionalidades`)      | `src/components/sections/Features.tsx`                         | Seis áreas: mensagens aos pais, dashboards, frequência e busca ativa, notas e risco, merenda e estoque, manutenção e ocorrências |
-| Como funciona (`#como-funciona`)          | `src/components/sections/HowItWorks.tsx`                       | Três passos: enviar planilhas, ver o painel e deixar o Escola+ avisar                                                            |
-| Impacto (`#impacto`)                      | `src/components/sections/Impact.tsx`                           | Quatro números fictícios de exemplo                                                                                              |
-| Depoimentos (`#depoimentos`)              | `src/components/sections/Testimonials.tsx`                     | Três depoimentos ilustrativos (direção, coordenação e secretaria escolar)                                                        |
-| Dúvidas (`#faq`)                          | `src/components/sections/Faq.tsx`                              | Proteção de dados (LGPD), uso com SIEPE, mensagens aos pais, tecnologia, internet instável e custo                               |
-| Demonstração (`#demonstracao`)            | `src/components/sections/DemoForm.tsx`                         | Formulário com cargo, município, UF e tamanho da escola; envio apenas simulado                                                   |
-| Rodapé (política de privacidade em modal) | `src/components/layout/Footer.tsx`                             | Política de privacidade, em modal                                                                                                |
+| Seção (id)                                | Componente                                                     | O que mostra                                                                                                                                                                                            |
+| ----------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cabeçalho                                 | `src/components/layout/Header.tsx`                             | Menu, troca de tema e menu mobile                                                                                                                                                                       |
+| Hero (`#topo`)                            | `src/components/sections/Hero.tsx` (usa `DashboardMockup.tsx`) | Proposta de valor, botões e painel ilustrativo com dados fictícios                                                                                                                                      |
+| Problemas (`#problemas`)                  | `src/components/sections/Problems.tsx`                         | Planilhas soltas, pais avisados tarde, aluno em risco sem alerta e prestação de contas                                                                                                                  |
+| Funcionalidades (`#funcionalidades`)      | `src/components/sections/Features.tsx`                         | Nove áreas: mensagens aos pais, dashboards, frequência/chegada/atrasos, notas e risco, painel de demandas, declarações e documentos, horário e professores, merenda e estoque, manutenção e ocorrências |
+| Como funciona (`#como-funciona`)          | `src/components/sections/HowItWorks.tsx`                       | Três passos: enviar planilhas, ver o painel e deixar o Escola+ avisar                                                                                                                                   |
+| Impacto (`#impacto`)                      | `src/components/sections/Impact.tsx`                           | Quatro números fictícios de exemplo                                                                                                                                                                     |
+| Depoimentos (`#depoimentos`)              | `src/components/sections/Testimonials.tsx`                     | Três depoimentos ilustrativos (direção, coordenação e secretaria escolar)                                                                                                                               |
+| Dúvidas (`#faq`)                          | `src/components/sections/Faq.tsx`                              | Proteção de dados (LGPD), uso com SIEPE, mensagens aos pais, tecnologia, internet instável e custo                                                                                                      |
+| Demonstração (`#demonstracao`)            | `src/components/sections/DemoForm.tsx`                         | Formulário com cargo, município, UF e tamanho da escola; envio apenas simulado                                                                                                                          |
+| Rodapé (política de privacidade em modal) | `src/components/layout/Footer.tsx`                             | Política de privacidade, em modal                                                                                                                                                                       |
 
 Textos e listas ficam em `src/data/content.ts` e `src/data/options.ts`.
 

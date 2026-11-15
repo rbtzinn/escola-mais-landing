@@ -6,7 +6,7 @@ const MONTHS = ['Mar', 'Abr', 'Mai', 'Jun', 'Ago', 'Set', 'Out', 'Nov'];
 const KPIS = [
   { label: 'Frequência', value: '92,4%', delta: '+1,8 p.p.', tone: 'text-primary' },
   { label: 'Alunos em risco', value: '18', delta: '−4 no mês', tone: 'text-primary' },
-  { label: 'Média de notas', value: '7,2', delta: '+0,3', tone: 'text-primary' },
+  { label: 'Atrasos hoje', value: '7', delta: '3 avisos enviados', tone: 'text-primary' },
 ];
 
 const MESSAGES = [
@@ -137,9 +137,9 @@ export function DashboardMockup() {
         </div>
       </div>
       <figcaption className="sr-only">
-        Painel de exemplo de uma escola com frequência de 92,4%, 18 alunos em risco, média de notas
-        7,2, gráfico de frequência mensal e mensagens aos pais: 42 avisos de falta e 118 convites de
-        reunião enviados, boletim aguardando. Todos os dados são fictícios.
+        Painel de exemplo de uma escola com frequência de 92,4%, 18 alunos em risco, 7 atrasos hoje
+        com 3 avisos enviados, gráfico de frequência mensal e mensagens aos pais: 42 avisos de falta
+        e 118 convites de reunião enviados, boletim aguardando. Todos os dados são fictícios.
       </figcaption>
     </figure>
   );
