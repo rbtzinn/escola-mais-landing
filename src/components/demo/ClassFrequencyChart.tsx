@@ -9,7 +9,7 @@ export function ClassFrequencyChart({ analysis }: { analysis: Analysis }) {
   return (
     <section
       aria-labelledby="freq-titulo"
-      className="rounded-2xl border border-border bg-surface p-5 sm:p-6"
+      className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-6"
     >
       <h3 id="freq-titulo" className="font-display text-xl font-bold">
         Frequência por turma

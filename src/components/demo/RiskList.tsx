@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { downloadText, riskToCsv } from '@/lib/spreadsheet/exportCsv';
 import type { Analysis } from '@/lib/spreadsheet/types';
 
-const INITIAL = 8;
+const INITIAL = 5;
 
 /** Alunos com frequência ou média abaixo do mínimo, com o motivo de cada alerta. */
 export function RiskList({ analysis }: { analysis: Analysis }) {
@@ -28,7 +28,7 @@ export function RiskList({ analysis }: { analysis: Analysis }) {
   return (
     <section
       aria-labelledby="risco-titulo"
-      className="rounded-2xl border border-border bg-surface p-5 sm:p-6"
+      className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 id="risco-titulo" className="font-display text-xl font-bold">
@@ -48,21 +48,17 @@ export function RiskList({ analysis }: { analysis: Analysis }) {
         </p>
       ) : (
         <>
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-3 space-y-2">
             {shown.map(({ student, motivos }) => (
               <li
                 key={`${student.turma}-${student.aluno}`}
-                className="rounded-xl border border-border bg-bg p-4"
+                className="rounded-xl border border-border bg-bg px-3 py-2.5"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{student.aluno}</span>
                   <Badge>{student.turma}</Badge>
                 </div>
-                <ul className="mt-2 list-disc space-y-0.5 pl-5 text-sm text-fg-muted">
-                  {motivos.map((m) => (
-                    <li key={m}>{m}</li>
-                  ))}
-                </ul>
+                <p className="mt-1 text-sm text-fg-muted">{motivos.join(' · ')}</p>
               </li>
             ))}
           </ul>

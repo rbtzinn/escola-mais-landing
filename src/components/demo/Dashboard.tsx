@@ -14,7 +14,7 @@ export function Dashboard({
   hasLateColumn: boolean;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-4">
       {analysis.avisos.length > 0 && (
         <div role="status" className="rounded-xl border border-accent bg-accent/20 p-4 text-sm">
           <p className="mb-1 flex items-center gap-2 font-semibold">
@@ -28,11 +28,11 @@ export function Dashboard({
         </div>
       )}
       <KpiCards analysis={analysis} />
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <ClassFrequencyChart analysis={analysis} />
         <GradesTable analysis={analysis} />
       </div>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <RiskList analysis={analysis} />
         <LateList analysis={analysis} hasColumn={hasLateColumn} />
       </div>
