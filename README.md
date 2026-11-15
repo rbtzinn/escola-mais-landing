@@ -1,6 +1,13 @@
 # Escola+ (landing page)
 
-Landing de apresentação do **Escola+**, uma plataforma de gestão escolar para redes municipais e estaduais.
+Landing de apresentação do **Escola+**, uma plataforma de gestão para a direção e a coordenação de **uma escola pública**. Destaques apresentados:
+
+- Mensagens automáticas aos pais por WhatsApp ou SMS.
+- Planilhas que viram dashboards e relatórios prontos.
+- Frequência e busca ativa: chamada digital para quem não tem sistema, ou importação de dados para quem já usa o SIEPE ou similar (sem integração oficial).
+- Notas e alunos em risco.
+- Merenda e estoque.
+- Manutenção e ocorrências.
 
 - **Só visual:** não tem backend, login nem banco de dados.
 - **Dados fictícios:** números, painel e depoimentos são ilustrativos.
@@ -44,18 +51,18 @@ Nenhuma. O `.env.example` só tem comentários. Se algum dia for preciso, copie-
 
 Ordem em `src/app/page.tsx`. Cabeçalho e rodapé ficam fora de `<main>`.
 
-| Seção (id)                                   | Componente                                                     |
-| -------------------------------------------- | -------------------------------------------------------------- |
-| Cabeçalho: menu, troca de tema e menu mobile | `src/components/layout/Header.tsx`                             |
-| Hero (`#topo`)                               | `src/components/sections/Hero.tsx` (usa `DashboardMockup.tsx`) |
-| Problemas (`#problemas`)                     | `src/components/sections/Problems.tsx`                         |
-| Funcionalidades (`#funcionalidades`)         | `src/components/sections/Features.tsx`                         |
-| Como funciona (`#como-funciona`)             | `src/components/sections/HowItWorks.tsx`                       |
-| Impacto (`#impacto`)                         | `src/components/sections/Impact.tsx`                           |
-| Depoimentos (`#depoimentos`)                 | `src/components/sections/Testimonials.tsx`                     |
-| Dúvidas (`#faq`)                             | `src/components/sections/Faq.tsx`                              |
-| Demonstração (`#demonstracao`)               | `src/components/sections/DemoForm.tsx`                         |
-| Rodapé (política de privacidade em modal)    | `src/components/layout/Footer.tsx`                             |
+| Seção (id)                                | Componente                                                     | O que mostra                                                                                                                     |
+| ----------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Cabeçalho                                 | `src/components/layout/Header.tsx`                             | Menu, troca de tema e menu mobile                                                                                                |
+| Hero (`#topo`)                            | `src/components/sections/Hero.tsx` (usa `DashboardMockup.tsx`) | Proposta de valor, botões e painel ilustrativo com dados fictícios                                                               |
+| Problemas (`#problemas`)                  | `src/components/sections/Problems.tsx`                         | Planilhas soltas, pais avisados tarde, aluno em risco sem alerta e prestação de contas                                           |
+| Funcionalidades (`#funcionalidades`)      | `src/components/sections/Features.tsx`                         | Seis áreas: mensagens aos pais, dashboards, frequência e busca ativa, notas e risco, merenda e estoque, manutenção e ocorrências |
+| Como funciona (`#como-funciona`)          | `src/components/sections/HowItWorks.tsx`                       | Três passos: enviar planilhas, ver o painel e deixar o Escola+ avisar                                                            |
+| Impacto (`#impacto`)                      | `src/components/sections/Impact.tsx`                           | Quatro números fictícios de exemplo                                                                                              |
+| Depoimentos (`#depoimentos`)              | `src/components/sections/Testimonials.tsx`                     | Três depoimentos ilustrativos (direção, coordenação e secretaria escolar)                                                        |
+| Dúvidas (`#faq`)                          | `src/components/sections/Faq.tsx`                              | Proteção de dados (LGPD), uso com SIEPE, mensagens aos pais, tecnologia, internet instável e custo                               |
+| Demonstração (`#demonstracao`)            | `src/components/sections/DemoForm.tsx`                         | Formulário com cargo, município, UF e tamanho da escola; envio apenas simulado                                                   |
+| Rodapé (política de privacidade em modal) | `src/components/layout/Footer.tsx`                             | Política de privacidade, em modal                                                                                                |
 
 Textos e listas ficam em `src/data/content.ts` e `src/data/options.ts`.
 
@@ -63,7 +70,7 @@ Textos e listas ficam em `src/data/content.ts` e `src/data/options.ts`.
 
 Em `src/components/ui/`, feitos sem biblioteca externa:
 
-- **Listbox:** lista suspensa (Cargo e Porte). Teclado: Enter, Espaço ou ↓ abrem; ↑ ↓ Home End navegam; letras buscam; Esc fecha.
+- **Listbox:** lista suspensa (Cargo e Tamanho da escola). Teclado: Enter, Espaço ou ↓ abrem; ↑ ↓ Home End navegam; letras buscam; Esc fecha.
 - **Combobox:** campo com busca (UF). Ignora acentos e maiúsculas, e também casa pela sigla (ex.: "PE").
 - **Accordion:** perguntas frequentes, com um item aberto por vez. Teclado: ↑ ↓ Home End.
 - **Modal:** diálogo em portal, com foco preso. Esc ou clique no fundo fecha, e o foco volta ao gatilho.
@@ -103,7 +110,7 @@ Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` 
 - `Modal`: foco preso, Esc e devolução do foco.
 - `Accordion`: abrir e fechar, um item por vez e navegação por teclado.
 - `DemoForm`: erros inline, foco no primeiro campo inválido e envio simulado com toast.
-- `validateDemoForm`: regras de validação do formulário.
+- `validateDemoForm` (`tests/validateDemoForm.test.ts`): campos obrigatórios, e-mail válido e município preenchido.
 
 Não há testes para tema, contadores, toast isolado nem visual.
 
