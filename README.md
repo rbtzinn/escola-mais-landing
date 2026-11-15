@@ -29,7 +29,7 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 - `src/components/sections`: seções da landing, uma por arquivo.
 - `src/components/ui`: componentes próprios e acessíveis.
 - `src/components/layout`: cabeçalho e rodapé.
-- `src/components/demo`: app da rota `/demo` (envio, mapeamento de colunas e painel).
+- `src/components/demo`: app da rota `/demo` (envio, mapeamento de colunas, painel em abas, fichas e imagem de compartilhamento).
 - `src/lib/spreadsheet`: leitura de CSV e Excel, análise e exportação em CSV.
 - `src/data`: textos e opções.
 - `src/hooks`: hooks React.
@@ -84,11 +84,11 @@ Textos e listas ficam em `src/data/content.ts` e `src/data/options.ts`.
 
 A rota `/demo` ("Planilha vira dashboard") lê a planilha e calcula os indicadores no navegador. Nada é enviado nem guardado.
 
-Fluxo em 3 passos:
+Fluxo:
 
-1. **Envie a planilha:** arraste o arquivo ou escolha-o no botão.
-2. **Confira as colunas:** o app sugere aluno, turma, faltas, atrasos e notas pelo nome dos cabeçalhos. Ajuste se precisar.
-3. **Veja o painel.**
+1. **Envie a planilha** (arraste ou escolha o arquivo) ou toque em **Ver com escola de exemplo** para abrir o painel na hora, sem planilha.
+2. **Confira as colunas:** o app sugere aluno, turma, faltas, atrasos, telefone do responsável e notas pelo nome dos cabeçalhos. Quando reconhece aluno, turma, faltas e ao menos uma nota, este passo é pulado (continua acessível no botão "Colunas").
+3. **Veja o painel**, pensado para o celular: abas fixas embaixo (Resumo, Turmas, Alunos), como em um app.
 
 Formatos aceitos:
 
@@ -100,14 +100,13 @@ Limites: 5 MB e 5.000 linhas de dados.
 
 O painel mostra:
 
-- Indicadores gerais: alunos, frequência geral, média geral, alunos em risco e alunos com atrasos.
-- Frequência por turma.
-- Notas por turma e disciplina.
-- Alunos em risco, com os motivos, e download em CSV.
-- Atrasos: alunos a partir do limite configurado.
+- **Resumo:** situação da escola em semáforo (verde até 10% dos alunos em risco, amarelo até 20%, vermelho acima) com uma frase que aponta a turma mais crítica; indicadores gerais; "O que fazer hoje", com até 3 ações (família do aluno mais grave, turma mais crítica, famílias com atrasos); botão **Compartilhar resumo**, que gera uma imagem PNG (desenhada em canvas, sem nomes de alunos) e abre o compartilhar do celular ou baixa o arquivo.
+- **Comparação:** uma segunda planilha (ex.: bimestre anterior) mostra setas de melhora e piora nos indicadores, nas turmas e nos alunos, e quantos alunos entraram ou saíram do risco. Os alunos são casados pelo nome e pela turma. Na escola de exemplo há um bimestre anterior pronto.
+- **Turmas:** grade colorida, uma turma por quadrado; um toque abre a ficha da turma (médias por disciplina e alunos em risco). Abaixo, frequência por turma e notas por turma e disciplina.
+- **Alunos:** busca pelo nome e filtros (em risco, atrasos, todos), download do risco em CSV. Cada aluno abre uma ficha com os números, os motivos e uma **mensagem pronta para a família**: o botão abre o WhatsApp (`wa.me`) com o texto preenchido, direto no telefone da planilha quando existe; sem telefone, o WhatsApp pede para escolher o contato.
 - Avisos sobre a planilha (linhas ignoradas, notas fora de 0 a 10, faltas acima dos dias letivos).
 
-Critérios configuráveis (o painel recalcula na hora). Frequência = 1 − faltas ÷ dias letivos.
+Os critérios ficam no botão **Critérios**. Eles são configuráveis e o painel recalcula na hora. Frequência = 1 − faltas ÷ dias letivos.
 
 | Critério               | Padrão | Aceita  |
 | ---------------------- | ------ | ------- |
@@ -173,9 +172,10 @@ Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` 
 - `spreadsheet/numbers`: notas com vírgula ou ponto, e texto que não vira número.
 - `spreadsheet/columns`: sugestão de colunas pelo nome (sem acento e sem maiúsculas) e reconhecimento das colunas de notas.
 - `spreadsheet/analyze`: frequência, média, alunos em risco com motivos, atrasos, indicadores gerais, critérios alterados, dias letivos zerados, avisos e CSV de risco.
-- `DemoApp` (`tests/DemoApp.test.tsx`): fluxo do CSV até o painel, recálculo ao mudar critério, erro para formato não aceito e erro para planilha vazia.
+- `spreadsheet/insights`, `whatsapp`, `compare` e `sample` (`tests/spreadsheet/insights.test.ts`): faixas do semáforo, frase-resumo, ações do dia, telefone e mensagem do WhatsApp, comparação entre planilhas e escola de exemplo estável.
+- `DemoApp` (`tests/DemoApp.test.tsx`): painel aberto direto quando as colunas são reconhecidas, veredito, ficha do aluno com link do WhatsApp, abas por clique e teclado, busca e filtros, critérios no modal, conferência de colunas, escola de exemplo com comparação, comparação com planilha enviada e erros de arquivo.
 
-Não há testes para tema, contadores, toast isolado nem visual. Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
+Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
 
 ## Deploy
 
