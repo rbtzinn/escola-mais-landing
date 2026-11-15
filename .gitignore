@@ -1,0 +1,20 @@
+# Claude Code (configurações pessoais)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Dependências e build
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Sistema
+.DS_Store
+Thumbs.db
