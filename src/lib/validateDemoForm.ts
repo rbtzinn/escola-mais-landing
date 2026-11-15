@@ -4,7 +4,7 @@ export interface DemoFormValues {
   cargo: string;
   municipio: string;
   uf: string;
-  porte: string;
+  tamanho: string;
 }
 
 export type DemoFormErrors = Partial<Record<keyof DemoFormValues, string>>;
@@ -15,7 +15,7 @@ export const EMPTY_DEMO_FORM: DemoFormValues = {
   cargo: '',
   municipio: '',
   uf: '',
-  porte: '',
+  tamanho: '',
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -26,11 +26,11 @@ export function validateDemoForm(v: DemoFormValues): DemoFormErrors {
   if (v.nome.trim().length < 3) errors.nome = 'Informe seu nome completo.';
   if (!v.email.trim()) errors.email = 'Informe seu e-mail institucional.';
   else if (!EMAIL_RE.test(v.email.trim()))
-    errors.email = 'Informe um e-mail válido, como nome@secretaria.gov.br.';
+    errors.email = 'Informe um e-mail válido, como nome@escola.edu.br.';
   if (!v.cargo) errors.cargo = 'Selecione seu cargo.';
   if (!v.municipio.trim()) errors.municipio = 'Informe o município.';
   if (!v.uf) errors.uf = 'Selecione a UF.';
-  if (!v.porte) errors.porte = 'Selecione o porte da rede.';
+  if (!v.tamanho) errors.tamanho = 'Selecione o tamanho da escola.';
   return errors;
 }
 
@@ -41,5 +41,5 @@ export const FIELD_ORDER: (keyof DemoFormValues)[] = [
   'cargo',
   'municipio',
   'uf',
-  'porte',
+  'tamanho',
 ];

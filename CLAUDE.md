@@ -7,7 +7,7 @@ Instruções do projeto para o Claude Code. Responda sempre em português do Bra
 <!-- Preencha quando definir o projeto -->
 
 - **Nome:** Escola+ (landing page de apresentação)
-- **Objetivo:** apresentar visualmente a plataforma de gestão de escolas públicas (municipais e estaduais) para secretarias de educação, diretores e coordenadores. Só front-end: sem backend, sem login, dados fictícios; o formulário de demonstração não envia nada.
+- **Objetivo:** apresentar visualmente uma plataforma de gestão para a própria escola pública, voltada à direção e à coordenação pedagógica (mensagens automáticas aos pais, planilhas viram dashboards, frequência e busca ativa, notas e alunos em risco, merenda, manutenção e relatórios prontos). Só front-end: sem backend, sem login, dados fictícios; o formulário de demonstração não envia nada.
 - **Stack:** Next.js 16 (App Router) + React 19 + TypeScript (strict) + Tailwind CSS v4 (tokens em `src/app/globals.css`), ESLint, Prettier, Vitest + Testing Library. Deploy na Vercel (sem variáveis de ambiente).
 - **Estrutura:** `src/components/sections` (uma seção por arquivo), `src/components/ui` (componentes próprios e acessíveis: Listbox, Combobox, Accordion, Modal, Toast), `src/components/layout`, `src/data` (textos e opções), `src/hooks`, `src/lib`, `tests/`.
 - **Regras de UI:** nunca usar `<select>`, `alert()`, `confirm()` nem `<dialog>` nativo; usar os componentes de `ui/`. Animações respeitam `prefers-reduced-motion`. Cores só via tokens (`bg-bg`, `text-fg`, `text-primary`...), com tema claro/escuro.

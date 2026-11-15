@@ -22,7 +22,9 @@ export type IconName =
   | 'users'
   | 'link'
   | 'school'
-  | 'info';
+  | 'info'
+  | 'calendar'
+  | 'inbox';
 
 const PATHS: Record<IconName, string> = {
   sheet: 'M4 5h16v14H4zM4 10h16M9 5v14',
@@ -48,6 +50,8 @@ const PATHS: Record<IconName, string> = {
   link: 'M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0011 18.7l1-1',
   school: 'M3 10l9-6 9 6M5 10v9h14v-9M10 19v-5h4v5M12 4V2',
   info: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 11v5M12 8h.01',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  inbox: 'M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5a3 3 0 006 0h5',
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {

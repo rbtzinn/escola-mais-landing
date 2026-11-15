@@ -11,13 +11,13 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Escola+ | Gestão escolar pública mais simples e transparente',
+  title: 'Escola+ | Sua escola organizada, sem passar o dia em planilhas',
   description:
-    'Plataforma de gestão para redes municipais e estaduais de ensino: frequência digital, indicadores, merenda, manutenção e prestação de contas em um só lugar.',
+    'Plataforma para direção e coordenação escolar: planilhas viram painéis, mensagens automáticas aos pais, busca ativa de alunos em risco, merenda e relatórios prontos.',
   openGraph: {
-    title: 'Escola+ | Gestão escolar pública mais simples e transparente',
+    title: 'Escola+ | Sua escola organizada, sem passar o dia em planilhas',
     description:
-      'Frequência digital, indicadores, merenda e transparência (LAI) para secretarias de educação e escolas públicas.',
+      'Planilhas viram painéis, os pais são avisados automaticamente e alunos em risco aparecem cedo, para direção e coordenação escolar.',
     locale: 'pt_BR',
     type: 'website',
   },

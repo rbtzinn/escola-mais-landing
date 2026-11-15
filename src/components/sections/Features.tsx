@@ -16,8 +16,8 @@ export function Features() {
           <SectionHeading
             id="funcionalidades-titulo"
             eyebrow="Funcionalidades"
-            title="Tudo o que a rede precisa, conectado"
-            description="Cada módulo conversa com os demais: o que a escola registra hoje já aparece no painel da secretaria."
+            title="Menos trabalho manual para quem gere a escola"
+            description="Pensado para o diretor e o coordenador resolverem o dia a dia, sem virar especialista em tecnologia."
           />
         </Reveal>
         <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
