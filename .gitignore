@@ -18,3 +18,8 @@ coverage/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Vercel e TypeScript
+.vercel
+*.tsbuildinfo
+next-env.d.ts
