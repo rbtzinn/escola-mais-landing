@@ -1,3 +1,4 @@
+import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeading } from '@/components/ui/SectionHeading';
@@ -37,6 +38,9 @@ export function HowItWorks() {
             </li>
           ))}
         </ol>
+        <Reveal className="mt-12 flex justify-center">
+          <ButtonLink href="/demo">Testar com a planilha da sua escola</ButtonLink>
+        </Reveal>
       </Container>
     </section>
   );

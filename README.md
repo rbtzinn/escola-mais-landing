@@ -11,7 +11,7 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 - Merenda e estoque.
 - Manutenção e ocorrências.
 
-- **Só visual:** não tem backend, login nem banco de dados.
+- **Landing visual:** a página não tem backend, login nem banco de dados. A rota `/demo` é a exceção: funciona de verdade no navegador, sem backend, sem envio e sem armazenamento de dados.
 - **Dados fictícios:** números, painel e depoimentos são ilustrativos.
 - **Formulário de demonstração:** não envia nada. O "envio" é simulado no navegador e nenhum dado é guardado.
 
@@ -22,6 +22,18 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 - Vitest 5, Testing Library e jsdom
 - ESLint 9 (`eslint-config-next`) e Prettier com plugin do Tailwind
 - clsx
+
+## Estrutura
+
+- `src/app`: rotas `/` (landing) e `/demo`.
+- `src/components/sections`: seções da landing, uma por arquivo.
+- `src/components/ui`: componentes próprios e acessíveis.
+- `src/components/layout`: cabeçalho e rodapé.
+- `src/components/demo`: app da rota `/demo` (envio, mapeamento de colunas e painel).
+- `src/lib/spreadsheet`: leitura de CSV e Excel, análise e exportação em CSV.
+- `src/data`: textos e opções.
+- `src/hooks`: hooks React.
+- `tests/`: testes (Vitest e Testing Library).
 
 ## Instalação e uso
 
@@ -68,6 +80,50 @@ Ordem em `src/app/page.tsx`. Cabeçalho e rodapé ficam fora de `<main>`.
 
 Textos e listas ficam em `src/data/content.ts` e `src/data/options.ts`.
 
+## Demo funcional (`/demo`)
+
+A rota `/demo` ("Planilha vira dashboard") lê a planilha e calcula os indicadores no navegador. Nada é enviado nem guardado.
+
+Fluxo em 3 passos:
+
+1. **Envie a planilha:** arraste o arquivo ou escolha-o no botão.
+2. **Confira as colunas:** o app sugere aluno, turma, faltas, atrasos e notas pelo nome dos cabeçalhos. Ajuste se precisar.
+3. **Veja o painel.**
+
+Formatos aceitos:
+
+- `.csv` com delimitador `;`, `,` ou tab (detectado automaticamente), em UTF-8 ou Windows-1252.
+- `.xlsx`, lendo a primeira aba.
+- `.xls` não é aceito.
+
+Limites: 5 MB e 5.000 linhas de dados.
+
+O painel mostra:
+
+- Indicadores gerais: alunos, frequência geral, média geral, alunos em risco e alunos com atrasos.
+- Frequência por turma.
+- Notas por turma e disciplina.
+- Alunos em risco, com os motivos, e download em CSV.
+- Atrasos: alunos a partir do limite configurado.
+- Avisos sobre a planilha (linhas ignoradas, notas fora de 0 a 10, faltas acima dos dias letivos).
+
+Critérios configuráveis (o painel recalcula na hora). Frequência = 1 − faltas ÷ dias letivos.
+
+| Critério               | Padrão | Aceita  |
+| ---------------------- | ------ | ------- |
+| Dias letivos até agora | 100    | 1 a 400 |
+| Frequência mínima (%)  | 75     | 0 a 100 |
+| Média mínima           | 6      | 0 a 10  |
+| Atrasos para avisar    | 3      | 1 a 50  |
+
+Valores vazios ou fora do intervalo usam o padrão.
+
+Limitação: faltas seguidas não são calculadas. Elas dependem do registro diário, e a planilha tem uma linha por aluno.
+
+Planilha-modelo: [`public/modelo-escola-mais.csv`](public/modelo-escola-mais.csv), com alunos fictícios de 6º, 7º e 8º ano. O link "Baixar planilha-modelo" fica na própria rota.
+
+Dependência: `read-excel-file`, carregada só quando um `.xlsx` é aberto.
+
 ## Componentes de UI
 
 Em `src/components/ui/`, feitos sem biblioteca externa:
@@ -113,8 +169,13 @@ Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` 
 - `Accordion`: abrir e fechar, um item por vez e navegação por teclado.
 - `DemoForm`: erros inline, foco no primeiro campo inválido e envio simulado com toast.
 - `validateDemoForm` (`tests/validateDemoForm.test.ts`): campos obrigatórios, e-mail válido e município preenchido.
+- `spreadsheet/parseCsv`: delimitadores `;` e tab, BOM, aspas com delimitador, aspas escapadas, cabeçalhos vazios ou repetidos e tabela vazia.
+- `spreadsheet/numbers`: notas com vírgula ou ponto, e texto que não vira número.
+- `spreadsheet/columns`: sugestão de colunas pelo nome (sem acento e sem maiúsculas) e reconhecimento das colunas de notas.
+- `spreadsheet/analyze`: frequência, média, alunos em risco com motivos, atrasos, indicadores gerais, critérios alterados, dias letivos zerados, avisos e CSV de risco.
+- `DemoApp` (`tests/DemoApp.test.tsx`): fluxo do CSV até o painel, recálculo ao mudar critério, erro para formato não aceito e erro para planilha vazia.
 
-Não há testes para tema, contadores, toast isolado nem visual.
+Não há testes para tema, contadores, toast isolado nem visual. Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
 
 ## Deploy
 

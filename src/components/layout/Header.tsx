@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { ButtonLink } from '@/components/ui/Button';
@@ -29,9 +30,9 @@ export function Header() {
       )}
     >
       <Container className="flex h-16 items-center justify-between gap-4">
-        <a href="#topo" aria-label="Escola+, ir para o início" className="rounded-lg">
+        <Link href="/" aria-label="Escola+, ir para o início" className="rounded-lg">
           <Logo />
-        </a>
+        </Link>
         <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((l) => (
             <a
@@ -45,7 +46,7 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <ButtonLink href="#demonstracao" className="!min-h-10 !px-5 !py-2 text-sm max-sm:hidden">
+          <ButtonLink href="/#demonstracao" className="!min-h-10 !px-5 !py-2 text-sm max-sm:hidden">
             Solicitar demonstração
           </ButtonLink>
           <button
