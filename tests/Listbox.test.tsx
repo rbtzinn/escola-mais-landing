@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Listbox } from '@/components/ui/Listbox';
+import { mockMobile } from './helpers';
 
 const options = [
   { value: 'a', label: 'Alfa' },
@@ -60,5 +61,52 @@ describe('Listbox', () => {
     await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByRole('button', { name: 'fora' }));
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+});
+
+describe('Listbox no celular', () => {
+  beforeEach(() => mockMobile());
+
+  it('abre as opções num painel (dialog) e seleciona por clique', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const trigger = screen.getByRole('combobox', { name: /Letra/ });
+    await user.click(trigger);
+    const dialog = screen.getByRole('dialog', { name: 'Letra' });
+    expect(dialog).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'Beta' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveTextContent('Beta');
+    expect(trigger).toHaveFocus();
+  });
+
+  it('fecha com o botão X, com Esc e tocando no fundo', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const trigger = screen.getByRole('combobox');
+
+    await user.click(trigger);
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    await user.click(trigger);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(trigger);
+    const backdrop = screen.getByRole('dialog').parentElement as HTMLElement;
+    await user.pointer({ keys: '[MouseLeft]', target: backdrop });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveTextContent('Selecione');
+  });
+
+  it('navega pelo teclado dentro do painel', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('listbox')).toHaveFocus();
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    expect(screen.getByRole('combobox')).toHaveTextContent('Gama');
   });
 });
