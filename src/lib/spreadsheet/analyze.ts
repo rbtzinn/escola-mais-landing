@@ -41,6 +41,8 @@ export function analyze(table: RawTable, mapping: Mapping, options: Options): An
       mapping.telefone === null ? null : (row[mapping.telefone] ?? '').trim() || null;
     const matricula =
       mapping.matricula === null ? null : (row[mapping.matricula] ?? '').trim() || null;
+    const nascimento =
+      mapping.nascimento === null ? null : (row[mapping.nascimento] ?? '').trim() || null;
 
     let frequencia: number | null = null;
     if (faltas !== null && options.diasLetivos > 0) {
@@ -67,6 +69,7 @@ export function analyze(table: RawTable, mapping: Mapping, options: Options): An
       notas,
       telefone,
       matricula,
+      nascimento,
     });
   }
 

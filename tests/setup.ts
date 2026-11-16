@@ -6,6 +6,8 @@ import { demoStore } from '@/lib/demoStore';
 afterEach(() => cleanup());
 // O estado da demo vive em memória (módulo): zera entre os testes.
 afterEach(() => demoStore.reset());
+// O link do aluno lembra quem entrou neste celular (localStorage): esquece entre os testes.
+afterEach(() => window.localStorage.clear());
 
 // jsdom não implementa estes recursos usados pelos componentes.
 if (!window.matchMedia) {

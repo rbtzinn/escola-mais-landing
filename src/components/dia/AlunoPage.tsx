@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Logo } from '@/components/layout/Logo';
 import { AlunoCheckin } from './AlunoCheckin';
+import { browserMemory } from '@/lib/attendance/remember';
 import { useRegistro } from './useRegistro';
 
 /** O que abre no celular do aluno ao ler o QR da entrada: só o registro, sem o menu do site. */
@@ -17,7 +18,7 @@ export function AlunoPage() {
       <Logo />
       <div className="rounded-3xl border border-border bg-surface p-5 shadow-card">
         {school ? (
-          <AlunoCheckin roster={roster} turmas={turmas} now={now} />
+          <AlunoCheckin roster={roster} turmas={turmas} now={now} memory={browserMemory} />
         ) : (
           <p className="text-fg-muted">Carregando…</p>
         )}

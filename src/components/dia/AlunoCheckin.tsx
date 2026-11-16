@@ -8,7 +8,9 @@ import { Listbox } from '@/components/ui/Listbox';
 import { TextField } from '@/components/ui/TextField';
 import { useDemoStore } from '@/hooks/useDemoStore';
 import { checkinWindow, formatHora, formatHHMM } from '@/lib/attendance/clock';
+import { sameBirthday } from '@/lib/attendance/birthday';
 import { findByMatricula, publicName } from '@/lib/attendance/codes';
+import type { StudentMemory } from '@/lib/attendance/remember';
 import { CHANNEL_LABEL, type RosterEntry } from '@/lib/attendance/types';
 import { mealWindow } from '@/lib/daily/meals';
 import { demoStore } from '@/lib/demoStore';
@@ -22,6 +24,8 @@ interface Props {
   /** No celular simulado da Entrada: mostra uma matrícula de exemplo para testar. */
   demoHint?: boolean;
   idPrefix?: string;
+  /** Lembra quem já se identificou neste celular (o aniversário só é pedido na 1ª vez). */
+  memory: StudentMemory;
 }
 
 function ResultBox({ result }: { result: Result }) {
@@ -42,25 +46,55 @@ function ResultBox({ result }: { result: Result }) {
   );
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
 /**
- * O que o aluno vê no link do QR: identifica-se com turma + matrícula e então
- * registra a chegada atrasada e/ou responde a merenda de hoje.
- * O link é público: nunca lista alunos e mostra só primeiro nome e inicial.
+ * O que o aluno vê no link do QR: identifica-se com turma + matrícula (e, na 1ª vez neste
+ * celular, o dia e o mês do aniversário) e então registra a chegada atrasada e/ou responde
+ * a merenda de hoje. O link é público: nunca lista alunos e mostra só primeiro nome e inicial.
  */
-export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix = 'aluno' }: Props) {
+export function AlunoCheckin({
+  roster,
+  turmas,
+  now,
+  demoHint = false,
+  idPrefix = 'aluno',
+  memory,
+}: Props) {
   const { meals, mealDeadline, clock } = useDemoStore();
   const [turma, setTurma] = useState('');
   const [matricula, setMatricula] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [aluno, setAluno] = useState<RosterEntry | null>(null);
+  // Aluno lembrado por este celular: entra direto, sem pedir nada.
+  const [aluno, setAluno] = useState<RosterEntry | null>(() => {
+    const key = memory.get();
+    return (key && roster.find((r) => r.key === key)) || null;
+  });
+  // Matrícula certa, esperando a confirmação do aniversário.
+  const [pendente, setPendente] = useState<RosterEntry | null>(null);
+  const [dia, setDia] = useState('');
+  const [mes, setMes] = useState('');
   const [atraso, setAtraso] = useState<Result | null>(null);
   const [exemplo, setExemplo] = useState(0);
 
   const sair = () => {
+    memory.set(null);
     setAluno(null);
+    setPendente(null);
     setAtraso(null);
     setError(null);
     setMatricula('');
+    setDia('');
+    setMes('');
+  };
+
+  const login = (entry: RosterEntry) => {
+    memory.set(entry.key);
+    setAluno(entry);
+    setPendente(null);
+    setError(null);
+    setDia('');
+    setMes('');
   };
 
   const fillExample = () => {
@@ -84,8 +118,98 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
         'Matrícula não encontrada nesta turma. Confira o número ou procure a portaria.',
       );
     setError(null);
-    setAluno(entry);
+    // Sem data de nascimento na planilha, a matrícula basta (como antes).
+    if (entry.nascimento) setPendente(entry);
+    else login(entry);
   };
+
+  const confirmar = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendente) return;
+    if (!dia.trim() || !mes.trim()) return setError('Digite o dia e o mês.');
+    if (!sameBirthday(pendente, Number(dia), Number(mes)))
+      return setError('O aniversário não confere. Confira ou procure a portaria.');
+    login(pendente);
+  };
+
+  if (!aluno && pendente)
+    return (
+      <form onSubmit={confirmar} className="space-y-4" noValidate>
+        <div>
+          <p className="font-display text-xl font-extrabold text-fg">Confirme que é você</p>
+          <p className="text-sm text-fg-muted">
+            Digite o dia e o mês do seu aniversário. Só é pedido na primeira vez neste celular.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            id={`${idPrefix}-dia`}
+            label="Dia"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={2}
+            placeholder="DD"
+            value={dia}
+            onChange={(v) => {
+              setDia(v.replace(/\D/g, ''));
+              setError(null);
+            }}
+          />
+          <TextField
+            id={`${idPrefix}-mes`}
+            label="Mês"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={2}
+            placeholder="MM"
+            value={mes}
+            onChange={(v) => {
+              setMes(v.replace(/\D/g, ''));
+              setError(null);
+            }}
+          />
+        </div>
+        {error && (
+          <p role="alert" className="text-sm font-semibold text-danger">
+            {error}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <Button type="submit" className="flex-1">
+            Confirmar
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setPendente(null);
+              setError(null);
+            }}
+          >
+            Voltar
+          </Button>
+        </div>
+        {demoHint && pendente.nascimento && (
+          <div className="rounded-xl bg-muted p-3 text-sm text-fg-muted">
+            <p>
+              Aniversário deste aluno de exemplo: {pad2(pendente.nascimento.dia)}/
+              {pad2(pendente.nascimento.mes)}.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setDia(pad2(pendente.nascimento!.dia));
+                setMes(pad2(pendente.nascimento!.mes));
+                setError(null);
+              }}
+              className="mt-1 font-semibold text-primary underline underline-offset-4"
+            >
+              Preencher
+            </button>
+          </div>
+        )}
+      </form>
+    );
 
   if (!aluno)
     return (
@@ -123,6 +247,9 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
         <Button type="submit" className="w-full">
           Continuar
         </Button>
+        <p className="text-center text-sm text-fg-muted">
+          Não sabe a matrícula? Pergunte na portaria.
+        </p>
         {demoHint && (
           <div className="rounded-xl bg-muted p-3 text-sm text-fg-muted">
             <p>Para testar, use a matrícula de um aluno da escola de exemplo.</p>
@@ -183,9 +310,10 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
         <div>
           <p className="font-display text-xl font-semibold text-fg">Olá, {nome}!</p>
           <p className="text-sm text-fg-muted">Turma {aluno.turma}</p>
+          <p className="text-xs text-fg-muted">Este celular lembra de você.</p>
         </div>
         <Button variant="ghost" size="sm" onClick={sair}>
-          {demoHint ? 'Trocar aluno' : 'Sair'}
+          {demoHint ? 'Trocar aluno' : 'Não sou eu'}
         </Button>
       </div>
 

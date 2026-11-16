@@ -24,6 +24,8 @@ export function guessMapping(table: RawTable): Mapping {
   // Telefone primeiro: "Telefone do aluno" não deve virar a coluna do aluno.
   const telefone = pick(['telefone', 'celular', 'whatsapp', 'fone', 'contato']);
   const matricula = pick(['matricula', 'codigo do aluno', 'codigo aluno']);
+  // Antes do aluno: "Data de nascimento do aluno" não deve virar a coluna do aluno.
+  const nascimento = pick(['nascimento', 'nasc', 'aniversario']);
   const turma = pick(['turma', 'serie', 'classe']);
   const aluno = pick(['aluno', 'estudante', 'nome']);
   const faltas = pick(['falta']);
@@ -31,7 +33,7 @@ export function guessMapping(table: RawTable): Mapping {
   const disciplinas = table.headers
     .map((_, i) => i)
     .filter((i) => !used.has(i) && looksLikeGrades(table, i));
-  return { aluno, turma, faltas, atrasos, telefone, matricula, disciplinas };
+  return { aluno, turma, faltas, atrasos, telefone, matricula, nascimento, disciplinas };
 }
 
 /** Verdadeiro quando a planilha foi reconhecida a ponto de dispensar a conferência de colunas. */

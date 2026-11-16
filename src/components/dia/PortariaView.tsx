@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { formatHora } from '@/lib/attendance/clock';
 import { CHANNEL_LABEL, type Motivo, type RosterEntry } from '@/lib/attendance/types';
 import { demoStore } from '@/lib/demoStore';
+import { MatriculaPrint } from './MatriculaList';
 import { RegistroShell } from './RegistroShell';
 import {
   type Feedback,
@@ -44,7 +45,7 @@ export function PortariaView() {
   return (
     <RegistroShell
       title="Portaria"
-      subtitle="Para o aluno sem celular ou sem internet: digite o nome e registre a chegada."
+      subtitle="Para o aluno sem celular, sem internet ou que não sabe a matrícula: digite o nome e registre a chegada."
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
         <section
@@ -69,6 +70,9 @@ export function PortariaView() {
                 <p className="font-display text-xl font-semibold">{picked.aluno}</p>
                 <p className="text-sm text-fg-muted">
                   {picked.turma} · chegada às {formatHora(now())}
+                </p>
+                <p className="mt-1 text-sm">
+                  Matrícula <strong className="tabular-nums">{picked.matricula}</strong>
                 </p>
               </div>
               <MotivoChips value={motivo} onChange={setMotivo} />
@@ -121,6 +125,27 @@ export function PortariaView() {
           )}
         </section>
       </div>
+
+      <section
+        aria-labelledby="portaria-lista"
+        className="mt-6 flex flex-col gap-3 rounded-3xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+      >
+        <div>
+          <h2 id="portaria-lista" className="font-display text-lg font-semibold">
+            Aluno não sabe a matrícula?
+          </h2>
+          <p className="text-sm text-fg-muted">
+            Imprima a lista (uma folha por turma) e deixe com quem está na portaria. Ao escolher o
+            aluno acima, a matrícula também aparece. Informe só ao próprio aluno: a lista não deve
+            ficar à vista.
+          </p>
+        </div>
+        <Button variant="secondary" className="shrink-0" onClick={() => window.print()}>
+          <Icon name="file" size={20} />
+          Imprimir lista de matrículas
+        </Button>
+      </section>
+      <MatriculaPrint roster={roster} impressoEm={now()} />
     </RegistroShell>
   );
 }

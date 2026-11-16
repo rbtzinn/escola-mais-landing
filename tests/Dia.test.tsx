@@ -111,6 +111,78 @@ describe('Dia a dia', () => {
     expect(demoStore.get().records[0]).toMatchObject({ aluno: 'Ana Souza', channel: 'aluno' });
   });
 
+  it('com a coluna Nascimento, pede o aniversário na 1ª vez e depois o celular lembra', async () => {
+    const user = userEvent.setup();
+    demoStore.setSchool(
+      parseCsv('Matrícula;Aluno;Turma;Nascimento\n111111;Ana Souza;6A;15/03/2012'),
+      'escola.csv',
+    );
+    const { unmount } = renderWith(<AlunoPage />);
+    await entrar(user, '6A', '111111');
+    expect(screen.getByText('Confirme que é você')).toBeInTheDocument();
+    // Antes de confirmar, o nome não aparece.
+    expect(screen.queryByText(/Ana/)).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Dia'), '03');
+    await user.type(screen.getByLabelText('Mês'), '15');
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('O aniversário não confere');
+    expect(screen.queryByText('Olá, Ana S.!')).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Dia'));
+    await user.clear(screen.getByLabelText('Mês'));
+    await user.type(screen.getByLabelText('Dia'), '15');
+    await user.type(screen.getByLabelText('Mês'), '3');
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(screen.getByText('Olá, Ana S.!')).toBeInTheDocument();
+
+    // Voltou ao link no mesmo celular: entra direto.
+    unmount();
+    renderWith(<AlunoPage />);
+    expect(screen.getByText('Olá, Ana S.!')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Não sou eu' }));
+    expect(screen.getByText('Olá! Quem é você?')).toBeInTheDocument();
+    expect(window.localStorage.getItem('escola-mais:aluno')).toBeNull();
+  });
+
+  it('sem a coluna Nascimento, a matrícula basta e o hub avisa', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWith(<DiaHub />);
+    expect(screen.getByText(/não tem a coluna Nascimento/)).toBeInTheDocument();
+    unmount();
+    renderWith(<AlunoPage />);
+    await entrar(user, '6A', '111111');
+    expect(screen.queryByText('Confirme que é você')).not.toBeInTheDocument();
+    expect(screen.getByText('Olá, Ana S.!')).toBeInTheDocument();
+  });
+
+  it('a escola de exemplo tem nascimento: o hub não mostra o aviso', () => {
+    demoStore.reset();
+    renderWith(<DiaHub />);
+    expect(screen.queryByText(/não tem a coluna Nascimento/)).not.toBeInTheDocument();
+  });
+
+  it('portaria mostra a matrícula do aluno e imprime a lista por turma', async () => {
+    const user = userEvent.setup();
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    renderWith(<PortariaView />);
+    const lista = screen.getByTestId('lista-matriculas');
+    const folhas = within(lista).getAllByRole('heading', { level: 2 });
+    expect(folhas.map((h) => h.textContent)).toEqual([
+      expect.stringMatching(/^Turma 6A · impresso em/),
+      expect.stringMatching(/^Turma 6B · impresso em/),
+    ]);
+    expect(within(lista).getAllByText(/Não afixar/)).toHaveLength(2);
+    expect(within(lista).getByRole('row', { name: /Bia Lima 222222/ })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Buscar aluno pelo nome'), 'bia');
+    await user.click(screen.getByRole('button', { name: /Bia Lima/ }));
+    expect(screen.getByText('222222', { selector: 'strong' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Imprimir lista de matrículas' }));
+    expect(print).toHaveBeenCalled();
+  });
+
   it('matrícula de outra turma não é aceita', async () => {
     const user = userEvent.setup();
     renderWith(<AlunoPage />);

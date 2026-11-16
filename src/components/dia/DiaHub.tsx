@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { Icon, type IconName } from '@/components/icons';
 import { Button, buttonClasses } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { simulatedMemory } from '@/lib/attendance/remember';
 import { AlunoCheckin } from './AlunoCheckin';
 import { QrCode } from './QrCode';
 import { RegistroShell } from './RegistroShell';
@@ -74,7 +75,7 @@ function Poster({ url }: { url: string }) {
         <Icon name="nfc" size={18} /> Encoste aqui (NFC)
       </p>
       <p className="mt-2 text-sm text-fg-muted">
-        Sem celular ou sem internet? Fale com a portaria.
+        Não sabe a matrícula, ou está sem celular ou internet? Fale com a portaria.
       </p>
     </div>
   );
@@ -85,6 +86,8 @@ export function DiaHub() {
   const { roster, turmas, now } = useRegistro();
   const origin = useOrigin();
   const url = `${origin}${ALUNO_PATH}`;
+  // Sem a coluna Nascimento, o link não tem como confirmar o aniversário do aluno.
+  const semNascimento = roster.length > 0 && roster.every((r) => !r.nascimento);
   const toast = useToast();
 
   const copyLink = async () => {
@@ -121,9 +124,18 @@ export function DiaHub() {
           <p className="text-fg-muted">
             Imprima e cole na entrada. O aluno lê o QR com a câmera do próprio celular (ou encosta o
             celular na plaquinha NFC), informa turma e matrícula e então registra a chegada atrasada
-            (só perto do horário de entrada) ou responde se vai comer a merenda.
+            (só perto do horário de entrada) ou responde se vai comer a merenda. Na primeira vez em
+            cada celular, ele confirma o dia e o mês do aniversário; depois, o celular lembra dele.
+            Não sabe a matrícula? A portaria tem a lista impressa.
           </p>
           <Poster url={url} />
+          {semNascimento && (
+            <p className="flex items-start gap-2 border-l-2 border-accent bg-accent/20 p-3 text-sm">
+              <Icon name="info" size={18} className="mt-0.5 shrink-0" />
+              Sua planilha não tem a coluna Nascimento: o aluno entra só com turma e matrícula.
+              Adicione a coluna para confirmar a identidade pelo aniversário.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
               <Icon name="file" size={18} />
@@ -187,6 +199,7 @@ export function DiaHub() {
                 now={now}
                 demoHint
                 idPrefix="simulado"
+                memory={simulatedMemory}
               />
             </div>
           </div>

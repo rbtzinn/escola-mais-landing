@@ -49,6 +49,8 @@ export interface DemoState {
   faltaram: string[];
   /** Nome de quem faz a chamada, perguntado uma vez (só nesta aba). */
   professorNome: string | null;
+  /** Aluno lembrado pelo celular simulado da Entrada (no celular de verdade, fica no aparelho). */
+  alunoSimulado: string | null;
 }
 
 const defaultOptionsText: OptionsText = {
@@ -70,10 +72,18 @@ const INITIAL: DemoState = {
   timetable: null,
   faltaram: [],
   professorNome: null,
+  alunoSimulado: null,
 };
 
 /** O dia recomeça quando a escola muda: registros, chamadas, merenda e faltas são da escola anterior. */
-const FRESH_DAY = { previous: null, records: [], chamadas: {}, meals: {}, faltaram: [] };
+const FRESH_DAY = {
+  previous: null,
+  records: [],
+  chamadas: {},
+  meals: {},
+  faltaram: [],
+  alunoSimulado: null,
+};
 
 /** Turmas da planilha (para montar a grade de exemplo). */
 const turmasOf = (table: RawTable, mapping: Mapping) =>
@@ -156,6 +166,10 @@ export const demoStore = {
 
   setProfessorNome(professorNome: string | null) {
     set({ professorNome: professorNome?.trim() || null });
+  },
+
+  setAlunoSimulado(alunoSimulado: string | null) {
+    set({ alunoSimulado });
   },
 
   setTimetable(timetable: DemoState['timetable']) {
