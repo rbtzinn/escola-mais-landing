@@ -72,6 +72,17 @@ describe('Dia a dia', () => {
       ).toHaveAttribute('href', href);
   });
 
+  it('o cartaz serve para QR e plaquinha NFC, e o link do aluno pode ser copiado', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+    renderWith(<DiaHub />);
+    expect(screen.getAllByText(/encoste o celular na plaquinha/).length).toBeGreaterThan(0);
+    await user.click(screen.getByText(/Plaquinha NFC: encostar o celular/));
+    await user.click(screen.getByRole('button', { name: 'Copiar link do aluno' }));
+    expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/\/demo\/dia\/aluno$/));
+    expect(await screen.findByText('Link copiado')).toBeInTheDocument();
+  });
+
   it('o endereço antigo /demo/registro redireciona para /demo/dia', async () => {
     const redirects = await nextConfig.redirects!();
     expect(redirects).toEqual(

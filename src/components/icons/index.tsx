@@ -34,7 +34,8 @@ export type IconName =
   | 'qr'
   | 'camera'
   | 'clock'
-  | 'grid';
+  | 'grid'
+  | 'nfc';
 
 const PATHS: Record<IconName, string> = {
   sheet: 'M4 5h16v14H4zM4 10h16M9 5v14',
@@ -68,6 +69,7 @@ const PATHS: Record<IconName, string> = {
   down: 'M12 5v14M6 13l6 6 6-6',
   home: 'M3 11l9-7 9 7M5 9.5V20h14V9.5M10 20v-5h4v5',
   copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
+  nfc: 'M6 8.5a5 5 0 0 1 0 7M9.5 6a9 9 0 0 1 0 12M13 3.5a13 13 0 0 1 0 17M2.5 11h1v2h-1z',
   qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2',
   camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 10.5a3 3 0 100 6 3 3 0 000-6z',
   clock: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2',

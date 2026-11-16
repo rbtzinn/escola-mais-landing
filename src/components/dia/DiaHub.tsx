@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, type IconName } from '@/components/icons';
 import { Button, buttonClasses } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
 import { AlunoCheckin } from './AlunoCheckin';
 import { QrCode } from './QrCode';
 import { RegistroShell } from './RegistroShell';
@@ -61,22 +62,39 @@ function Poster({ url }: { url: string }) {
     <div className="qr-light border border-fg bg-surface p-6 text-center text-fg">
       <p className="eyebrow text-fg-muted">Escola+</p>
       <p className="mt-1 font-display text-3xl font-medium">Chegou atrasado?</p>
-      <p className="text-fg-muted">Leia o QR com a câmera do celular e registre sua chegada.</p>
+      <p className="text-fg-muted">
+        Aponte a câmera para o QR ou encoste o celular na plaquinha e registre sua chegada.
+      </p>
       <QrCode
         value={url}
         label="QR para registrar a chegada atrasada"
         className="mx-auto my-4 size-56 max-w-full"
       />
-      <p className="text-sm text-fg-muted">Sem celular ou sem internet? Fale com a portaria.</p>
+      <p className="flex items-center justify-center gap-1.5 text-sm font-semibold">
+        <Icon name="nfc" size={18} /> Encoste aqui (NFC)
+      </p>
+      <p className="mt-2 text-sm text-fg-muted">
+        Sem celular ou sem internet? Fale com a portaria.
+      </p>
     </div>
   );
 }
 
-/** Entrada da escola: o QR que o aluno lê, o celular do aluno simulado e as telas da equipe. */
+/** Entrada da escola: o QR (ou plaquinha NFC) que o aluno usa, o celular do aluno simulado e as telas da equipe. */
 export function DiaHub() {
   const { roster, turmas, now } = useRegistro();
   const origin = useOrigin();
   const url = `${origin}${ALUNO_PATH}`;
+  const toast = useToast();
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.show({ title: 'Link copiado', description: 'Cole no app NFC Tools para gravar.' });
+    } catch {
+      toast.show({ title: 'Não foi possível copiar', description: url });
+    }
+  };
 
   return (
     <RegistroShell
@@ -98,12 +116,12 @@ export function DiaHub() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         <section aria-labelledby="qr-titulo" className="space-y-3">
           <h2 id="qr-titulo" className="font-display text-2xl font-medium">
-            1. O QR da entrada
+            1. O QR (ou a plaquinha) da entrada
           </h2>
           <p className="text-fg-muted">
-            Imprima e cole na entrada. O aluno lê com a câmera do próprio celular, informa turma e
-            matrícula e então registra a chegada atrasada (só perto do horário de entrada) ou
-            responde se vai comer a merenda.
+            Imprima e cole na entrada. O aluno lê o QR com a câmera do próprio celular (ou encosta o
+            celular na plaquinha NFC), informa turma e matrícula e então registra a chegada atrasada
+            (só perto do horário de entrada) ou responde se vai comer a merenda.
           </p>
           <Poster url={url} />
           <div className="flex flex-wrap gap-2">
@@ -115,6 +133,39 @@ export function DiaHub() {
               Abrir o link do aluno
             </Link>
           </div>
+          <details className="border border-border bg-surface p-3 text-sm">
+            <summary className="flex cursor-pointer items-center gap-2 font-semibold">
+              <Icon name="nfc" size={18} className="text-primary" />
+              Plaquinha NFC: encostar o celular em vez de ler o QR
+            </summary>
+            <div className="mt-2 space-y-2 text-fg-muted">
+              <p>
+                É uma etiqueta com chip (NTAG213 ou NTAG215, cerca de R$ 2 a R$ 5 cada) que guarda o
+                mesmo link do QR. Não precisa mudar nada no sistema.
+              </p>
+              <ol className="list-decimal space-y-1 pl-5">
+                <li>Copie o link do aluno no botão abaixo.</li>
+                <li>
+                  No app gratuito NFC Tools, toque em Gravar, adicione um registro de URL e cole o
+                  link.
+                </li>
+                <li>Encoste o celular na etiqueta para gravar.</li>
+                <li>
+                  Em Outras opções, use &quot;Bloquear etiqueta&quot; para ninguém regravar o link.
+                </li>
+                <li>Cole a etiqueta atrás do cartaz, no lugar do &quot;Encoste aqui&quot;.</li>
+              </ol>
+              <p>
+                Mantenha o QR: nem todo celular tem NFC (alguns Android mais simples não têm, e no
+                iPhone funciona a partir do XS). Em parede ou portão de metal, use etiqueta
+                anti-metal.
+              </p>
+              <Button variant="secondary" size="sm" onClick={copyLink}>
+                <Icon name="copy" size={18} />
+                Copiar link do aluno
+              </Button>
+            </div>
+          </details>
         </section>
 
         <section aria-labelledby="celular-titulo" className="space-y-3">
@@ -122,7 +173,8 @@ export function DiaHub() {
             2. O celular do aluno (simulado)
           </h2>
           <p className="text-fg-muted">
-            É o que abre ao ler o QR: registra a chegada atrasada e responde a merenda. Teste aqui:
+            É o que abre ao ler o QR ou encostar na plaquinha: registra a chegada atrasada e
+            responde a merenda. Teste aqui:
           </p>
           <div className="mx-auto w-full max-w-sm rounded-[2.5rem] border-[10px] border-fg bg-fg p-0 shadow-card">
             <div className="flex justify-center bg-fg pb-2" aria-hidden="true">
