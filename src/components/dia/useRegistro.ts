@@ -6,6 +6,8 @@ import { useDemoStore } from '@/hooks/useDemoStore';
 import { nowFor } from '@/lib/attendance/clock';
 import { buildRoster } from '@/lib/attendance/codes';
 import { applyLateRecords, pendingNotices } from '@/lib/attendance/records';
+import { presenceByClass, presenceTotal } from '@/lib/daily/attendance';
+import { mealCount, mealTotal, mealWindow } from '@/lib/daily/meals';
 import { demoStore } from '@/lib/demoStore';
 import { analyze } from '@/lib/spreadsheet/analyze';
 
@@ -15,7 +17,7 @@ import { analyze } from '@/lib/spreadsheet/analyze';
  */
 export function useRegistro() {
   const state = useDemoStore();
-  const { school, records, clock, optionsText } = state;
+  const { school, records, clock, optionsText, chamadas, meals, mealDeadline, faltaram } = state;
 
   // Sem planilha carregada na /demo, usa a escola de exemplo.
   useEffect(() => {
@@ -37,6 +39,14 @@ export function useRegistro() {
     [roster],
   );
   const now = useCallback(() => nowFor(clock, new Date()), [clock]);
+  const presence = useMemo(
+    () => presenceByClass(roster, chamadas, records),
+    [roster, chamadas, records],
+  );
+  const mealsByClass = useMemo(
+    () => mealCount(roster, chamadas, records, meals),
+    [roster, chamadas, records, meals],
+  );
 
   return {
     ...state,
@@ -46,5 +56,11 @@ export function useRegistro() {
     turmas,
     now,
     pendentes: pendingNotices(records).length,
+    presence,
+    presenceTotal: presenceTotal(presence),
+    mealsByClass,
+    refeicoes: mealTotal(mealsByClass),
+    merendaAberta: mealWindow(now(), mealDeadline) === 'aberto',
+    faltando: faltaram.length,
   };
 }

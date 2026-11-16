@@ -17,6 +17,7 @@ import {
 import { demoStore } from '@/lib/demoStore';
 import { familyMessage, whatsappUrl } from '@/lib/spreadsheet/whatsapp';
 import { RegistroShell } from './RegistroShell';
+import { TodayStats } from './TodayStats';
 import {
   type Feedback,
   FeedbackBox,
@@ -57,6 +58,9 @@ export function CoordenacaoView() {
       title="Coordenação"
       subtitle="Corrija os registros do dia, avise as famílias e acompanhe quem atrasa sempre."
     >
+      <div className="mb-6">
+        <TodayStats />
+      </div>
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div className="space-y-6">
           <section aria-labelledby="coord-registrar" className={clsx(card, 'space-y-3')}>

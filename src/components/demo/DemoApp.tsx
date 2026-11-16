@@ -186,7 +186,6 @@ export function DemoApp() {
             analysis={analysis}
             comparison={comparison}
             hasLateColumn={merged?.mapping.atrasos != null}
-            records={records}
             actions={
               <>
                 <Button variant="secondary" size="sm" onClick={() => setSettingsOpen(true)}>

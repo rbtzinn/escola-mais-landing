@@ -5,9 +5,9 @@ import { Header } from '@/components/layout/Header';
 import { DiaHub } from '@/components/dia/DiaHub';
 
 export const metadata: Metadata = {
-  title: 'Registro de atrasos | Escola+',
+  title: 'Hoje na escola · Dia a dia | Escola+',
   description:
-    'Simule o registro de atrasos: um QR na entrada para o aluno e telas para portaria, professor e coordenação, com avisos às famílias pelo WhatsApp.',
+    'O dia a dia da escola numa tela: presença pela chamada, atrasos pelo QR da entrada, merenda respondida pelo aluno e horário remanejado quando um professor falta.',
 };
 
 export default function Page() {

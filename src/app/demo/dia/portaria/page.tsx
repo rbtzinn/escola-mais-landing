@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { PortariaView } from '@/components/dia/PortariaView';
 
 export const metadata: Metadata = {
-  title: 'Portaria · Registro de atrasos | Escola+',
+  title: 'Portaria · Dia a dia | Escola+',
   description:
     'Tela da portaria: registra pelo nome a chegada do aluno que não conseguiu ler o QR.',
 };

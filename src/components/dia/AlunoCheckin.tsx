@@ -6,9 +6,11 @@ import { Icon } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { Listbox } from '@/components/ui/Listbox';
 import { TextField } from '@/components/ui/TextField';
-import { checkinWindow, formatHora } from '@/lib/attendance/clock';
+import { useDemoStore } from '@/hooks/useDemoStore';
+import { checkinWindow, formatHora, formatHHMM } from '@/lib/attendance/clock';
 import { findByMatricula, publicName } from '@/lib/attendance/codes';
 import { CHANNEL_LABEL, type RosterEntry } from '@/lib/attendance/types';
+import { mealWindow } from '@/lib/daily/meals';
 import { demoStore } from '@/lib/demoStore';
 
 type Result = { tone: 'ok' | 'info' | 'error'; title: string; detail: string };
@@ -22,21 +24,41 @@ interface Props {
   idPrefix?: string;
 }
 
+function ResultBox({ result }: { result: Result }) {
+  return (
+    <div
+      role="status"
+      aria-label="Resultado do registro"
+      className={clsx(
+        'rounded-xl border-2 p-3 text-center',
+        result.tone === 'ok' && 'border-primary/50 bg-primary/10',
+        result.tone === 'info' && 'border-accent bg-accent/20',
+        result.tone === 'error' && 'border-danger/60 bg-danger/10',
+      )}
+    >
+      <p className="font-display text-lg font-extrabold text-fg">{result.title}</p>
+      <p className="text-sm text-fg-muted">{result.detail}</p>
+    </div>
+  );
+}
+
 /**
- * Tela que o aluno vê ao ler o QR da entrada: turma + matrícula, confirma e registra.
- * O link é público, então nunca lista alunos e mostra só primeiro nome e inicial.
+ * O que o aluno vê no link do QR: identifica-se com turma + matrícula e então
+ * registra a chegada atrasada e/ou responde a merenda de hoje.
+ * O link é público: nunca lista alunos e mostra só primeiro nome e inicial.
  */
 export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix = 'aluno' }: Props) {
+  const { meals, mealDeadline, clock } = useDemoStore();
   const [turma, setTurma] = useState('');
   const [matricula, setMatricula] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [found, setFound] = useState<RosterEntry | null>(null);
-  const [result, setResult] = useState<Result | null>(null);
+  const [aluno, setAluno] = useState<RosterEntry | null>(null);
+  const [atraso, setAtraso] = useState<Result | null>(null);
   const [exemplo, setExemplo] = useState(0);
 
-  const restart = () => {
-    setFound(null);
-    setResult(null);
+  const sair = () => {
+    setAluno(null);
+    setAtraso(null);
     setError(null);
     setMatricula('');
   };
@@ -52,18 +74,8 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
     setError(null);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const entrar = (e: React.FormEvent) => {
     e.preventDefault();
-    const janela = checkinWindow(now(), demoStore.get().clock);
-    if (janela !== 'aberto') {
-      setResult({
-        tone: 'error',
-        title:
-          janela === 'cedo' ? 'O registro ainda não abriu' : 'O registro pelo celular encerrou',
-        detail: 'Este link só funciona perto do horário de entrada. Procure a portaria.',
-      });
-      return;
-    }
     if (!turma) return setError('Escolha a sua turma.');
     if (!matricula.trim()) return setError('Digite a sua matrícula.');
     const entry = findByMatricula(roster, turma, matricula);
@@ -72,136 +84,180 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
         'Matrícula não encontrada nesta turma. Confira o número ou procure a portaria.',
       );
     setError(null);
-    setFound(entry);
+    setAluno(entry);
   };
 
-  const confirm = () => {
-    if (!found) return;
+  if (!aluno)
+    return (
+      <form onSubmit={entrar} className="space-y-4" noValidate>
+        <div>
+          <p className="font-display text-xl font-extrabold text-fg">Olá! Quem é você?</p>
+          <p className="text-sm text-fg-muted">
+            Informe sua turma e matrícula para registrar a chegada ou responder a merenda.
+          </p>
+        </div>
+        <Listbox
+          id={`${idPrefix}-turma`}
+          name={`${idPrefix}-turma`}
+          label="Sua turma"
+          placeholder="Escolha a turma"
+          options={turmas.map((t) => ({ value: t, label: t }))}
+          value={turma}
+          onChange={(v) => {
+            setTurma(v);
+            setError(null);
+          }}
+        />
+        <TextField
+          id={`${idPrefix}-matricula`}
+          label="Sua matrícula"
+          inputMode="numeric"
+          autoComplete="off"
+          value={matricula}
+          onChange={(v) => {
+            setMatricula(v);
+            setError(null);
+          }}
+          error={error ?? undefined}
+        />
+        <Button type="submit" className="w-full">
+          Continuar
+        </Button>
+        {demoHint && (
+          <div className="rounded-xl bg-muted p-3 text-sm text-fg-muted">
+            <p>Para testar, use a matrícula de um aluno da escola de exemplo.</p>
+            <button
+              type="button"
+              onClick={fillExample}
+              className="mt-1 font-semibold text-primary underline underline-offset-4"
+            >
+              Preencher com um aluno de exemplo
+            </button>
+          </div>
+        )}
+      </form>
+    );
+
+  const nome = publicName(aluno.aluno);
+  const resposta = meals[aluno.key];
+  const merendaAberta = mealWindow(now(), mealDeadline) === 'aberto';
+
+  const registrarAtraso = () => {
+    const janela = checkinWindow(now(), clock);
+    if (janela !== 'aberto')
+      return setAtraso({
+        tone: 'error',
+        title:
+          janela === 'cedo' ? 'O registro ainda não abriu' : 'O registro pelo celular encerrou',
+        detail: 'Este link só registra chegada perto do horário de entrada. Procure a portaria.',
+      });
     const r = demoStore.register({
-      entry: found,
+      entry: aluno,
       channel: 'aluno',
       registradoPor: 'Link da entrada',
       at: now(),
     });
-    const nome = publicName(found.aluno);
     if (r.status === 'novo')
-      setResult({
+      setAtraso({
         tone: 'ok',
         title: `Chegada registrada às ${formatHora(new Date(r.record.at))}`,
-        detail: `${nome}, pode seguir para a sala. A escola avisa a sua família.`,
+        detail: 'Pode seguir para a sala. A escola avisa a sua família.',
       });
     else if (r.status === 'duplicado')
-      setResult({
+      setAtraso({
         tone: 'info',
         title: 'Você já foi registrado hoje',
         detail: `Por ${CHANNEL_LABEL[r.record.channel].toLowerCase()}, às ${formatHora(new Date(r.record.at))}.`,
       });
     else
-      setResult({
+      setAtraso({
         tone: 'ok',
         title: 'Você chegou no horário',
-        detail: `${nome}, pode entrar. Não conta como atraso.`,
+        detail: 'Pode entrar. Não conta como atraso.',
       });
-    setFound(null);
   };
 
-  if (result)
-    return (
-      <div className="space-y-4 text-center">
-        <div
-          role="status"
-          aria-label="Resultado do registro"
-          className={clsx(
-            'rounded-2xl border-2 p-5',
-            result.tone === 'ok' && 'border-primary/50 bg-primary/10',
-            result.tone === 'info' && 'border-accent bg-accent/20',
-            result.tone === 'error' && 'border-danger/60 bg-danger/10',
-          )}
-        >
-          <span
-            className={clsx(
-              'mx-auto mb-2 flex size-12 items-center justify-center rounded-full',
-              result.tone === 'error' ? 'bg-danger/15 text-danger' : 'bg-primary/15 text-primary',
-            )}
-          >
-            <Icon name={result.tone === 'error' ? 'info' : 'check'} size={26} />
-          </span>
-          <p className="font-display text-xl font-extrabold text-fg">{result.title}</p>
-          <p className="mt-1 text-sm text-fg-muted">{result.detail}</p>
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-display text-xl font-extrabold text-fg">Olá, {nome}!</p>
+          <p className="text-sm text-fg-muted">Turma {aluno.turma}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={restart}>
-          {demoHint ? 'Testar com outro aluno' : 'Voltar'}
+        <Button variant="ghost" size="sm" onClick={sair}>
+          {demoHint ? 'Trocar aluno' : 'Sair'}
         </Button>
       </div>
-    );
 
-  if (found)
-    return (
-      <div className="space-y-4 text-center">
-        <p className="text-sm text-fg-muted">Confira antes de registrar</p>
-        <p className="font-display text-2xl font-extrabold text-fg">
-          Você é {publicName(found.aluno)}?
-        </p>
-        <p className="text-fg-muted">Turma {found.turma}</p>
-        <div className="flex flex-col gap-2">
-          <Button onClick={confirm}>
-            <Icon name="check" size={20} />
-            Sim, registrar minha chegada
+      <section
+        aria-labelledby={`${idPrefix}-atraso`}
+        className="space-y-2 rounded-2xl border border-border bg-surface p-3"
+      >
+        <h3 id={`${idPrefix}-atraso`} className="flex items-center gap-2 font-semibold text-fg">
+          <Icon name="clock" size={18} className="text-primary" />
+          Chegou depois do horário?
+        </h3>
+        {atraso ? (
+          <ResultBox result={atraso} />
+        ) : (
+          <Button variant="secondary" size="sm" className="w-full" onClick={registrarAtraso}>
+            Registrar minha chegada
           </Button>
-          <Button variant="ghost" onClick={restart}>
-            Não sou eu
-          </Button>
-        </div>
-      </div>
-    );
+        )}
+      </section>
 
-  return (
-    <form onSubmit={submit} className="space-y-4" noValidate>
-      <div>
-        <p className="font-display text-xl font-extrabold text-fg">Registrar chegada</p>
-        <p className="text-sm text-fg-muted">
-          Chegou depois do horário? Informe sua turma e matrícula.
-        </p>
-      </div>
-      <Listbox
-        id={`${idPrefix}-turma`}
-        name={`${idPrefix}-turma`}
-        label="Sua turma"
-        placeholder="Escolha a turma"
-        options={turmas.map((t) => ({ value: t, label: t }))}
-        value={turma}
-        onChange={(v) => {
-          setTurma(v);
-          setError(null);
-        }}
-      />
-      <TextField
-        id={`${idPrefix}-matricula`}
-        label="Sua matrícula"
-        inputMode="numeric"
-        autoComplete="off"
-        value={matricula}
-        onChange={(v) => {
-          setMatricula(v);
-          setError(null);
-        }}
-        error={error ?? undefined}
-      />
-      <Button type="submit" className="w-full">
-        Continuar
-      </Button>
-      {demoHint && (
-        <div className="rounded-xl bg-muted p-3 text-sm text-fg-muted">
-          <p>Para testar, use a matrícula de um aluno da escola de exemplo.</p>
-          <button
-            type="button"
-            onClick={fillExample}
-            className="mt-1 font-semibold text-primary underline underline-offset-4"
-          >
-            Preencher com um aluno de exemplo
-          </button>
-        </div>
-      )}
-    </form>
+      <section
+        aria-labelledby={`${idPrefix}-merenda`}
+        className="space-y-2 rounded-2xl border border-border bg-surface p-3"
+      >
+        <h3 id={`${idPrefix}-merenda`} className="flex items-center gap-2 font-semibold text-fg">
+          <Icon name="utensils" size={18} className="text-primary" />
+          Merenda de hoje
+        </h3>
+        {merendaAberta ? (
+          <>
+            <div
+              role="group"
+              aria-label="Você vai comer a merenda hoje?"
+              className="grid grid-cols-2 gap-2"
+            >
+              {[
+                { vai: true, label: 'Vou comer' },
+                { vai: false, label: 'Não vou comer' },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  type="button"
+                  aria-pressed={resposta === o.vai}
+                  onClick={() => demoStore.setMeal(aluno.key, o.vai, now())}
+                  className={clsx(
+                    'min-h-11 rounded-full border px-3 text-sm font-semibold transition-colors',
+                    resposta === o.vai
+                      ? 'border-primary bg-primary text-on-primary'
+                      : 'border-border bg-surface text-fg hover:border-primary',
+                  )}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-fg-muted">
+              {resposta === undefined
+                ? `Responda até ${formatHHMM(mealDeadline)}. Sem resposta, a cozinha conta você.`
+                : `Resposta salva. Dá para mudar até ${formatHHMM(mealDeadline)}.`}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-fg-muted">
+            O prazo da merenda encerrou às {formatHHMM(mealDeadline)}.{' '}
+            {resposta === undefined
+              ? 'Você está na conta da cozinha.'
+              : resposta
+                ? 'Você respondeu que vai comer.'
+                : 'Você respondeu que não vai comer.'}
+          </p>
+        )}
+      </section>
+    </div>
   );
 }

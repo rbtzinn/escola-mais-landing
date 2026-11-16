@@ -40,7 +40,7 @@ export function RegistroShell({ title, subtitle, hub = false, children }: Props)
           className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
         >
           <Icon name="arrow" size={16} className="rotate-180" />
-          Entrada e telas da equipe
+          Hoje na escola
         </Link>
       )}
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-6">

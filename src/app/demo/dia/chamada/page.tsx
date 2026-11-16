@@ -5,9 +5,9 @@ import { Header } from '@/components/layout/Header';
 import { ChamadaView } from '@/components/dia/ChamadaView';
 
 export const metadata: Metadata = {
-  title: 'Professor(a) · Registro de atrasos | Escola+',
+  title: 'Chamada · Dia a dia | Escola+',
   description:
-    'Tela do professor: marca quem entrou atrasado na chamada e pode desfazer por 5 minutos.',
+    'Chamada do 1º horário: o professor marca só quem faltou e quem entrou atrasado, com desfazer de 5 minutos.',
 };
 
 export default function Page() {

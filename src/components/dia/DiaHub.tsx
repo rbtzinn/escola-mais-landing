@@ -8,28 +8,41 @@ import { Button, buttonClasses } from '@/components/ui/Button';
 import { AlunoCheckin } from './AlunoCheckin';
 import { QrCode } from './QrCode';
 import { RegistroShell } from './RegistroShell';
+import { TodayStats } from './TodayStats';
 import { useRegistro } from './useRegistro';
 
 const ALUNO_PATH = '/demo/dia/aluno';
 
 const STAFF: { href: string; icon: IconName; title: string; text: string }[] = [
   {
+    href: '/demo/dia/chamada',
+    icon: 'users',
+    title: 'Chamada (professor)',
+    text: 'Marca só quem faltou e quem entrou atrasado. Gera a contagem do dia.',
+  },
+  {
     href: '/demo/dia/portaria',
     icon: 'school',
     title: 'Portaria',
-    text: 'Link aberto no celular do porteiro: registra pelo nome quem não conseguiu ler o QR.',
+    text: 'Registra pelo nome quem não conseguiu ler o QR (sem celular ou internet).',
   },
   {
-    href: '/demo/dia/chamada',
-    icon: 'users',
-    title: 'Professor(a)',
-    text: 'Marca quem entrou atrasado na chamada; dá para desfazer por 5 minutos.',
+    href: '/demo/dia/merenda',
+    icon: 'utensils',
+    title: 'Merenda (cozinha)',
+    text: 'Quantas refeições preparar, por turma, com as respostas dos alunos.',
+  },
+  {
+    href: '/demo/dia/horario',
+    icon: 'calendar',
+    title: 'Horário do dia',
+    text: 'Professor faltou? Adianta as aulas e mostra quem está livre para cobrir.',
   },
   {
     href: '/demo/dia/coordenacao',
     icon: 'inbox',
     title: 'Coordenação',
-    text: 'Corrige os registros, envia os avisos às famílias e vê os reincidentes.',
+    text: 'Corrige os atrasos, avisa as famílias e vê os reincidentes.',
   },
 ];
 
@@ -68,9 +81,13 @@ export function DiaHub() {
   return (
     <RegistroShell
       hub
-      title="Registro de atrasos"
-      subtitle="Um QR na entrada para o aluno e uma tela para cada pessoa da equipe, tudo no mesmo lugar."
+      title="Hoje na escola"
+      subtitle="Presença, atrasos, merenda e horário do dia, cada pessoa na sua tela e tudo no mesmo lugar."
     >
+      <div className="mb-8">
+        <TodayStats />
+      </div>
+
       <p className="mb-6 flex items-start gap-2 rounded-xl border border-border bg-muted p-3 text-sm text-fg-muted">
         <Icon name="info" size={18} className="mt-0.5 shrink-0 text-primary" />
         Demonstração sem servidor: os registros ficam só nesta aba e somem ao recarregar. Por isso o
@@ -84,9 +101,9 @@ export function DiaHub() {
             1. O QR da entrada
           </h2>
           <p className="text-fg-muted">
-            Imprima e cole na entrada. O aluno atrasado lê com a câmera do próprio celular, abre o
-            link e informa a turma e a matrícula. O link só aceita registros perto do horário de
-            entrada.
+            Imprima e cole na entrada. O aluno lê com a câmera do próprio celular, informa turma e
+            matrícula e então registra a chegada atrasada (só perto do horário de entrada) ou
+            responde se vai comer a merenda.
           </p>
           <Poster url={url} />
           <div className="flex flex-wrap gap-2">
@@ -104,7 +121,9 @@ export function DiaHub() {
           <h2 id="celular-titulo" className="font-display text-xl font-bold">
             2. O celular do aluno (simulado)
           </h2>
-          <p className="text-fg-muted">É o que abre ao ler o QR. Teste aqui:</p>
+          <p className="text-fg-muted">
+            É o que abre ao ler o QR: registra a chegada atrasada e responde a merenda. Teste aqui:
+          </p>
           <div className="mx-auto w-full max-w-sm rounded-[2.5rem] border-[10px] border-fg bg-fg p-0 shadow-card">
             <div className="flex justify-center bg-fg pb-2" aria-hidden="true">
               <span className="h-1.5 w-20 rounded-full bg-bg/30" />
@@ -126,7 +145,7 @@ export function DiaHub() {
         <h2 id="equipe-titulo" className="mb-3 font-display text-xl font-bold">
           3. As telas da equipe
         </h2>
-        <ul className="grid gap-3 md:grid-cols-3">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {STAFF.map((s) => (
             <li key={s.href}>
               <Link

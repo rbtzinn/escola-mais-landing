@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { CoordenacaoView } from '@/components/dia/CoordenacaoView';
 
 export const metadata: Metadata = {
-  title: 'Coordenação · Registro de atrasos | Escola+',
+  title: 'Coordenação · Dia a dia | Escola+',
   description:
     'Tela da coordenação: corrige os registros, avisa as famílias e acompanha os reincidentes.',
 };
