@@ -93,6 +93,7 @@ describe('analyze', () => {
         atrasos: null,
         telefone: null,
         matricula: null,
+        nascimento: null,
         disciplinas: [2],
       },
       DEFAULT_OPTIONS,

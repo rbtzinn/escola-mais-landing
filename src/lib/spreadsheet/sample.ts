@@ -70,6 +70,11 @@ export function sampleTable(periodo: 'atual' | 'anterior' = 'atual'): RawTable {
       const assiduidade = traco() * 2 - 0.6; // >1 falta bem mais que a turma
       const desempenho = traco() * 2.8 - 1.4;
       const atrasado = traco();
+      // Nascimento: ano coerente com a série (6º ≈ 2014 … 9º ≈ 2011), dia e mês do aluno.
+      const serie = Number.parseInt(t.turma, 10);
+      const mes = 1 + Math.floor(traco() * 12);
+      const dia = 1 + Math.floor(traco() * 28);
+      const nascimento = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${2020 - serie}`;
       const ruido = mulberry32(5000 + p * 7919 + ti * 100 + i);
 
       const faltas = Math.round(clamp(t.falta[p] * (1 + assiduidade) + ruido() * 6 - 3, 0, 60));
@@ -82,11 +87,15 @@ export function sampleTable(periodo: 'atual' | 'anterior' = 'atual'): RawTable {
         matriculaFor(nome, t.turma),
         nome,
         t.turma,
+        nascimento,
         String(faltas),
         String(atrasos),
         ...notas,
       ]);
     }
   });
-  return { headers: ['Matrícula', 'Aluno', 'Turma', 'Faltas', 'Atrasos', ...DISCIPLINAS], rows };
+  return {
+    headers: ['Matrícula', 'Aluno', 'Turma', 'Nascimento', 'Faltas', 'Atrasos', ...DISCIPLINAS],
+    rows,
+  };
 }

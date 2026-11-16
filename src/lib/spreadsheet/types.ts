@@ -14,6 +14,8 @@ export interface Mapping {
   telefone: number | null;
   /** Matrícula (opcional): o aluno se identifica com ela no registro de atrasos. */
   matricula: number | null;
+  /** Data de nascimento (opcional): confirma a identidade do aluno no link da entrada. */
+  nascimento: number | null;
   /** Colunas com uma nota (0 a 10) por disciplina. */
   disciplinas: number[];
 }
@@ -48,6 +50,8 @@ export interface Student {
   telefone: string | null;
   /** Matrícula como veio da planilha (ou null). */
   matricula: string | null;
+  /** Data de nascimento como veio da planilha (ou null). */
+  nascimento: string | null;
 }
 
 export interface ClassSummary {

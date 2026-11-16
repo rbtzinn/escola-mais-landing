@@ -1,6 +1,7 @@
 import { studentKey } from '@/lib/spreadsheet/compare';
 import type { Student } from '@/lib/spreadsheet/types';
 import { normalizeText } from '@/lib/text';
+import { parseBirthday } from './birthday';
 import type { RosterEntry } from './types';
 
 /** Hash FNV-1a de 32 bits: estável e rápido. */
@@ -38,6 +39,7 @@ export function buildRoster(students: Student[]): RosterEntry[] {
       turma: s.turma,
       matricula,
       telefone: s.telefone,
+      nascimento: parseBirthday(s.nascimento),
     };
   });
 }

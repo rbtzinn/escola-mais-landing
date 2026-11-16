@@ -67,4 +67,11 @@ export interface RosterEntry {
   /** Matrícula (da planilha ou gerada): o aluno se identifica com ela no link da entrada. */
   matricula: string;
   telefone: string | null;
+  /** Dia e mês do aniversário (da planilha): confirma a identidade no link da entrada. */
+  nascimento: Birthday | null;
+}
+
+export interface Birthday {
+  dia: number;
+  mes: number;
 }
