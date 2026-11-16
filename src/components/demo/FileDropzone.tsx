@@ -70,7 +70,7 @@ export function FileDropzone({ onFile, onSample, loading, error }: Props) {
           Ver com escola de exemplo
         </Button>
         <Link
-          href="/demo/registro"
+          href="/demo/dia"
           className="mt-3 text-sm font-semibold text-primary underline underline-offset-4"
         >
           Ou simule o registro de atrasos na entrada

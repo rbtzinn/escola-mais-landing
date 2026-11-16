@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
-import { CoordenacaoView } from '@/components/registro/CoordenacaoView';
+import { DiaHub } from '@/components/dia/DiaHub';
 
 export const metadata: Metadata = {
-  title: 'Coordenação · Registro de atrasos | Escola+',
+  title: 'Hoje na escola · Dia a dia | Escola+',
   description:
-    'Tela da coordenação: corrige os registros, avisa as famílias e acompanha os reincidentes.',
+    'O dia a dia da escola numa tela: presença pela chamada, atrasos pelo QR da entrada, merenda respondida pelo aluno e horário remanejado quando um professor falta.',
 };
 
 export default function Page() {
@@ -17,7 +17,7 @@ export default function Page() {
       <main id="conteudo" tabIndex={-1}>
         {/* A hora da demo é lida no navegador: o conteúdo vem depois da pré-renderização. */}
         <Suspense>
-          <CoordenacaoView />
+          <DiaHub />
         </Suspense>
       </main>
       <Footer />

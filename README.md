@@ -25,12 +25,13 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 
 ## Estrutura
 
-- `src/app`: rotas `/` (landing), `/demo` e `/demo/registro` (Entrada) com `/aluno`, `/portaria`, `/professor` e `/coordenacao`.
+- `src/app`: rotas `/` (landing), `/demo` e `/demo/dia` (Hoje na escola) com `/aluno`, `/chamada`, `/portaria`, `/merenda`, `/horario` e `/coordenacao`. `/demo/registro` redireciona para `/demo/dia`.
 - `src/components/sections`: seções da landing, uma por arquivo.
 - `src/components/ui`: componentes próprios e acessíveis.
 - `src/components/layout`: cabeçalho e rodapé.
-- `src/components/registro`: registro de atrasos (Entrada com QR e celular simulado, tela do aluno, portaria, professor e coordenação).
-- `src/lib/attendance`: regras do registro (matrícula, relógio e janela de horário, registros, desfazer, mensagem), funções puras e testadas.
+- `src/components/dia`: seção Dia a dia (hub com os números do dia, QR e celular simulado, aluno, chamada, portaria, merenda, horário e coordenação).
+- `src/lib/attendance`: regras do registro de atrasos (matrícula, relógio e janela de horário, registros, desfazer, mensagem).
+- `src/lib/daily`: presença pela chamada, conta da merenda e remanejamento do horário quando professor falta. Funções puras e testadas.
 - `src/components/demo`: app da rota `/demo` (envio, mapeamento de colunas, painel em abas, fichas e imagem de compartilhamento).
 - `src/lib/spreadsheet`: leitura de CSV e Excel, análise e exportação em CSV.
 - `src/data`: textos e opções.
@@ -125,25 +126,32 @@ Planilha-modelo: [`public/modelo-escola-mais.csv`](public/modelo-escola-mais.csv
 
 Dependência: `read-excel-file`, carregada só quando um `.xlsx` é aberto.
 
-## Registro de atrasos (`/demo/registro`)
+## Dia a dia (`/demo/dia`)
 
-Simula como os atrasos chegam ao painel. **Cada pessoa tem a sua tela**, e todas gravam no **mesmo lugar**: se o aluno já foi registrado hoje, as outras telas mostram "já registrado por X às H" e nada é duplicado.
+O dia a dia da escola, com **uma tela para cada pessoa**, todas gravando no **mesmo lugar**. Cobre o que mais toma tempo da gestão no dia a dia: contar os alunos, contar quem come a merenda, refazer o horário quando um professor falta e registrar atrasos. O endereço antigo `/demo/registro` (inclusive o QR impresso) redireciona para cá.
 
-- **Entrada (`/demo/registro`):**
-  - mostra o **QR único da entrada**, com botão para imprimir o cartaz;
-  - ao lado, um **celular simulado** com a tela do aluno, para testar ali mesmo;
-  - traz os links das telas da equipe.
-- **Aluno (`/demo/registro/aluno`):** é o que abre ao ler o QR com a câmera do próprio celular.
-  - O aluno escolhe a turma, digita a **matrícula**, confirma "Você é Ana S.?" e registra.
-  - O link é público: mostra só o primeiro nome e a inicial e nunca lista alunos.
-  - Só aceita registros **perto do horário de entrada** (30 min antes até 2 h depois); fora disso, manda procurar a portaria.
-- **Portaria (`/demo/registro/portaria`):** link aberto no celular do porteiro, para quem não tem celular ou internet. Busca pelo nome, motivo opcional e lista das chegadas atrasadas do dia.
-- **Professor(a) (`/demo/registro/professor`):** escolhe a turma e marca "Atrasado". Pode **desfazer por 5 minutos**, com contagem regressiva na hora real; depois disso, a correção é com a coordenação.
-- **Coordenação (`/demo/registro/coordenacao`):** duas colunas no computador.
-  - Registra pelo nome.
-  - Fila de avisos às famílias.
-  - Atrasos do dia: motivo, justificado, entrou no 1º ou 2º horário e **excluir**.
-  - Reincidentes: total da planilha + hoje ≥ limite.
+- **Hoje na escola (`/demo/dia`):**
+  - números ao vivo: presentes, atrasos e avisos pendentes, refeições, professores faltando;
+  - o **QR único da entrada**, com cartaz para imprimir, e um **celular simulado** com a tela do aluno;
+  - os links das telas.
+- **Aluno (`/demo/dia/aluno`):** abre ao ler o QR com o próprio celular. O aluno se identifica com **turma e matrícula** ("Olá, Ana S.!") e então:
+  - **Cheguei atrasado:** só perto do horário de entrada (30 min antes até 2 h depois); fora disso, manda procurar a portaria;
+  - **Merenda de hoje:** "Vou comer" ou "Não vou comer", até o prazo (padrão 9h00).
+  - O link é público: nunca lista alunos e mostra só o primeiro nome e a inicial.
+- **Chamada (`/demo/dia/chamada`):** o professor do 1º horário marca só **quem faltou**; os demais contam como presentes.
+  - Também marca quem entrou atrasado e pode **desfazer por 5 minutos**.
+  - "Salvar chamada" atualiza a contagem do dia e a merenda; dá para refazer.
+- **Portaria (`/demo/dia/portaria`):** registra pelo nome a chegada de quem não conseguiu ler o QR.
+- **Merenda (`/demo/dia/merenda`):** refeições para preparar, no total e por turma.
+  - Conta os presentes, menos quem respondeu "não vou". **Quem não respondeu conta**, para o aluno sem celular não ficar sem merenda.
+  - Turma sem chamada usa todos os alunos (marcada "sem chamada").
+  - O prazo é configurável.
+- **Horário do dia (`/demo/dia/horario`):** marque quem faltou. Para cada turma afetada:
+  - as aulas seguintes são **adiantadas** quando o professor está na escola e livre naquele horário;
+  - as vagas que sobram mostram **quem está livre para cobrir**;
+  - se as vagas ficam no fim, mostra "pode sair às HhMM".
+  - A escola de exemplo já vem com uma grade (6 turmas × 25 aulas, sem professor em duas turmas ao mesmo tempo). Também dá para enviar uma planilha (`Turma; Dia; Aula; Professor; Disciplina`, dia de segunda a sexta ou 1 a 5, aula de 1 a 5) ou gerar uma grade de exemplo para as turmas da planilha carregada.
+- **Coordenação (`/demo/dia/coordenacao`):** os números do dia; registrar pelo nome; fila de avisos pelo WhatsApp; atrasos do dia (motivo, justificado, horário de entrada na sala, excluir); reincidentes.
 
 Regras:
 
@@ -153,6 +161,7 @@ Regras:
 - Justificado não conta no total e dispensa o aviso.
 - Os atrasos registrados somam à coluna de atrasos da planilha no painel da `/demo` (ou criam a coluna "Atrasos (registrados)"). O Resumo mostra "Hoje: N atrasos · M avisos pendentes".
 - Sem planilha carregada, usa a escola de exemplo. Trocar de planilha zera os registros.
+- Presentes: turma − ausentes da chamada. Quem foi marcado ausente e depois registrou atraso volta a contar como presente.
 - Tudo fica **só em memória nesta aba** (`src/lib/demoStore.ts`): sobrevive à navegação entre as telas e some ao recarregar. Por isso, um celular de verdade que ler o QR abre a tela do aluno, mas o registro não chega a esta aba; na escola real, isso exige um servidor.
 - QR gerado com `qrcode-generator` e desenhado em SVG, sempre escuro sobre claro (`.qr-light`), também no tema escuro.
 
@@ -213,7 +222,8 @@ Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` 
 - `spreadsheet/analyze`: frequência, média, alunos em risco com motivos, atrasos, indicadores gerais, critérios alterados, dias letivos zerados, avisos e CSV de risco.
 - `spreadsheet/insights`, `whatsapp`, `compare` e `sample` (`tests/spreadsheet/insights.test.ts`): faixas do semáforo, frase-resumo, ações do dia, telefone e mensagem do WhatsApp, comparação entre planilhas e escola de exemplo estável.
 - `attendance` (`tests/attendance/attendance.test.ts`): matrícula gerada estável, coluna de matrícula, busca só na turma escolhida, nome público, hora simulada, tolerância, janela do link do aluno, desfazer em 5 minutos, excluir, um registro por dia, justificado fora da fila e da soma, soma à planilha (com e sem coluna) e mensagem mínima.
-- Registro (`tests/Registro.test.tsx`): escola de exemplo sem planilha, Entrada com QR e links, aluno por turma e matrícula (certa, de outra turma, fora do horário), portaria e aluno no mesmo registro, professor marcando e desfazendo (e o desfazer sumindo após 5 min), coordenação com WhatsApp, justificar, excluir e reincidentes, e soma no painel da `/demo`.
+- `daily` (`tests/daily/daily.test.ts`): presença com e sem chamada, atraso tirando o aluno dos ausentes, merenda (sem resposta conta, "não vou" e ausentes saem, prazo), remanejamento do horário (adianta, respeita conflito, vagas no fim, livres, dois professores faltando), grade de exemplo sem conflito e leitura da planilha de horário.
+- Dia a dia (`tests/Dia.test.tsx`): escola e grade de exemplo sem planilha, hub com os números e os links, redirecionamento de `/demo/registro`, aluno por turma e matrícula (certa, de outra turma, fora do horário), merenda pelo celular e prazo, chamada com ausentes e atraso devolvendo a presença, professor desfazendo em 5 min, horário adiantando aula e mostrando livres, coordenação com WhatsApp, justificar, excluir e reincidentes, e resumo do dia no painel da `/demo`.
 - `DemoApp` (`tests/DemoApp.test.tsx`): painel aberto direto quando as colunas são reconhecidas, veredito, ficha do aluno com link do WhatsApp, abas por clique e teclado, busca e filtros, critérios no modal, conferência de colunas, escola de exemplo com comparação, comparação com planilha enviada e erros de arquivo.
 
 Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.

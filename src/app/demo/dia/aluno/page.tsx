@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { AlunoPage } from '@/components/registro/AlunoPage';
+import { AlunoPage } from '@/components/dia/AlunoPage';
 
 export const metadata: Metadata = {
-  title: 'Registrar chegada | Escola+',
-  description: 'Registre a sua chegada atrasada com a turma e a matrícula.',
+  title: 'Aluno · Escola+',
+  description:
+    'Registre a chegada atrasada e responda a merenda de hoje com a turma e a matrícula.',
 };
 
 /** Tela do celular do aluno: sem o menu do site, só o registro. */

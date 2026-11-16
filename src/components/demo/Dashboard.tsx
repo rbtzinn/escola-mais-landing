@@ -6,8 +6,6 @@ import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { pendingNotices } from '@/lib/attendance/records';
-import type { LateRecord } from '@/lib/attendance/types';
 import type { Comparison } from '@/lib/spreadsheet/compare';
 import type { Action } from '@/lib/spreadsheet/insights';
 import type { Analysis, Student } from '@/lib/spreadsheet/types';
@@ -20,6 +18,7 @@ import { KpiCards } from './KpiCards';
 import { shareSummary } from './shareImage';
 import { StudentSheet } from './StudentSheet';
 import { type StudentFilter, StudentsTab } from './StudentsTab';
+import { useRegistro } from '@/components/dia/useRegistro';
 import { TodayActions } from './TodayActions';
 import { Verdict } from './Verdict';
 
@@ -44,21 +43,12 @@ interface Props {
   comparison: Comparison | null;
   hasLateColumn: boolean;
   compareProps: CompareProps;
-  /** Atrasos registrados hoje em /demo/registro. */
-  records?: LateRecord[];
   /** Botões (Critérios, Registrar atrasos...) na mesma linha das abas, à direita. */
   actions?: React.ReactNode;
 }
 
 /** Painel em 3 abas. No celular, as abas ficam fixas embaixo, como em um app. */
-export function Dashboard({
-  analysis,
-  comparison,
-  hasLateColumn,
-  compareProps,
-  records = [],
-  actions,
-}: Props) {
+export function Dashboard({ analysis, comparison, hasLateColumn, compareProps, actions }: Props) {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('resumo');
   const [student, setStudent] = useState<Student | null>(null);
@@ -209,7 +199,7 @@ export function Dashboard({
         {tab === 'resumo' && (
           <>
             <Verdict analysis={analysis} comparison={comparison} />
-            {records.length > 0 && <TodayLate records={records} />}
+            <TodayLate />
             <KpiCards analysis={analysis} comparison={comparison} />
             <TodayActions analysis={analysis} onAction={onAction} />
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -273,25 +263,29 @@ export function Dashboard({
 }
 
 /** Atrasos registrados hoje (aluno pelo QR, portaria, professor, coordenação) e avisos que faltam mandar. */
-function TodayLate({ records }: { records: LateRecord[] }) {
-  const pendentes = pendingNotices(records).length;
+function TodayLate() {
+  const { records, pendentes, presenceTotal: p, refeicoes } = useRegistro();
+  const atrasos = `${records.length} ${records.length === 1 ? 'atraso registrado' : 'atrasos registrados'}`;
   return (
     <Link
-      href="/demo/registro?canal=coordenacao"
-      className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-primary"
+      href="/demo/dia"
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-primary hover:bg-muted"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon name="calendar" size={20} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-semibold">
-          Hoje: {records.length}{' '}
-          {records.length === 1 ? 'atraso registrado' : 'atrasos registrados'}
+          Hoje: {atrasos} ·{' '}
+          {p.turmasComChamada
+            ? `${p.presentes}/${p.alunosComChamada} presentes`
+            : 'chamada pendente'}
         </span>
         <span className={clsx('block text-sm', pendentes ? 'text-danger' : 'text-fg-muted')}>
           {pendentes
             ? `${pendentes} ${pendentes === 1 ? 'aviso pendente' : 'avisos pendentes'} para as famílias`
-            : 'Todos os avisos foram enviados ou dispensados'}
+            : 'Nenhum aviso pendente'}{' '}
+          · {refeicoes} refeições
         </span>
       </span>
       <Icon name="arrow" size={18} className="shrink-0 text-fg-muted" />

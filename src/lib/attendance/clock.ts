@@ -60,3 +60,9 @@ export function checkinWindow(at: Date, settings: ClockSettings): 'aberto' | 'ce
   if (agora > entrada + CHECKIN_WINDOW.depois) return 'encerrado';
   return 'aberto';
 }
+
+/** "09:00" → "9h00" (como o resto da interface escreve horários). */
+export function formatHHMM(s: string): string {
+  const m = toMinutes(s);
+  return m === null ? s : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
+}
