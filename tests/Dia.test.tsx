@@ -2,11 +2,11 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DemoApp } from '@/components/demo/DemoApp';
-import { AlunoPage } from '@/components/registro/AlunoPage';
-import { CoordenacaoView } from '@/components/registro/CoordenacaoView';
-import { EntradaHub } from '@/components/registro/EntradaHub';
-import { PortariaView } from '@/components/registro/PortariaView';
-import { ProfessorView } from '@/components/registro/ProfessorView';
+import { AlunoPage } from '@/components/dia/AlunoPage';
+import { CoordenacaoView } from '@/components/dia/CoordenacaoView';
+import { DiaHub } from '@/components/dia/DiaHub';
+import { PortariaView } from '@/components/dia/PortariaView';
+import { ChamadaView } from '@/components/dia/ChamadaView';
 import { ToastProvider } from '@/components/ui/Toast';
 import { buildRoster } from '@/lib/attendance/codes';
 import { demoStore } from '@/lib/demoStore';
@@ -44,17 +44,17 @@ afterEach(() => vi.useRealTimers());
 describe('Registro de atrasos', () => {
   it('sem planilha, abre com a escola de exemplo', () => {
     demoStore.reset();
-    renderWith(<EntradaHub />);
+    renderWith(<DiaHub />);
     expect(screen.getByText('Escola de exemplo')).toBeInTheDocument();
   });
 
   it('a Entrada mostra o QR, o celular simulado e o link de cada tela', () => {
-    renderWith(<EntradaHub />);
+    renderWith(<DiaHub />);
     expect(screen.getByRole('img', { name: /QR para registrar/ })).toBeInTheDocument();
     for (const [nome, href] of [
-      ['Portaria', '/demo/registro/portaria'],
-      ['Professor(a)', '/demo/registro/professor'],
-      ['Coordenação', '/demo/registro/coordenacao'],
+      ['Portaria', '/demo/dia/portaria'],
+      ['Professor(a)', '/demo/dia/chamada'],
+      ['Coordenação', '/demo/dia/coordenacao'],
     ])
       expect(
         screen.getByRole('link', { name: new RegExp(`^${nome.replace(/[()]/g, '\\$&')}`) }),
@@ -116,7 +116,7 @@ describe('Registro de atrasos', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 10, 16, 10, 0, 0));
     const user = userEvent.setup();
-    renderWith(<ProfessorView />);
+    renderWith(<ChamadaView />);
     const lista = screen.getByRole('list', { name: 'Alunos da turma 6A' });
 
     await user.click(within(lista).getByRole('button', { name: 'Marcar atraso de Bia Lima' }));
@@ -182,7 +182,7 @@ describe('Registro de atrasos', () => {
     );
     expect(screen.getByRole('link', { name: /Registrar atrasos/ })).toHaveAttribute(
       'href',
-      '/demo/registro',
+      '/demo/dia',
     );
   });
 });

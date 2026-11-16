@@ -36,7 +36,7 @@ export function RegistroShell({ title, subtitle, hub = false, children }: Props)
     <Container className="py-4 sm:py-8">
       {!hub && (
         <Link
-          href="/demo/registro"
+          href="/demo/dia"
           className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
         >
           <Icon name="arrow" size={16} className="rotate-180" />

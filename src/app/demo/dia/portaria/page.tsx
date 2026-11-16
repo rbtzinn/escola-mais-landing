@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
-import { EntradaHub } from '@/components/registro/EntradaHub';
+import { PortariaView } from '@/components/dia/PortariaView';
 
 export const metadata: Metadata = {
-  title: 'Registro de atrasos | Escola+',
+  title: 'Portaria · Registro de atrasos | Escola+',
   description:
-    'Simule o registro de atrasos: um QR na entrada para o aluno e telas para portaria, professor e coordenação, com avisos às famílias pelo WhatsApp.',
+    'Tela da portaria: registra pelo nome a chegada do aluno que não conseguiu ler o QR.',
 };
 
 export default function Page() {
@@ -17,7 +17,7 @@ export default function Page() {
       <main id="conteudo" tabIndex={-1}>
         {/* A hora da demo é lida no navegador: o conteúdo vem depois da pré-renderização. */}
         <Suspense>
-          <EntradaHub />
+          <PortariaView />
         </Suspense>
       </main>
       <Footer />

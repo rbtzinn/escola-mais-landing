@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
-import { ProfessorView } from '@/components/registro/ProfessorView';
+import { DiaHub } from '@/components/dia/DiaHub';
 
 export const metadata: Metadata = {
-  title: 'Professor(a) · Registro de atrasos | Escola+',
+  title: 'Registro de atrasos | Escola+',
   description:
-    'Tela do professor: marca quem entrou atrasado na chamada e pode desfazer por 5 minutos.',
+    'Simule o registro de atrasos: um QR na entrada para o aluno e telas para portaria, professor e coordenação, com avisos às famílias pelo WhatsApp.',
 };
 
 export default function Page() {
@@ -17,7 +17,7 @@ export default function Page() {
       <main id="conteudo" tabIndex={-1}>
         {/* A hora da demo é lida no navegador: o conteúdo vem depois da pré-renderização. */}
         <Suspense>
-          <ProfessorView />
+          <DiaHub />
         </Suspense>
       </main>
       <Footer />

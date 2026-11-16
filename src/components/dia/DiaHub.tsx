@@ -10,23 +10,23 @@ import { QrCode } from './QrCode';
 import { RegistroShell } from './RegistroShell';
 import { useRegistro } from './useRegistro';
 
-const ALUNO_PATH = '/demo/registro/aluno';
+const ALUNO_PATH = '/demo/dia/aluno';
 
 const STAFF: { href: string; icon: IconName; title: string; text: string }[] = [
   {
-    href: '/demo/registro/portaria',
+    href: '/demo/dia/portaria',
     icon: 'school',
     title: 'Portaria',
     text: 'Link aberto no celular do porteiro: registra pelo nome quem não conseguiu ler o QR.',
   },
   {
-    href: '/demo/registro/professor',
+    href: '/demo/dia/chamada',
     icon: 'users',
     title: 'Professor(a)',
     text: 'Marca quem entrou atrasado na chamada; dá para desfazer por 5 minutos.',
   },
   {
-    href: '/demo/registro/coordenacao',
+    href: '/demo/dia/coordenacao',
     icon: 'inbox',
     title: 'Coordenação',
     text: 'Corrige os registros, envia os avisos às famílias e vê os reincidentes.',
@@ -60,7 +60,7 @@ function Poster({ url }: { url: string }) {
 }
 
 /** Entrada da escola: o QR que o aluno lê, o celular do aluno simulado e as telas da equipe. */
-export function EntradaHub() {
+export function DiaHub() {
   const { roster, turmas, now } = useRegistro();
   const origin = useOrigin();
   const url = `${origin}${ALUNO_PATH}`;

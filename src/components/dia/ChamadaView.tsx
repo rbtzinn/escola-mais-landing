@@ -14,7 +14,7 @@ import { useRegistro } from './useRegistro';
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 /** Professor(a) do 1º horário: marca quem entrou atrasado e pode desfazer por 5 minutos. */
-export function ProfessorView() {
+export function ChamadaView() {
   const { roster, records, turmas, now } = useRegistro();
   const [turma, setTurma] = useState('');
   const [operator, setOperator] = useState('Professor(a)');

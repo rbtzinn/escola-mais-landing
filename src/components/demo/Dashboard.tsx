@@ -44,7 +44,7 @@ interface Props {
   comparison: Comparison | null;
   hasLateColumn: boolean;
   compareProps: CompareProps;
-  /** Atrasos registrados hoje em /demo/registro. */
+  /** Atrasos registrados hoje em /demo/dia. */
   records?: LateRecord[];
   /** Botões (Critérios, Registrar atrasos...) na mesma linha das abas, à direita. */
   actions?: React.ReactNode;
@@ -277,7 +277,7 @@ function TodayLate({ records }: { records: LateRecord[] }) {
   const pendentes = pendingNotices(records).length;
   return (
     <Link
-      href="/demo/registro?canal=coordenacao"
+      href="/demo/dia?canal=coordenacao"
       className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-primary"
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">

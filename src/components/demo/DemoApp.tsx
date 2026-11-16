@@ -34,7 +34,7 @@ const TITLES: Record<Step, string> = {
 export function DemoApp() {
   const toast = useToast();
   // Escola, comparação, critérios e atrasos registrados vêm do estado compartilhado da demo:
-  // continuam carregados ao ir para /demo/registro e voltar.
+  // continuam carregados ao ir para /demo/dia e voltar.
   const { school, previous, optionsText, records } = useDemoStore();
   const table = school?.table ?? null;
   const mapping = school?.mapping ?? null;
@@ -193,7 +193,7 @@ export function DemoApp() {
                   <Icon name="sliders" size={18} />
                   Critérios
                 </Button>
-                <Link href="/demo/registro" className={buttonClasses('secondary', undefined, 'sm')}>
+                <Link href="/demo/dia" className={buttonClasses('secondary', undefined, 'sm')}>
                   <Icon name="calendar" size={18} />
                   Registrar atrasos
                 </Link>

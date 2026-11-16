@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { AlunoPage } from '@/components/registro/AlunoPage';
+import { AlunoPage } from '@/components/dia/AlunoPage';
 
 export const metadata: Metadata = {
   title: 'Registrar chegada | Escola+',
