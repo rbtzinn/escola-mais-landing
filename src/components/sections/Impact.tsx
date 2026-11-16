@@ -14,7 +14,7 @@ export function Impact() {
       <Container>
         <Reveal className="max-w-2xl">
           <p className="eyebrow mb-5 flex items-center gap-3 text-[#b9d2c6]">
-            <span className="text-[#f2c230]">04</span>
+            <span className="text-[#f2c230]">05</span>
             <span aria-hidden="true" className="h-px w-8 bg-[#f1efe4]/40" />
             Impacto · números de exemplo
           </p>

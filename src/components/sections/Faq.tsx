@@ -12,7 +12,7 @@ export function Faq() {
           <div className="lg:sticky lg:top-28">
             <SectionHeading
               id="faq-titulo"
-              index="06"
+              index="07"
               eyebrow="Dúvidas"
               title="Perguntas que costumam surgir"
               description="Não achou a sua? Fale com a gente na demonstração."
