@@ -135,7 +135,7 @@ O dia a dia da escola, com **uma tela para cada pessoa**, todas gravando no **me
   - números ao vivo: presentes, atrasos e avisos pendentes, refeições, professores faltando;
   - o **QR único da entrada**, com cartaz para imprimir (que também serve de **plaquinha NFC**: uma etiqueta gravada com o mesmo link, com passo a passo e botão para copiar o link), e um **celular simulado** com a tela do aluno;
   - os links das telas.
-- **Aluno (`/demo/dia/aluno`):** abre ao ler o QR com o próprio celular. O aluno se identifica com **turma e matrícula** ("Olá, Ana S.!") e então:
+- **Aluno (`/demo/dia/aluno`):** abre ao ler o QR com o próprio celular. O aluno se identifica com **turma e matrícula** e, na **primeira vez em cada celular**, confirma o **dia e o mês do aniversário** (coluna "Nascimento" da planilha; sem ela, a matrícula basta e o hub avisa). Depois o celular **lembra do aluno** e abre direto ("Olá, Ana S.!", com "Não sou eu" para trocar). Então:
   - **Cheguei atrasado:** só perto do horário de entrada (30 min antes até 2 h depois); fora disso, manda procurar a portaria;
   - **Merenda de hoje:** "Vou comer" ou "Não vou comer", até o prazo (padrão 9h00).
   - O link é público: nunca lista alunos e mostra só o primeiro nome e a inicial.
@@ -145,7 +145,7 @@ O dia a dia da escola, com **uma tela para cada pessoa**, todas gravando no **me
   - Lista numerada como no diário de papel, com **P / F / A** em cada aluno (todos começam em P).
   - Nada é gravado até tocar em **Salvar**, na barra fixa embaixo. Depois de salvar, aparece o resumo e o botão para a próxima turma sem chamada.
   - Um atraso marcado pelo professor pode ser trocado por **5 minutos**; depois disso, fica travado ("fale com a coordenação"). Atrasos da portaria ou do QR já aparecem em A e travados.
-- **Portaria (`/demo/dia/portaria`):** registra pelo nome a chegada de quem não conseguiu ler o QR.
+- **Portaria (`/demo/dia/portaria`):** registra pelo nome a chegada de quem não conseguiu ler o QR. Ao escolher o aluno, mostra a matrícula, e o botão **Imprimir lista de matrículas** gera uma folha por turma (nome e matrícula em ordem alfabética, com o aviso "Não afixar") para quem não lembra a matrícula.
 - **Merenda (`/demo/dia/merenda`):** refeições para preparar, no total e por turma.
   - Conta os presentes, menos quem respondeu "não vou". **Quem não respondeu conta**, para o aluno sem celular não ficar sem merenda.
   - Turma sem chamada usa todos os alunos (marcada "sem chamada").
@@ -159,6 +159,7 @@ O dia a dia da escola, com **uma tela para cada pessoa**, todas gravando no **me
 
 Regras:
 
+- Nascimento: coluna "Nascimento" (ou "Data de nascimento", "Aniversário"); aceita 15/03/2012, 15/3, 2012-03-15 e data do Excel. Só o dia e o mês são usados, para confirmar o aluno no link. Sem limite de tentativas nesta demo (sem servidor).
 - Matrícula: vem da coluna "Matrícula" da planilha (só os dígitos contam). Sem a coluna, o sistema gera 6 dígitos estáveis por aluno; a escola de exemplo já tem a coluna.
 - Atraso = chegada depois da entrada + tolerância (padrão 7h00 + 10 min, em "Relógio e horário"). Dentro da tolerância, "chegou no horário" e nada é registrado.
 - A demo usa uma **hora simulada** (começa em 7h12, com −5/+5 min) para funcionar fora do horário de entrada; há a opção de usar a hora real.
@@ -229,9 +230,10 @@ Newsreader (títulos, serifa; classe `font-display`), Source Sans 3 (texto) e IB
 - `spreadsheet/columns`: sugestão de colunas pelo nome (sem acento e sem maiúsculas) e reconhecimento das colunas de notas.
 - `spreadsheet/analyze`: frequência, média, alunos em risco com motivos, atrasos, indicadores gerais, critérios alterados, dias letivos zerados, avisos e CSV de risco.
 - `spreadsheet/insights`, `whatsapp`, `compare` e `sample` (`tests/spreadsheet/insights.test.ts`): faixas do semáforo, frase-resumo, ações do dia, telefone e mensagem do WhatsApp, comparação entre planilhas e escola de exemplo estável.
+- `birthday` (`tests/attendance/birthday.test.ts`): formatos de data de nascimento (incluindo a do Excel), datas inválidas, coluna "Data de nascimento do aluno" sem tomar a do aluno, confirmação no roster e escola de exemplo com aniversário em todos.
 - `attendance` (`tests/attendance/attendance.test.ts`): matrícula gerada estável, coluna de matrícula, busca só na turma escolhida, nome público, hora simulada, tolerância, janela do link do aluno, desfazer em 5 minutos, excluir, um registro por dia, justificado fora da fila e da soma, soma à planilha (com e sem coluna) e mensagem mínima.
 - `daily` (`tests/daily/daily.test.ts`): presença com e sem chamada, atraso tirando o aluno dos ausentes, merenda (sem resposta conta, "não vou" e ausentes saem, prazo), remanejamento do horário (adianta, respeita conflito, vagas no fim, livres, dois professores faltando), grade de exemplo sem conflito e leitura da planilha de horário.
-- Dia a dia (`tests/Dia.test.tsx`): escola e grade de exemplo sem planilha, hub com os números e os links, redirecionamento de `/demo/registro`, aluno por turma e matrícula (certa, de outra turma, fora do horário), merenda pelo celular e prazo, chamada com ausentes e atraso devolvendo a presença, professor desfazendo em 5 min, horário adiantando aula e mostrando livres, coordenação com WhatsApp, justificar, excluir e reincidentes, e resumo do dia no painel da `/demo`.
+- Dia a dia (`tests/Dia.test.tsx`): escola e grade de exemplo sem planilha, hub com os números e os links, redirecionamento de `/demo/registro`, aluno por turma e matrícula (certa, de outra turma, fora do horário), aniversário na 1ª vez e celular que lembra, aviso sem coluna Nascimento, lista de matrículas da portaria, merenda pelo celular e prazo, chamada com ausentes e atraso devolvendo a presença, professor desfazendo em 5 min, horário adiantando aula e mostrando livres, coordenação com WhatsApp, justificar, excluir e reincidentes, e resumo do dia no painel da `/demo`.
 - `DemoApp` (`tests/DemoApp.test.tsx`): painel aberto direto quando as colunas são reconhecidas, veredito, ficha do aluno com link do WhatsApp, abas por clique e teclado, busca e filtros, critérios no modal, conferência de colunas, escola de exemplo com comparação, comparação com planilha enviada e erros de arquivo.
 
 Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.

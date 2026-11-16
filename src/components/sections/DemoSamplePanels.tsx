@@ -187,7 +187,8 @@ export function EntradaPanel({
             <>
               <p className="font-display text-2xl font-medium">Olá! Quem é você?</p>
               <p className="mt-1 text-sm text-fg-muted">
-                Na escola, o aluno informa turma e matrícula. Aqui, escolha um aluno de exemplo:
+                Na escola, o aluno informa turma e matrícula (e o aniversário na 1ª vez). Aqui,
+                escolha um aluno de exemplo:
               </p>
               <ul className="mt-4 space-y-2">
                 {students.map((s) => (
