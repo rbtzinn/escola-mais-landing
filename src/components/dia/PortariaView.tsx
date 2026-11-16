@@ -51,7 +51,7 @@ export function PortariaView() {
           aria-labelledby="portaria-titulo"
           className="space-y-4 rounded-3xl border border-border bg-surface p-4 shadow-card sm:p-6"
         >
-          <h2 id="portaria-titulo" className="font-display text-xl font-bold">
+          <h2 id="portaria-titulo" className="font-display text-xl font-semibold">
             Registrar chegada
           </h2>
           <div className="max-w-sm">
@@ -66,7 +66,7 @@ export function PortariaView() {
           {picked ? (
             <div className="space-y-3 rounded-2xl border-2 border-primary/50 bg-primary/5 p-4">
               <div>
-                <p className="font-display text-xl font-extrabold">{picked.aluno}</p>
+                <p className="font-display text-xl font-semibold">{picked.aluno}</p>
                 <p className="text-sm text-fg-muted">
                   {picked.turma} · chegada às {formatHora(now())}
                 </p>
@@ -99,7 +99,7 @@ export function PortariaView() {
           aria-labelledby="portaria-hoje"
           className="rounded-3xl border border-border bg-surface p-4 sm:p-6"
         >
-          <h2 id="portaria-hoje" className="mb-3 font-display text-lg font-bold">
+          <h2 id="portaria-hoje" className="mb-3 font-display text-lg font-semibold">
             Chegadas atrasadas hoje ({records.length})
           </h2>
           {hoje.length === 0 ? (

@@ -31,7 +31,7 @@ export function MerendaView() {
           <h2 id="merenda-total" className="text-sm font-semibold text-fg-muted">
             Refeições para preparar hoje
           </h2>
-          <p className="font-display text-5xl font-extrabold">{refeicoes}</p>
+          <p className="font-display text-5xl font-semibold">{refeicoes}</p>
           <p className="flex flex-wrap items-center gap-2 text-sm">
             <span
               className={clsx(
@@ -49,11 +49,11 @@ export function MerendaView() {
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <div className="rounded-xl bg-muted p-3">
               <dt className="text-fg-muted">Não vão comer</dt>
-              <dd className="font-display text-xl font-extrabold">{naoVao}</dd>
+              <dd className="font-display text-xl font-semibold">{naoVao}</dd>
             </div>
             <div className="rounded-xl bg-muted p-3">
               <dt className="text-fg-muted">Sem resposta (contam)</dt>
-              <dd className="font-display text-xl font-extrabold">{semResposta}</dd>
+              <dd className="font-display text-xl font-semibold">{semResposta}</dd>
             </div>
           </dl>
           {estimadas > 0 && (
@@ -81,7 +81,7 @@ export function MerendaView() {
           aria-labelledby="merenda-turmas"
           className="rounded-3xl border border-border bg-surface p-4 sm:p-6"
         >
-          <h2 id="merenda-turmas" className="mb-3 font-display text-lg font-bold">
+          <h2 id="merenda-turmas" className="mb-3 font-display text-lg font-semibold">
             Por turma
           </h2>
           <div

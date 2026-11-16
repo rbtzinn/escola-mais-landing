@@ -141,7 +141,7 @@ export function ChamadaView() {
           }}
         >
           <div>
-            <h1 className="font-display text-2xl font-extrabold">Chamada</h1>
+            <h1 className="font-display text-2xl font-semibold">Chamada</h1>
             <p className="text-fg-muted">Como você quer aparecer nos registros?</p>
           </div>
           <TextField
@@ -170,7 +170,7 @@ export function ChamadaView() {
           >
             <Icon name="arrow" size={20} className="rotate-180" />
           </Link>
-          <h1 className="min-w-0 flex-1 font-display text-xl font-extrabold">
+          <h1 className="min-w-0 flex-1 font-display text-xl font-semibold">
             Chamada <span className="font-semibold text-fg-muted">· {formatHora(now())}</span>
           </h1>
           <button
@@ -202,7 +202,7 @@ export function ChamadaView() {
                 aria-selected={on}
                 onClick={() => trocarTurma(t)}
                 className={clsx(
-                  'inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full border px-3.5 text-sm font-semibold transition-colors',
+                  'inline-flex min-h-10 shrink-0 items-center gap-1 rounded-md border px-3.5 text-sm font-semibold transition-colors',
                   on
                     ? 'border-primary bg-primary text-on-primary'
                     : 'border-border bg-surface text-fg hover:border-primary',
@@ -234,7 +234,7 @@ export function ChamadaView() {
             aria-label="Resultado do registro"
             className="my-2 rounded-2xl border-2 border-primary/50 bg-primary/10 p-3"
           >
-            <p className="font-display text-lg font-extrabold">{aviso.titulo}</p>
+            <p className="font-display text-lg font-semibold">{aviso.titulo}</p>
             <p className="text-sm text-fg-muted">{aviso.detalhe}</p>
             {aviso.proxima ? (
               <Button size="sm" className="mt-2" onClick={() => trocarTurma(aviso.proxima!)}>

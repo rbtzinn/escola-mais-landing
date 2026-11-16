@@ -26,23 +26,23 @@ export function MobileMenu({ onClose }: { onClose: () => void }) {
       className="fade-in fixed inset-0 z-[60] flex flex-col bg-bg px-5 py-4 md:hidden"
     >
       <div className="flex items-center justify-between">
-        <span className="font-display text-xl font-extrabold">Menu</span>
+        <span className="eyebrow text-fg-muted">Menu</span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar menu"
-          className="flex size-11 items-center justify-center rounded-full hover:bg-muted"
+          className="flex size-11 items-center justify-center rounded-md hover:bg-muted"
         >
           <Icon name="close" />
         </button>
       </div>
-      <nav aria-label="Seções da página" className="mt-6 flex flex-col">
+      <nav aria-label="Seções da página" className="mt-6 flex flex-col border-t border-fg">
         {NAV_LINKS.map((l) => (
           <a
             key={l.href}
             href={l.href}
             onClick={onClose}
-            className="flex min-h-14 items-center border-b border-border text-lg font-semibold"
+            className="flex min-h-16 items-center border-b border-fg/20 font-display text-2xl font-medium"
           >
             {l.label}
           </a>

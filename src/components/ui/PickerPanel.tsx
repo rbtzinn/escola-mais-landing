@@ -48,7 +48,7 @@ function Panel({ title, onClose, align = 'center', initialFocus, children }: Pro
         className="flex max-h-[70dvh] w-full max-w-sm flex-col rounded-2xl border border-border bg-surface text-fg shadow-card"
       >
         <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-2">
-          <h2 id={titleId} className="font-display text-lg font-extrabold">
+          <h2 id={titleId} className="font-display text-lg font-semibold">
             {title}
           </h2>
           <button

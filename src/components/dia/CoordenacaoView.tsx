@@ -64,7 +64,7 @@ export function CoordenacaoView() {
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div className="space-y-6">
           <section aria-labelledby="coord-registrar" className={clsx(card, 'space-y-3')}>
-            <h2 id="coord-registrar" className="font-display text-lg font-bold">
+            <h2 id="coord-registrar" className="font-display text-lg font-semibold">
               Registrar atraso
             </h2>
             <div className="max-w-sm">
@@ -98,7 +98,7 @@ export function CoordenacaoView() {
 
           <section aria-labelledby="coord-fila" className={clsx(card, 'space-y-3')}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="coord-fila" className="font-display text-lg font-bold">
+              <h2 id="coord-fila" className="font-display text-lg font-semibold">
                 Fila de avisos ({fila.length})
               </h2>
               {fila.length > 0 && (
@@ -154,7 +154,7 @@ export function CoordenacaoView() {
 
         <div className="space-y-6">
           <section aria-labelledby="coord-hoje" className={clsx(card, 'space-y-3')}>
-            <h2 id="coord-hoje" className="font-display text-lg font-bold">
+            <h2 id="coord-hoje" className="font-display text-lg font-semibold">
               Atrasos de hoje ({records.length})
             </h2>
             {records.length === 0 ? (
@@ -174,7 +174,7 @@ export function CoordenacaoView() {
 
           {analysis && (
             <section aria-labelledby="coord-reincidentes" className={clsx(card, 'space-y-3')}>
-              <h2 id="coord-reincidentes" className="font-display text-lg font-bold">
+              <h2 id="coord-reincidentes" className="font-display text-lg font-semibold">
                 Reincidentes ({analysis.atrasos.length})
               </h2>
               <p className="text-sm text-fg-muted">
@@ -289,7 +289,7 @@ function RecordCard({ r }: { r: LateRecord }) {
                 aria-pressed={r.liberado === l}
                 onClick={() => demoStore.update(r.id, { liberado: r.liberado === l ? null : l })}
                 className={clsx(
-                  'min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors',
+                  'min-h-10 rounded-md border px-3 text-sm font-semibold transition-colors',
                   r.liberado === l
                     ? 'border-primary bg-primary text-on-primary'
                     : 'border-border bg-surface hover:border-primary',

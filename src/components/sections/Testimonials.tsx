@@ -1,5 +1,4 @@
-import { Icon } from '@/components/icons';
-import { Badge } from '@/components/ui/Badge';
+import clsx from 'clsx';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeading } from '@/components/ui/SectionHeading';
@@ -7,33 +6,34 @@ import { TESTIMONIALS } from '@/data/content';
 
 export function Testimonials() {
   return (
-    <section id="depoimentos" aria-labelledby="depoimentos-titulo" className="py-20 sm:py-24">
+    <section id="depoimentos" aria-labelledby="depoimentos-titulo" className="py-20 sm:py-28">
       <Container>
         <Reveal>
           <SectionHeading
             id="depoimentos-titulo"
-            eyebrow="Depoimentos"
+            index="05"
+            eyebrow="Depoimentos ilustrativos"
             title="O que gestores de escola poderiam dizer"
+            description="As falas abaixo são exemplos, sem pessoas reais."
           />
-          <Badge className="mt-5">Depoimentos ilustrativos, sem pessoas reais</Badge>
         </Reveal>
-        <ul className="mt-10 grid gap-5 lg:grid-cols-3">
+        <ul className="mt-14 grid gap-x-10 border-t border-fg md:grid-cols-2">
           {TESTIMONIALS.map((t, i) => (
-            <li key={t.role}>
-              <Reveal delay={i * 100} className="h-full">
-                <figure className="flex h-full flex-col rounded-2xl border border-border bg-surface p-6 sm:p-7">
-                  <Icon name="quote" size={32} className="text-secondary" />
-                  <blockquote className="mt-4 flex-1 text-lg leading-relaxed">
+            <li key={t.role} className={clsx('border-b border-fg/20', i === 0 && 'md:col-span-2')}>
+              <Reveal delay={i * 80} className="h-full">
+                <figure className="flex h-full flex-col py-9 sm:py-10">
+                  <blockquote
+                    className={clsx(
+                      'flex-1 font-display leading-[1.2] text-pretty',
+                      i === 0
+                        ? 'max-w-4xl text-[1.75rem] sm:text-[2.6rem]'
+                        : 'text-2xl sm:text-[1.7rem]',
+                    )}
+                  >
                     “{t.quote}”
                   </blockquote>
-                  <figcaption className="mt-6 flex items-center gap-3 border-t border-border pt-5">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary/15 text-secondary">
-                      <Icon name="users" size={22} />
-                    </span>
-                    <span>
-                      <span className="block font-semibold">{t.role}</span>
-                      <span className="block text-sm text-fg-muted">{t.context}</span>
-                    </span>
+                  <figcaption className="eyebrow mt-6 text-fg-muted">
+                    <span className="text-fg">{t.role}</span> · {t.context}
                   </figcaption>
                 </figure>
               </Reveal>

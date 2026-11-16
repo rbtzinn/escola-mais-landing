@@ -62,20 +62,23 @@ export function TodayStats({ compact = false }: { compact?: boolean }) {
   ];
 
   return (
-    <ul className={clsx('grid grid-cols-2 gap-2 sm:gap-3', !compact && 'lg:grid-cols-4')}>
+    <ul
+      className={clsx(
+        'grid grid-cols-2 border-t border-l border-border',
+        !compact && 'lg:grid-cols-4',
+      )}
+    >
       {items.map((it) => (
-        <li key={it.href}>
+        <li key={it.href} className="border-r border-b border-border">
           <Link
             href={it.href}
-            className="flex h-full flex-col rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-primary hover:bg-muted sm:p-4"
+            className="flex h-full flex-col bg-surface p-3 transition-colors hover:bg-muted sm:p-4"
           >
-            <span className="flex items-center justify-between gap-2 text-sm font-semibold text-fg-muted">
+            <span className="flex items-center justify-between gap-2 text-sm text-fg-muted">
               {it.label}
               <Icon name={it.icon} size={18} className="text-primary" />
             </span>
-            <span className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">
-              {it.value}
-            </span>
+            <span className="mt-1 font-display text-3xl font-medium sm:text-4xl">{it.value}</span>
             <span
               className={clsx('text-xs sm:text-sm', it.alert ? 'text-danger' : 'text-fg-muted')}
             >

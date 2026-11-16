@@ -61,7 +61,7 @@ export function FeedbackBox({
             feedback.tone === 'error' && 'border-danger/60 bg-danger/10',
           )}
         >
-          <p className={clsx('font-display font-extrabold', large ? 'text-3xl' : 'text-lg')}>
+          <p className={clsx('font-display font-semibold', large ? 'text-3xl' : 'text-lg')}>
             {feedback.title}
           </p>
           {feedback.detail && (
@@ -173,7 +173,7 @@ export function MotivoChips({
             aria-pressed={value === m}
             onClick={() => onChange(value === m ? null : m)}
             className={clsx(
-              'min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors',
+              'min-h-10 rounded-md border px-3 text-sm font-semibold transition-colors',
               value === m
                 ? 'border-primary bg-primary text-on-primary'
                 : 'border-border bg-surface text-fg hover:border-primary',

@@ -83,7 +83,7 @@ export function StudentsTab({
   return (
     <section aria-labelledby="alunos-titulo" className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 id="alunos-titulo" className="font-display text-lg font-bold">
+        <h3 id="alunos-titulo" className="font-display text-lg font-semibold">
           Alunos
         </h3>
         {analysis.risco.length > 0 && (
@@ -114,7 +114,7 @@ export function StudentsTab({
               setAll(false);
             }}
             className={clsx(
-              'inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold transition-colors',
+              'inline-flex min-h-10 items-center rounded-md border px-4 text-sm font-semibold transition-colors',
               filter === f.id
                 ? 'border-primary bg-primary text-on-primary'
                 : 'border-border bg-surface hover:border-primary',

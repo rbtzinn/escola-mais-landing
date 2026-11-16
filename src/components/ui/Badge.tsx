@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-/** Selo discreto usado para marcar conteúdo fictício ("Exemplo", "Ilustrativo"). */
+/** Carimbo discreto usado para marcar conteúdo fictício ("Exemplo", "Ilustrativo"). */
 export function Badge({
   children,
   tone = 'neutral',
@@ -13,10 +13,10 @@ export function Badge({
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide',
+        'inline-flex items-center rounded-sm border px-2 py-0.5 font-mono text-[0.7rem] font-medium tracking-wide whitespace-nowrap',
         tone === 'accent'
-          ? 'bg-accent text-on-accent'
-          : 'border border-border bg-surface text-fg-muted',
+          ? 'border-transparent bg-accent text-on-accent'
+          : 'border-border bg-surface text-fg-muted',
         className,
       )}
     >

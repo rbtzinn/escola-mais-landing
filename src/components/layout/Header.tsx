@@ -25,20 +25,20 @@ export function Header() {
   return (
     <header
       className={clsx(
-        'sticky top-0 z-50 transition-[background-color,box-shadow,border-color] duration-200',
-        scrolled ? 'border-b border-border bg-bg/95 backdrop-blur' : 'border-b border-transparent',
+        'sticky top-0 z-50 border-b transition-[background-color,border-color] duration-200',
+        scrolled ? 'border-fg/25 bg-bg/95 backdrop-blur' : 'border-transparent',
       )}
     >
       <Container className="flex h-16 items-center justify-between gap-4">
-        <Link href="/" aria-label="Escola+, ir para o início" className="rounded-lg">
+        <Link href="/" aria-label="Escola+, ir para o início" className="rounded-sm">
           <Logo />
         </Link>
-        <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Principal" className="hidden items-center gap-6 md:flex lg:gap-7">
           {NAV_LINKS.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="rounded-full px-3.5 py-2 text-sm font-semibold text-fg-muted transition-colors hover:bg-muted hover:text-fg"
+              className="py-2 text-[0.95rem] text-fg-muted decoration-accent decoration-2 underline-offset-[6px] transition-colors hover:text-fg hover:underline"
             >
               {l.label}
             </a>
@@ -46,7 +46,7 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <ButtonLink href="/#demonstracao" className="!min-h-10 !px-5 !py-2 text-sm max-sm:hidden">
+          <ButtonLink href="/#demonstracao" size="sm" className="max-sm:hidden">
             Solicitar demonstração
           </ButtonLink>
           <button
@@ -55,7 +55,7 @@ export function Header() {
             aria-label="Abrir menu"
             aria-expanded={menuOpen}
             aria-controls="menu-mobile"
-            className="flex size-11 items-center justify-center rounded-full hover:bg-muted md:hidden"
+            className="flex size-11 items-center justify-center rounded-md hover:bg-muted md:hidden"
           >
             <Icon name="menu" />
           </button>

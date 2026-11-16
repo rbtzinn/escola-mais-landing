@@ -36,7 +36,7 @@ function ResultBox({ result }: { result: Result }) {
         result.tone === 'error' && 'border-danger/60 bg-danger/10',
       )}
     >
-      <p className="font-display text-lg font-extrabold text-fg">{result.title}</p>
+      <p className="font-display text-lg font-semibold text-fg">{result.title}</p>
       <p className="text-sm text-fg-muted">{result.detail}</p>
     </div>
   );
@@ -91,7 +91,7 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
     return (
       <form onSubmit={entrar} className="space-y-4" noValidate>
         <div>
-          <p className="font-display text-xl font-extrabold text-fg">Olá! Quem é você?</p>
+          <p className="font-display text-xl font-semibold text-fg">Olá! Quem é você?</p>
           <p className="text-sm text-fg-muted">
             Informe sua turma e matrícula para registrar a chegada ou responder a merenda.
           </p>
@@ -181,7 +181,7 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-display text-xl font-extrabold text-fg">Olá, {nome}!</p>
+          <p className="font-display text-xl font-semibold text-fg">Olá, {nome}!</p>
           <p className="text-sm text-fg-muted">Turma {aluno.turma}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={sair}>
@@ -231,7 +231,7 @@ export function AlunoCheckin({ roster, turmas, now, demoHint = false, idPrefix =
                   aria-pressed={resposta === o.vai}
                   onClick={() => demoStore.setMeal(aluno.key, o.vai, now())}
                   className={clsx(
-                    'min-h-11 rounded-full border px-3 text-sm font-semibold transition-colors',
+                    'min-h-11 rounded-md border px-3 text-sm font-semibold transition-colors',
                     resposta === o.vai
                       ? 'border-primary bg-primary text-on-primary'
                       : 'border-border bg-surface text-fg hover:border-primary',

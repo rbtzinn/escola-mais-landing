@@ -1,12 +1,26 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { IBM_Plex_Mono, Newsreader, Source_Sans_3 } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
 
-const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap' });
-const jakarta = Plus_Jakarta_Sans({
-  variable: '--font-jakarta',
+// Texto: Source Sans 3 (humanista, boa em tela pequena). Títulos: Newsreader (serifa de jornal).
+// Rótulos e números de seção: IBM Plex Mono.
+const body = Source_Sans_3({
+  variable: '--font-body',
   subsets: ['latin'],
+  display: 'swap',
+});
+const serif = Newsreader({
+  variable: '--font-serif',
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  axes: ['opsz'],
+  display: 'swap',
+});
+const code = IBM_Plex_Mono({
+  variable: '--font-code',
+  subsets: ['latin'],
+  weight: ['400', '500'],
   display: 'swap',
 });
 
@@ -25,8 +39,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#faf8f4' },
-    { media: '(prefers-color-scheme: dark)', color: '#12100e' },
+    { media: '(prefers-color-scheme: light)', color: '#f5f3ea' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f1a16' },
   ],
 };
 
@@ -35,7 +49,11 @@ const themeScript = `(function(){try{var d=document.documentElement;d.setAttribu
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${jakarta.variable}`} suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      className={`${body.variable} ${serif.variable} ${code.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
