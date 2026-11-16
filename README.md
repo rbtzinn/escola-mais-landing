@@ -25,10 +25,12 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 
 ## Estrutura
 
-- `src/app`: rotas `/` (landing) e `/demo`.
+- `src/app`: rotas `/` (landing), `/demo` e `/demo/registro`.
 - `src/components/sections`: seções da landing, uma por arquivo.
 - `src/components/ui`: componentes próprios e acessíveis.
 - `src/components/layout`: cabeçalho e rodapé.
+- `src/components/registro`: registro de atrasos (totem, portaria, professor, coordenação, carteirinhas e leitor de QR).
+- `src/lib/attendance`: regras do registro (código opaco, relógio, registros, mensagem), funções puras e testadas.
 - `src/components/demo`: app da rota `/demo` (envio, mapeamento de colunas, painel em abas, fichas e imagem de compartilhamento).
 - `src/lib/spreadsheet`: leitura de CSV e Excel, análise e exportação em CSV.
 - `src/data`: textos e opções.
@@ -123,6 +125,32 @@ Planilha-modelo: [`public/modelo-escola-mais.csv`](public/modelo-escola-mais.csv
 
 Dependência: `read-excel-file`, carregada só quando um `.xlsx` é aberto.
 
+## Registro de atrasos (`/demo/registro`)
+
+Simula como os atrasos chegam ao painel. Quatro jeitos de registrar, todos gravando no **mesmo lugar** (se um aluno já foi registrado hoje, os outros canais veem "já registrado por X às H" e nada é duplicado):
+
+- **Totem:** o aluno aproxima a carteirinha; a câmera lê o QR (`jsqr`, carregado só nesta tela). Tela pública: mostra só primeiro nome e inicial. A câmera é desligada ao sair.
+- **Portaria:** busca pelo nome (quem não tem carteirinha ou celular) ou lê o QR; motivo opcional.
+- **Professor(a):** escolhe a turma e marca "Atrasado" na chamada.
+- **Coordenação:** registra pelo nome, edita cada atraso (motivo, justificado, entrou no 1º ou 2º horário), envia a **fila de avisos** e vê os **reincidentes** (total da planilha + registros de hoje ≥ limite de atrasos).
+
+Regras:
+
+- Atraso = chegada depois da entrada + tolerância (padrão 7h00 + 10 min, em "Relógio e horário"). Dentro da tolerância, "chegou no horário" e nada é registrado.
+- A demo usa uma **hora simulada** (começa em 7h12, com −5/+5 min) para funcionar fora do horário de entrada; há a opção de usar a hora real.
+- Justificado não conta no total e dispensa o aviso.
+- Os atrasos registrados somam à coluna de atrasos da planilha no painel da `/demo` (ou criam a coluna "Atrasos (registrados)"); o Resumo mostra "Hoje: N atrasos · M avisos pendentes".
+- Sem planilha carregada, usa a escola de exemplo. Trocar de planilha zera os registros.
+- Tudo fica **só em memória nesta aba** (`src/lib/demoStore.ts`): sobrevive à navegação entre `/demo` e `/demo/registro`, some ao recarregar.
+
+Carteirinhas: o botão "Carteirinhas" gera cartões com QR (`qrcode-generator`, carregado só ao abrir) por turma, para abrir em outro celular ou imprimir. O QR guarda só um **código opaco** (`EM-XXXXXX`, hash do aluno), sem nome nem turma.
+
+Avisos às famílias, custo e LGPD:
+
+- A mensagem é mínima: aluno, turma e horário. Motivo, notas e quem registrou não vão para a família.
+- A demo não usa a API paga do WhatsApp (WhatsApp Business Platform, cobrada por mensagem e com empresa verificada). Cada aviso abre o WhatsApp com o texto pronto (`wa.me`) e a coordenação confere e envia; "Enviar próximo" percorre a fila. Bibliotecas não oficiais que automatizam o WhatsApp comum violam os termos de uso e podem banir o número, por isso não são usadas.
+- Base legal (orientação geral, não parecer jurídico): informar os responsáveis sobre a frequência é dever da escola (LDB, art. 12, VII); na escola pública, o tratamento se apoia na execução de políticas públicas (LGPD, arts. 7º, III, e 23), observando o melhor interesse de crianças e adolescentes (art. 14). Em produção, validar com o encarregado de dados da secretaria de educação, informar as famílias e, se usar a API da Meta, tratar o contrato com o operador e a transferência internacional (art. 33).
+
 ## Componentes de UI
 
 Em `src/components/ui/`, feitos sem biblioteca externa:
@@ -173,9 +201,11 @@ Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` 
 - `spreadsheet/columns`: sugestão de colunas pelo nome (sem acento e sem maiúsculas) e reconhecimento das colunas de notas.
 - `spreadsheet/analyze`: frequência, média, alunos em risco com motivos, atrasos, indicadores gerais, critérios alterados, dias letivos zerados, avisos e CSV de risco.
 - `spreadsheet/insights`, `whatsapp`, `compare` e `sample` (`tests/spreadsheet/insights.test.ts`): faixas do semáforo, frase-resumo, ações do dia, telefone e mensagem do WhatsApp, comparação entre planilhas e escola de exemplo estável.
+- `attendance` (`tests/attendance/attendance.test.ts`): código opaco estável e sem nome, busca por código, nome público, hora simulada, tolerância, um registro por dia, justificado fora da fila e da soma, soma à planilha (com e sem coluna) e mensagem mínima.
+- Registro (`tests/Registro.test.tsx`): escola de exemplo sem planilha, portaria e professor no mesmo registro, totem por código sem duplicar e com código inválido, tolerância, fila de avisos com link do WhatsApp, justificar e liberar, reincidentes e soma no painel da `/demo`.
 - `DemoApp` (`tests/DemoApp.test.tsx`): painel aberto direto quando as colunas são reconhecidas, veredito, ficha do aluno com link do WhatsApp, abas por clique e teclado, busca e filtros, critérios no modal, conferência de colunas, escola de exemplo com comparação, comparação com planilha enviada e erros de arquivo.
 
-Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
+Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom) nem para a leitura pela câmera (conferida no navegador com vídeo simulado). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
 
 ## Deploy
 

@@ -1,22 +1,26 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClasses } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
+import { useDemoStore } from '@/hooks/useDemoStore';
+import { applyLateRecords } from '@/lib/attendance/records';
+import { SAMPLE_NAME, demoStore } from '@/lib/demoStore';
 import { analyze } from '@/lib/spreadsheet/analyze';
 import { guessMapping, isConfident } from '@/lib/spreadsheet/columns';
 import { compare } from '@/lib/spreadsheet/compare';
 import { readSpreadsheet } from '@/lib/spreadsheet/readFile';
 import { sampleTable } from '@/lib/spreadsheet/sample';
-import type { Mapping, RawTable } from '@/lib/spreadsheet/types';
+import type { RawTable } from '@/lib/spreadsheet/types';
 import { ColumnMapper } from './ColumnMapper';
 import { Dashboard } from './Dashboard';
 import { FileDropzone } from './FileDropzone';
-import { Thresholds, defaultOptionsText, toOptions, type OptionsText } from './Thresholds';
+import { Thresholds, toOptions } from './Thresholds';
 
 type Step = 'upload' | 'map' | 'dashboard';
 
@@ -26,26 +30,30 @@ const TITLES: Record<Step, string> = {
   dashboard: '3. Seu painel',
 };
 
-const SAMPLE_NAME = 'Escola de exemplo';
-
 /** Demo funcional: planilha (CSV ou Excel) vira painel, tudo no navegador. */
 export function DemoApp() {
   const toast = useToast();
-  const [step, setStep] = useState<Step>('upload');
-  const [table, setTable] = useState<RawTable | null>(null);
-  const [sourceName, setSourceName] = useState<string | null>(null);
-  const [mapping, setMapping] = useState<Mapping | null>(null);
-  const [previous, setPrevious] = useState<{ table: RawTable; name: string } | null>(null);
-  const [optionsText, setOptionsText] = useState<OptionsText>(defaultOptionsText);
+  // Escola, comparação, critérios e atrasos registrados vêm do estado compartilhado da demo:
+  // continuam carregados ao ir para /demo/registro e voltar.
+  const { school, previous, optionsText, records } = useDemoStore();
+  const table = school?.table ?? null;
+  const mapping = school?.mapping ?? null;
+  const sourceName = school?.sourceName ?? null;
+  const [step, setStep] = useState<Step>(() => (demoStore.get().school ? 'dashboard' : 'upload'));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingPrev, setLoadingPrev] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const options = useMemo(() => toOptions(optionsText), [optionsText]);
+  // Atrasos registrados hoje (portaria, totem...) somam ao total da planilha.
+  const merged = useMemo(
+    () => (table && mapping ? applyLateRecords(table, mapping, records) : null),
+    [table, mapping, records],
+  );
   const analysis = useMemo(
-    () => (step === 'dashboard' && table && mapping ? analyze(table, mapping, options) : null),
-    [step, table, mapping, options],
+    () => (step === 'dashboard' && merged ? analyze(merged.table, merged.mapping, options) : null),
+    [step, merged, options],
   );
   const comparison = useMemo(() => {
     if (!analysis || !previous) return null;
@@ -60,11 +68,7 @@ export function DemoApp() {
   }, [step]);
 
   const open = (t: RawTable, name: string) => {
-    const m = guessMapping(t);
-    setTable(t);
-    setSourceName(name);
-    setMapping(m);
-    setPrevious(null);
+    const m = demoStore.setSchool(t, name);
     setStep(isConfident(m) ? 'dashboard' : 'map');
     return m;
   };
@@ -103,7 +107,7 @@ export function DemoApp() {
       const m = guessMapping(t);
       if (m.aluno === null || m.turma === null)
         throw new Error('Não encontramos as colunas de aluno e turma na planilha anterior.');
-      setPrevious({ table: t, name: file.name });
+      demoStore.setPrevious({ table: t, name: file.name });
       toast.show({ title: 'Comparação pronta', description: `Comparando com ${file.name}.` });
     } catch (e) {
       toast.show({
@@ -116,10 +120,7 @@ export function DemoApp() {
   };
 
   const reset = () => {
-    setTable(null);
-    setSourceName(null);
-    setMapping(null);
-    setPrevious(null);
+    demoStore.clearSchool();
     setError(null);
     setStep('upload');
   };
@@ -168,6 +169,13 @@ export function DemoApp() {
                     <Icon name="sliders" size={18} />
                     Critérios
                   </Button>
+                  <Link
+                    href="/demo/registro"
+                    className={buttonClasses('secondary', '!min-h-10 !px-4 text-sm')}
+                  >
+                    <Icon name="calendar" size={18} />
+                    Registrar atrasos
+                  </Link>
                   {!isSample && (
                     <Button
                       variant="ghost"
@@ -194,7 +202,7 @@ export function DemoApp() {
           <ColumnMapper
             table={table}
             mapping={mapping}
-            onChange={setMapping}
+            onChange={demoStore.setMapping}
             onSubmit={() => setStep('dashboard')}
             onBack={reset}
           />
@@ -204,16 +212,20 @@ export function DemoApp() {
           <Dashboard
             analysis={analysis}
             comparison={comparison}
-            hasLateColumn={mapping.atrasos !== null}
+            hasLateColumn={merged?.mapping.atrasos != null}
+            records={records}
             compareProps={{
               previousName: previous?.name ?? null,
               loading: loadingPrev,
               onFile: onPrevious,
               onSample: isSample
                 ? () =>
-                    setPrevious({ table: sampleTable('anterior'), name: '1º bimestre (exemplo)' })
+                    demoStore.setPrevious({
+                      table: sampleTable('anterior'),
+                      name: '1º bimestre (exemplo)',
+                    })
                 : undefined,
-              onRemove: () => setPrevious(null),
+              onRemove: () => demoStore.setPrevious(null),
             }}
           />
         )}
@@ -221,7 +233,7 @@ export function DemoApp() {
 
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Critérios do painel">
         <p>O painel é recalculado na hora, a cada mudança.</p>
-        <Thresholds value={optionsText} onChange={setOptionsText} />
+        <Thresholds value={optionsText} onChange={demoStore.setOptionsText} />
         <Button onClick={() => setSettingsOpen(false)} className="w-full">
           Ver painel
         </Button>

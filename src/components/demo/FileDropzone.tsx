@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import Link from 'next/link';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
@@ -68,6 +69,12 @@ export function FileDropzone({ onFile, onSample, loading, error }: Props) {
           <Icon name="school" size={20} />
           Ver com escola de exemplo
         </Button>
+        <Link
+          href="/demo/registro"
+          className="mt-3 text-sm font-semibold text-primary underline underline-offset-4"
+        >
+          Ou simule o registro de atrasos na entrada
+        </Link>
       </div>
 
       {error && (
