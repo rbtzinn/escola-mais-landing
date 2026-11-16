@@ -1,33 +1,45 @@
 import clsx from 'clsx';
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'whatsapp';
+type Size = 'md' | 'sm';
 
 const base =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-2.5 text-[0.95rem] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+
+const sizes: Record<Size, string> = {
+  md: 'min-h-11 px-6 py-2.5 text-[0.95rem]',
+  sm: 'min-h-10 px-4 py-2 text-sm',
+};
 
 const variants: Record<Variant, string> = {
   primary: 'bg-primary text-on-primary hover:brightness-110',
   secondary: 'border border-border bg-surface text-fg hover:border-primary hover:text-primary',
   ghost: 'text-fg hover:bg-muted',
+  whatsapp: 'bg-whatsapp text-on-whatsapp hover:brightness-95',
 };
 
 /** Classes do botão, para aplicar em outros elementos (ex.: o Link do Next, que não recarrega a página). */
-export const buttonClasses = (variant: Variant = 'primary', className?: string) =>
-  clsx(base, variants[variant], className);
+export const buttonClasses = (
+  variant: Variant = 'primary',
+  className?: string,
+  size: Size = 'md',
+) => clsx(base, sizes[size], variants[variant], className);
 
 export function Button({
   variant = 'primary',
+  size = 'md',
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
-  return <button className={clsx(base, variants[variant], className)} {...props} />;
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size }) {
+  return <button className={buttonClasses(variant, className, size)} {...props} />;
 }
 
 export function ButtonLink({
   variant = 'primary',
+  size = 'md',
   className,
   ...props
-}: AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: Variant }) {
-  return <a className={clsx(base, variants[variant], className)} {...props} />;
+}: AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: Variant; size?: Size }) {
+  return <a className={buttonClasses(variant, className, size)} {...props} />;
 }

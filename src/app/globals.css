@@ -14,6 +14,9 @@
   --accent: #e8b321;
   --on-accent: #1c1917;
   --danger: #b42318;
+  /* Verde da marca WhatsApp, com texto escuro (contraste AA). */
+  --whatsapp: #25d366;
+  --on-whatsapp: #052e16;
   --ring: #3b3f8f;
   --shadow: 0 1px 2px rgb(28 25 23 / 0.06), 0 8px 24px -8px rgb(28 25 23 / 0.12);
   color-scheme: light;
@@ -48,6 +51,8 @@
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
+  --color-whatsapp: var(--whatsapp);
+  --color-on-whatsapp: var(--on-whatsapp);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
   --shadow-card: var(--shadow);
@@ -55,6 +60,20 @@
 
 html {
   scroll-padding-top: 5rem;
+}
+
+/* O Tailwind v4 não põe a mãozinha em botões: tudo que é clicável ganha cursor de link. */
+@layer base {
+  button:not(:disabled),
+  [role='button'],
+  [role='tab'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='option'],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -116,7 +135,41 @@ body {
   animation: fade-in 180ms ease-out;
 }
 
+/* Painel lateral (fichas): sobe de baixo no celular, entra pela direita no computador. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes sheet-right {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.sheet-enter {
+  animation: sheet-up 220ms ease-out;
+}
+@media (min-width: 640px) {
+  .sheet-enter-side {
+    animation: sheet-right 220ms ease-out;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .sheet-enter,
+  .sheet-enter-side {
+    animation: none;
+  }
   [data-js] .reveal {
     opacity: 1;
     transform: none;
@@ -140,17 +193,4 @@ body {
   --text: #1c1917;
   --text-muted: #57534e;
   --border: #e4ded3;
-}
-
-/* Impressão das carteirinhas: só a área de impressão aparece. */
-.print-only {
-  display: none;
-}
-@media print {
-  body > *:not(.print-only) {
-    display: none !important;
-  }
-  .print-only {
-    display: block;
-  }
 }

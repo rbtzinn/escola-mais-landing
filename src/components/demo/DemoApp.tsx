@@ -150,49 +150,22 @@ export function DemoApp() {
       )}
 
       <div className="rounded-3xl border border-border bg-surface p-3 shadow-card sm:p-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
-          <h2
-            className={onDashboard ? 'sr-only' : 'font-display text-xl font-bold'}
-            aria-live="polite"
-          >
+        {onDashboard ? (
+          <h2 className="sr-only" aria-live="polite">
             {TITLES[step]}
           </h2>
-          {step !== 'upload' && (
-            <div className="flex flex-wrap gap-2">
-              {onDashboard && (
-                <>
-                  <Button
-                    variant="secondary"
-                    className="!min-h-10 !px-4 text-sm"
-                    onClick={() => setSettingsOpen(true)}
-                  >
-                    <Icon name="sliders" size={18} />
-                    Critérios
-                  </Button>
-                  <Link
-                    href="/demo/registro"
-                    className={buttonClasses('secondary', '!min-h-10 !px-4 text-sm')}
-                  >
-                    <Icon name="calendar" size={18} />
-                    Registrar atrasos
-                  </Link>
-                  {!isSample && (
-                    <Button
-                      variant="ghost"
-                      className="!min-h-10 !px-4 text-sm"
-                      onClick={() => setStep('map')}
-                    >
-                      Colunas
-                    </Button>
-                  )}
-                </>
-              )}
-              <Button variant="ghost" className="!min-h-10 !px-4 text-sm" onClick={reset}>
+        ) : (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
+            <h2 className="font-display text-xl font-bold" aria-live="polite">
+              {TITLES[step]}
+            </h2>
+            {step === 'map' && (
+              <Button variant="ghost" size="sm" onClick={reset}>
                 Trocar planilha
               </Button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {step === 'upload' && (
           <FileDropzone onFile={onFile} onSample={onSample} loading={loading} error={error} />
@@ -214,6 +187,26 @@ export function DemoApp() {
             comparison={comparison}
             hasLateColumn={merged?.mapping.atrasos != null}
             records={records}
+            actions={
+              <>
+                <Button variant="secondary" size="sm" onClick={() => setSettingsOpen(true)}>
+                  <Icon name="sliders" size={18} />
+                  Critérios
+                </Button>
+                <Link href="/demo/registro" className={buttonClasses('secondary', undefined, 'sm')}>
+                  <Icon name="calendar" size={18} />
+                  Registrar atrasos
+                </Link>
+                {!isSample && (
+                  <Button variant="ghost" size="sm" onClick={() => setStep('map')}>
+                    Colunas
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={reset}>
+                  Trocar planilha
+                </Button>
+              </>
+            }
             compareProps={{
               previousName: previous?.name ?? null,
               loading: loadingPrev,
@@ -231,12 +224,18 @@ export function DemoApp() {
         )}
       </div>
 
-      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Critérios do painel">
-        <p>O painel é recalculado na hora, a cada mudança.</p>
+      <Modal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        title="Critérios do painel"
+        subtitle="O painel é recalculado na hora, a cada mudança."
+        footer={
+          <Button size="sm" onClick={() => setSettingsOpen(false)}>
+            Pronto
+          </Button>
+        }
+      >
         <Thresholds value={optionsText} onChange={demoStore.setOptionsText} />
-        <Button onClick={() => setSettingsOpen(false)} className="w-full">
-          Ver painel
-        </Button>
       </Modal>
     </Container>
   );

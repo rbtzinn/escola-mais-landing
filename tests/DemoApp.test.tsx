@@ -57,7 +57,7 @@ describe('DemoApp', () => {
 
     const ficha = screen.getByRole('dialog', { name: 'Bia' });
     expect(within(ficha).getByText(/Frequência 70% \(mínimo 75%\)/)).toBeInTheDocument();
-    const link = within(ficha).getByRole('link', { name: /Avisar a família no WhatsApp/ });
+    const link = within(ficha).getByRole('link', { name: /Avisar no WhatsApp/ });
     expect(link.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/\?text=Ol%C3%A1/);
   });
 
@@ -109,7 +109,7 @@ describe('DemoApp', () => {
     const input = screen.getByLabelText('Frequência mínima (%)');
     await user.clear(input);
     await user.type(input, '85');
-    await user.click(screen.getByRole('button', { name: 'Ver painel' }));
+    await user.click(screen.getByRole('button', { name: 'Pronto' }));
     expect(
       screen.getByRole('region', { name: '2 alunos precisam de atenção.' }),
     ).toBeInTheDocument();
