@@ -272,7 +272,7 @@ export function Dashboard({
   );
 }
 
-/** Atrasos registrados hoje (portaria, totem, professor, coordenação) e avisos que faltam mandar. */
+/** Atrasos registrados hoje (aluno pelo QR, portaria, professor, coordenação) e avisos que faltam mandar. */
 function TodayLate({ records }: { records: LateRecord[] }) {
   const pendentes = pendingNotices(records).length;
   return (

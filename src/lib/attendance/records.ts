@@ -11,6 +11,8 @@ export interface RegisterInput {
   at: Date;
   settings: ClockSettings;
   motivo?: Motivo | null;
+  /** Hora real do registro (padrão: agora). Separada de `at`, que pode ser a hora simulada. */
+  criadoEm?: Date;
 }
 
 export type RegisterResult =
@@ -37,6 +39,7 @@ export function register(records: LateRecord[], input: RegisterInput): RegisterR
     aluno: input.entry.aluno,
     turma: input.entry.turma,
     at: input.at.toISOString(),
+    criadoEm: (input.criadoEm ?? new Date()).toISOString(),
     minutos,
     channel: input.channel,
     registradoPor: input.registradoPor.trim() || input.channel,
@@ -62,6 +65,22 @@ export function updateRecord(records: LateRecord[], id: string, patch: RecordPat
     return next;
   });
 }
+
+/** Minutos em que quem registrou ainda pode desfazer (ex.: professor que marcou sem querer). */
+export const UNDO_MINUTES = 5;
+
+/** Segundos que faltam para poder desfazer (0 = não pode mais). */
+export function undoSecondsLeft(r: LateRecord, now: Date, minutes = UNDO_MINUTES): number {
+  const left = minutes * 60_000 - (now.getTime() - new Date(r.criadoEm).getTime());
+  return left > 0 ? Math.ceil(left / 1000) : 0;
+}
+
+export const canUndo = (r: LateRecord, now: Date, minutes = UNDO_MINUTES) =>
+  undoSecondsLeft(r, now, minutes) > 0;
+
+/** Exclui um registro (desfazer do professor ou correção da coordenação); sai também da fila. */
+export const removeRecord = (records: LateRecord[], id: string) =>
+  records.filter((r) => r.id !== id);
 
 /** Avisos que a coordenação ainda precisa mandar, do mais antigo para o mais novo. */
 export const pendingNotices = (records: LateRecord[]) =>

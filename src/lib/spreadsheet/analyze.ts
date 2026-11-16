@@ -39,6 +39,8 @@ export function analyze(table: RawTable, mapping: Mapping, options: Options): An
     const atrasos = mapping.atrasos === null ? null : parseNumber(row[mapping.atrasos] ?? '');
     const telefone =
       mapping.telefone === null ? null : (row[mapping.telefone] ?? '').trim() || null;
+    const matricula =
+      mapping.matricula === null ? null : (row[mapping.matricula] ?? '').trim() || null;
 
     let frequencia: number | null = null;
     if (faltas !== null && options.diasLetivos > 0) {
@@ -55,7 +57,17 @@ export function analyze(table: RawTable, mapping: Mapping, options: Options): An
     });
     const media = mean(Object.values(notas));
 
-    students.push({ aluno: nome, turma, faltas, atrasos, frequencia, media, notas, telefone });
+    students.push({
+      aluno: nome,
+      turma,
+      faltas,
+      atrasos,
+      frequencia,
+      media,
+      notas,
+      telefone,
+      matricula,
+    });
   }
 
   if (ignoradas) avisos.push(`${ignoradas} linha(s) sem aluno ou turma foram ignoradas.`);

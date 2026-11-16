@@ -1,3 +1,4 @@
+import { matriculaFor } from '@/lib/attendance/codes';
 import { formatNumber } from './numbers';
 import type { RawTable } from './types';
 
@@ -77,8 +78,15 @@ export function sampleTable(periodo: 'atual' | 'anterior' = 'atual'): RawTable {
         const vies = d === 1 ? -0.6 : d === 0 ? 0.2 : 0; // Matemática costuma ser a mais baixa
         return formatNumber(clamp(t.nota[p] + desempenho + vies + ruido() * 1.6 - 0.8, 0, 10));
       });
-      rows.push([nome, t.turma, String(faltas), String(atrasos), ...notas]);
+      rows.push([
+        matriculaFor(nome, t.turma),
+        nome,
+        t.turma,
+        String(faltas),
+        String(atrasos),
+        ...notas,
+      ]);
     }
   });
-  return { headers: ['Aluno', 'Turma', 'Faltas', 'Atrasos', ...DISCIPLINAS], rows };
+  return { headers: ['Matrícula', 'Aluno', 'Turma', 'Faltas', 'Atrasos', ...DISCIPLINAS], rows };
 }

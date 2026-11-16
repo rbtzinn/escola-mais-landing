@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { addMinutes, formatHora, lateness, nowFor } from '@/lib/attendance/clock';
-import {
-  buildRoster,
-  findByCode,
-  normalizeCode,
-  publicName,
-  studentCode,
-} from '@/lib/attendance/codes';
+import { addMinutes, checkinWindow, formatHora, lateness, nowFor } from '@/lib/attendance/clock';
+import { buildRoster, findByMatricula, matriculaFor, publicName } from '@/lib/attendance/codes';
 import { lateMessage } from '@/lib/attendance/message';
-import { applyLateRecords, pendingNotices, register, updateRecord } from '@/lib/attendance/records';
+import {
+  applyLateRecords,
+  canUndo,
+  pendingNotices,
+  register,
+  removeRecord,
+  undoSecondsLeft,
+  updateRecord,
+} from '@/lib/attendance/records';
 import { DEFAULT_CLOCK, type LateRecord } from '@/lib/attendance/types';
 import { analyze } from '@/lib/spreadsheet/analyze';
 import { guessMapping } from '@/lib/spreadsheet/columns';
@@ -24,28 +26,34 @@ const ana = { key: studentKey('Ana Souza', '6A'), aluno: 'Ana Souza', turma: '6A
 const bia = { key: studentKey('Bia', '6A'), aluno: 'Bia', turma: '6A' };
 const base = { settings: DEFAULT_CLOCK, registradoPor: 'Sr. José', channel: 'portaria' as const };
 
-describe('código da carteirinha', () => {
-  it('é estável, curto e não contém nome nem turma', () => {
-    const c = studentCode('Ana Souza', '6º A');
-    expect(c).toBe(studentCode('ana souza', '6º a'));
-    expect(c).toMatch(/^EM-[2-9A-Z]{6}$/);
-    expect(c).not.toMatch(/ANA|6/);
-    expect(studentCode('Ana Souza', '6º B')).not.toBe(c);
+describe('matrícula', () => {
+  const roster = (csv: string) => {
+    const t = parseCsv(csv);
+    return buildRoster(analyze(t, guessMapping(t), DEFAULT_OPTIONS).students);
+  };
+
+  it('gera 6 dígitos estáveis quando a planilha não tem matrícula', () => {
+    const m = matriculaFor('Ana Souza', '6º A');
+    expect(m).toMatch(/^\d{6}$/);
+    expect(matriculaFor('ana souza', '6º a')).toBe(m);
+    const r = roster('Aluno;Turma\nAna;6A\nBia;6A');
+    expect(r.map((x) => x.matricula)).toEqual([
+      matriculaFor('Ana', '6A'),
+      matriculaFor('Bia', '6A'),
+    ]);
   });
 
-  it('acha o aluno pelo código lido ou digitado', () => {
-    const roster = buildRoster(
-      analyze(
-        parseCsv('Aluno;Turma\nAna;6A\nBia;6A'),
-        { aluno: 0, turma: 1, faltas: null, atrasos: null, telefone: null, disciplinas: [] },
-        DEFAULT_OPTIONS,
-      ).students,
-    );
-    expect(new Set(roster.map((r) => r.code)).size).toBe(2);
-    const code = roster[1].code;
-    expect(findByCode(roster, code.toLowerCase().replace('-', ' '))?.aluno).toBe('Bia');
-    expect(findByCode(roster, 'EM-ZZZZZZ')).toBeNull();
-    expect(normalizeCode('em 7k2p9q')).toBe('EM-7K2P9Q');
+  it('usa a coluna de matrícula da planilha (só os dígitos)', () => {
+    const r = roster('Matrícula;Aluno;Turma\n20.451-3;Ana;6A\n;Bia;6A');
+    expect(r[0].matricula).toBe('204513');
+    expect(r[1].matricula).toBe(matriculaFor('Bia', '6A')); // vazia: gerada
+  });
+
+  it('só acha o aluno na turma escolhida', () => {
+    const r = roster('Matrícula;Aluno;Turma\n111111;Ana;6º A\n222222;Bia;6º B');
+    expect(findByMatricula(r, '6º A', ' 111.111 ')?.aluno).toBe('Ana');
+    expect(findByMatricula(r, '6º B', '111111')).toBeNull();
+    expect(findByMatricula(r, '6º A', '')).toBeNull();
   });
 
   it('mostra só primeiro nome e inicial na tela pública', () => {
@@ -67,6 +75,13 @@ describe('relógio', () => {
     expect(lateness(at('07:10'), DEFAULT_CLOCK)).toEqual({ atrasado: false, minutos: 10 });
     expect(lateness(at('07:11'), DEFAULT_CLOCK)).toEqual({ atrasado: true, minutos: 11 });
     expect(lateness(at('06:50'), DEFAULT_CLOCK)).toEqual({ atrasado: false, minutos: 0 });
+  });
+
+  it('o link do aluno só abre perto do horário de entrada', () => {
+    expect(checkinWindow(at('06:29'), DEFAULT_CLOCK)).toBe('cedo');
+    expect(checkinWindow(at('06:30'), DEFAULT_CLOCK)).toBe('aberto');
+    expect(checkinWindow(at('09:00'), DEFAULT_CLOCK)).toBe('aberto');
+    expect(checkinWindow(at('09:01'), DEFAULT_CLOCK)).toBe('encerrado');
   });
 
   it('soma minutos à hora simulada', () => {
@@ -128,6 +143,25 @@ describe('registros', () => {
     expect(out.table.headers.at(-1)).toBe('Atrasos (registrados)');
     expect(out.mapping.atrasos).toBe(3);
     expect(out.table.rows.map((r) => r[3])).toEqual(['1', '0']);
+  });
+});
+
+describe('desfazer e excluir', () => {
+  it('quem registrou pode desfazer por 5 minutos (hora real, não a simulada)', () => {
+    const criadoEm = new Date(2026, 10, 16, 10, 0, 0);
+    const { records } = register([], { ...base, entry: ana, at: at('07:25'), criadoEm });
+    const r = records[0];
+    expect(undoSecondsLeft(r, new Date(2026, 10, 16, 10, 0, 1))).toBe(299);
+    expect(canUndo(r, new Date(2026, 10, 16, 10, 4, 59))).toBe(true);
+    expect(canUndo(r, new Date(2026, 10, 16, 10, 5, 0))).toBe(false);
+  });
+
+  it('excluir tira o registro e o aviso da fila', () => {
+    let records = register([], { ...base, entry: ana, at: at('07:25') }).records;
+    records = register(records, { ...base, entry: bia, at: at('07:30') }).records;
+    records = removeRecord(records, records[0].id);
+    expect(records.map((r) => r.aluno)).toEqual(['Ana Souza']);
+    expect(pendingNotices(records)).toHaveLength(1);
   });
 });
 

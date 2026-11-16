@@ -46,7 +46,7 @@ export function DemoApp() {
   const [error, setError] = useState<string | null>(null);
 
   const options = useMemo(() => toOptions(optionsText), [optionsText]);
-  // Atrasos registrados hoje (portaria, totem...) somam ao total da planilha.
+  // Atrasos registrados hoje (aluno pelo QR, portaria...) somam ao total da planilha.
   const merged = useMemo(
     () => (table && mapping ? applyLateRecords(table, mapping, records) : null),
     [table, mapping, records],

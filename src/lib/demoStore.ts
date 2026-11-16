@@ -1,5 +1,6 @@
 import {
   type RecordPatch,
+  removeRecord,
   type RegisterInput,
   type RegisterResult,
   register,
@@ -30,7 +31,7 @@ export interface DemoState {
   /** Planilha anterior para comparação. */
   previous: { table: RawTable; name: string } | null;
   optionsText: OptionsText;
-  /** Atrasos registrados hoje (portaria, totem, coordenação, professor): um só "banco". */
+  /** Atrasos registrados hoje (aluno pelo QR, portaria, professor, coordenação): um só "banco". */
   records: LateRecord[];
   clock: ClockSettings;
 }
@@ -102,6 +103,10 @@ export const demoStore = {
     const result = register(state.records, { ...input, settings: state.clock });
     if (result.status === 'novo') set({ records: result.records });
     return result;
+  },
+  /** Desfazer (professor, até 5 min) ou excluir (coordenação). */
+  remove(id: string) {
+    set({ records: removeRecord(state.records, id) });
   },
   update(id: string, patch: RecordPatch) {
     set({ records: updateRecord(state.records, id, patch) });

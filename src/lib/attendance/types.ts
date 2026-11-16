@@ -1,10 +1,10 @@
 /** Onde o atraso foi registrado. Todos gravam no mesmo lugar. */
-export type Channel = 'totem' | 'portaria' | 'coordenacao' | 'professor';
+export type Channel = 'aluno' | 'portaria' | 'coordenacao' | 'professor';
 
 export type Motivo = 'transporte' | 'chuva' | 'saude' | 'familia' | 'outro';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
-  totem: 'Totem',
+  aluno: 'Celular do aluno',
   portaria: 'Portaria',
   coordenacao: 'Coordenação',
   professor: 'Professor(a)',
@@ -36,6 +36,8 @@ export interface LateRecord {
   turma: string;
   /** Data e hora da chegada (ISO). */
   at: string;
+  /** Hora real em que o registro foi feito (para o "desfazer" de 5 minutos). */
+  criadoEm: string;
   /** Minutos depois do horário de entrada. */
   minutos: number;
   channel: Channel;
@@ -62,7 +64,7 @@ export interface RosterEntry {
   key: string;
   aluno: string;
   turma: string;
-  /** Código opaco da carteirinha (sem nome nem turma). */
-  code: string;
+  /** Matrícula (da planilha ou gerada): o aluno se identifica com ela no link da entrada. */
+  matricula: string;
   telefone: string | null;
 }
