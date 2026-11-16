@@ -40,15 +40,15 @@ export function KpiCards({
   return (
     <dl
       aria-label="Indicadores da escola"
-      className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
+      className="grid grid-cols-2 border-y border-fg/60 sm:grid-cols-4 sm:divide-x sm:divide-border max-sm:[&>*]:border-border max-sm:[&>*:nth-child(-n+2)]:border-b max-sm:[&>*:nth-child(odd)]:border-r"
     >
       {items.map((k) => (
-        <div key={k.label} className="min-w-0 rounded-2xl border border-border bg-surface p-3">
-          <dt className="text-sm font-semibold text-fg-muted">{k.label}</dt>
+        <div key={k.label} className="min-w-0 px-3 py-3 sm:px-4">
+          <dt className="text-sm text-fg-muted">{k.label}</dt>
           <dd className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
             <span
               className={clsx(
-                'font-display text-2xl font-extrabold sm:text-3xl',
+                'font-display text-3xl font-medium sm:text-4xl',
                 k.alert && 'text-danger',
               )}
             >

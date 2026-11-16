@@ -39,7 +39,7 @@ export function Verdict({
       </p>
       <h3
         id="veredito-titulo"
-        className="mt-2 font-display text-2xl leading-tight font-extrabold text-balance sm:text-3xl"
+        className="mt-2 font-display text-2xl leading-tight font-semibold text-balance sm:text-3xl"
       >
         {title}
       </h3>

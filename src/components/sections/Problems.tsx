@@ -1,4 +1,3 @@
-import { Icon } from '@/components/icons';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeading } from '@/components/ui/SectionHeading';
@@ -6,30 +5,39 @@ import { PROBLEMS } from '@/data/content';
 
 export function Problems() {
   return (
-    <section id="problemas" aria-labelledby="problemas-titulo" className="bg-muted py-20 sm:py-24">
-      <Container>
-        <Reveal>
-          <SectionHeading
-            id="problemas-titulo"
-            eyebrow="O desafio"
-            title="O dia a dia da gestão escolar não deveria depender de planilhas soltas, papelada e grupos de WhatsApp"
-          />
+    <section
+      id="problemas"
+      aria-labelledby="problemas-titulo"
+      className="border-t border-fg py-20 sm:py-28"
+    >
+      <Container className="grid gap-12 lg:grid-cols-12 lg:gap-10">
+        <Reveal className="lg:col-span-5">
+          <div className="lg:sticky lg:top-28">
+            <SectionHeading
+              id="problemas-titulo"
+              index="01"
+              eyebrow="O problema"
+              title="Gerir uma escola não deveria depender de planilha solta, papelada e grupo de WhatsApp"
+            />
+          </div>
         </Reveal>
-        <ul className="mt-12 grid gap-5 sm:grid-cols-2">
+        <ol className="border-t border-fg lg:col-span-7">
           {PROBLEMS.map((p, i) => (
-            <li key={p.title}>
-              <Reveal delay={i * 80} className="h-full">
-                <article className="h-full rounded-2xl border border-border bg-surface p-6 sm:p-7">
-                  <span className="flex size-12 items-center justify-center rounded-xl bg-danger/10 text-danger">
-                    <Icon name={p.icon} />
-                  </span>
-                  <h3 className="mt-5 font-display text-xl font-bold">{p.title}</h3>
-                  <p className="mt-2 leading-relaxed text-fg-muted">{p.text}</p>
-                </article>
+            <li key={p.title} className="border-b border-fg/20">
+              <Reveal delay={i * 60} className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-7 sm:py-8">
+                <span aria-hidden="true" className="eyebrow pt-2 text-danger">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3 className="font-display text-2xl leading-tight font-medium sm:text-[1.75rem]">
+                    {p.title}
+                  </h3>
+                  <p className="mt-2 max-w-xl text-lg leading-relaxed text-fg-muted">{p.text}</p>
+                </div>
               </Reveal>
             </li>
           ))}
-        </ul>
+        </ol>
       </Container>
     </section>
   );

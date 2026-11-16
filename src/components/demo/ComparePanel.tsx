@@ -62,7 +62,7 @@ export function ComparePanel({
         <label
           htmlFor="arquivo-anterior"
           className={clsx(
-            'peer-focus-visible:outline-ring inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-border bg-surface px-4 text-sm font-semibold peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 hover:border-primary hover:text-primary',
+            'peer-focus-visible:outline-ring inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-semibold peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 hover:border-primary hover:text-primary',
             loading && 'pointer-events-none opacity-60',
           )}
         >

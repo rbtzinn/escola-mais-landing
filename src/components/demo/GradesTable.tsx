@@ -18,7 +18,7 @@ export function GradesTable({ analysis }: { analysis: Analysis }) {
       aria-labelledby="notas-titulo"
       className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-6"
     >
-      <h3 id="notas-titulo" className="font-display text-xl font-bold">
+      <h3 id="notas-titulo" className="font-display text-xl font-semibold">
         Notas por turma e disciplina
       </h3>
       {disciplinas.length === 0 ? (

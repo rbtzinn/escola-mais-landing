@@ -91,7 +91,7 @@ export function ColumnMapper({ table, mapping, onChange, onSubmit, onBack }: Pro
                 aria-checked={on}
                 onClick={() => toggle(Number(c.value))}
                 className={clsx(
-                  'inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors',
+                  'inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-semibold transition-colors',
                   on
                     ? 'border-primary bg-primary text-on-primary'
                     : 'border-border bg-surface hover:border-primary',
@@ -106,7 +106,7 @@ export function ColumnMapper({ table, mapping, onChange, onSubmit, onBack }: Pro
       </fieldset>
 
       <div className="mt-8">
-        <h3 className="mb-2 font-display text-lg font-bold">Prévia da planilha</h3>
+        <h3 className="mb-2 font-display text-lg font-semibold">Prévia da planilha</h3>
         <div
           role="region"
           aria-label="Prévia das primeiras linhas da planilha"

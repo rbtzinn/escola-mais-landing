@@ -5,7 +5,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'whatsapp';
 type Size = 'md' | 'sm';
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 rounded-md font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60';
 
 const sizes: Record<Size, string> = {
   md: 'min-h-11 px-6 py-2.5 text-[0.95rem]',
@@ -14,7 +14,7 @@ const sizes: Record<Size, string> = {
 
 const variants: Record<Variant, string> = {
   primary: 'bg-primary text-on-primary hover:brightness-110',
-  secondary: 'border border-border bg-surface text-fg hover:border-primary hover:text-primary',
+  secondary: 'border border-fg/35 bg-surface text-fg hover:border-fg hover:bg-muted',
   ghost: 'text-fg hover:bg-muted',
   whatsapp: 'bg-whatsapp text-on-whatsapp hover:brightness-95',
 };

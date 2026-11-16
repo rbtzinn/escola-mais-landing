@@ -271,7 +271,7 @@ function TodayLate() {
       href="/demo/dia"
       className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-primary hover:bg-muted"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-primary/40 text-primary">
         <Icon name="calendar" size={20} />
       </span>
       <span className="min-w-0 flex-1">

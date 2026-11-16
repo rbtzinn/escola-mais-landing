@@ -30,7 +30,7 @@ export function Accordion({ items }: { items: AccordionItem[] }) {
   };
 
   return (
-    <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+    <div className="divide-y divide-fg/20 border-y border-fg">
       {items.map((item, i) => {
         const open = openId === item.id;
         const btnId = `${uid}-btn-${item.id}`;
@@ -48,14 +48,18 @@ export function Accordion({ items }: { items: AccordionItem[] }) {
                 aria-controls={panelId}
                 onClick={() => setOpenId(open ? null : item.id)}
                 onKeyDown={(e) => onKeyDown(e, i)}
-                className="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold transition-colors hover:bg-muted sm:px-6"
+                className="group flex min-h-16 w-full items-center justify-between gap-6 py-4 text-left font-display text-xl font-medium sm:text-2xl"
               >
-                <span>{item.question}</span>
+                <span className="decoration-accent decoration-2 underline-offset-4 group-hover:underline">
+                  {item.question}
+                </span>
+                {/* Um "+" que gira e vira "×" ao abrir. */}
                 <Icon
-                  name="chevron"
+                  name="close"
+                  size={22}
                   className={clsx(
                     'shrink-0 text-primary transition-transform',
-                    open && 'rotate-180',
+                    !open && 'rotate-45',
                   )}
                 />
               </button>
@@ -70,7 +74,9 @@ export function Accordion({ items }: { items: AccordionItem[] }) {
               )}
             >
               <div className="overflow-hidden" inert={!open}>
-                <p className="px-5 pb-5 leading-relaxed text-fg-muted sm:px-6">{item.answer}</p>
+                <p className="max-w-2xl pb-6 text-lg leading-relaxed text-fg-muted">
+                  {item.answer}
+                </p>
               </div>
             </div>
           </div>

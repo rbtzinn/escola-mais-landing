@@ -17,7 +17,7 @@ export function ClassGrid({
 }) {
   return (
     <section aria-labelledby="grade-titulo">
-      <h3 id="grade-titulo" className="mb-2 font-display text-lg font-bold">
+      <h3 id="grade-titulo" className="mb-2 font-display text-lg font-semibold">
         Turmas
       </h3>
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -35,7 +35,7 @@ export function ClassGrid({
                 )}
               >
                 <span className="flex items-center justify-between gap-2">
-                  <span className="font-display text-xl font-extrabold">{t.turma}</span>
+                  <span className="font-display text-xl font-semibold">{t.turma}</span>
                   <span
                     className={clsx('size-3 shrink-0 rounded-full', LEVEL_DOT[level])}
                     aria-hidden="true"

@@ -69,7 +69,7 @@ function ModalContent({
       >
         <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <h2 id={titleId} className="font-display text-xl font-extrabold sm:text-2xl">
+            <h2 id={titleId} className="font-display text-xl font-semibold sm:text-2xl">
               {title}
             </h2>
             {subtitle && <div className="mt-0.5 text-sm text-fg-muted">{subtitle}</div>}

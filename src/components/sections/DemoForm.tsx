@@ -58,34 +58,41 @@ export function DemoForm() {
   };
 
   return (
-    <section id="demonstracao" aria-labelledby="demo-titulo" className="py-20 sm:py-24">
-      <Container className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-        <Reveal>
+    <section
+      id="demonstracao"
+      aria-labelledby="demo-titulo"
+      className="border-t border-fg bg-muted py-20 sm:py-28"
+    >
+      <Container className="grid gap-12 lg:grid-cols-12 lg:gap-10">
+        <Reveal className="lg:col-span-5">
           <SectionHeading
             id="demo-titulo"
+            index="07"
             eyebrow="Demonstração"
             title="Veja o Escola+ com os dados da sua escola"
             description="Preencha o formulário e agende uma conversa com a nossa equipe."
           />
-          <ul className="mt-8 space-y-4">
+          <ul className="mt-9 border-t border-fg/40">
             {DEMO_BENEFITS.map((b) => (
-              <li key={b} className="flex items-start gap-3">
-                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-                  <Icon name="check" size={14} />
-                </span>
+              <li key={b} className="flex items-start gap-3 border-b border-fg/20 py-3.5">
+                <Icon name="check" size={20} className="mt-0.5 shrink-0 text-primary" />
                 <span className="leading-relaxed">{b}</span>
               </li>
             ))}
           </ul>
         </Reveal>
 
-        <Reveal delay={100}>
+        <Reveal delay={100} className="lg:col-span-7">
           <form
             noValidate
             onSubmit={onSubmit}
             aria-labelledby="demo-titulo"
-            className="rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8"
+            className="border border-fg/70 bg-surface p-6 shadow-card sm:p-9"
           >
+            <p className="eyebrow mb-6 flex justify-between gap-4 border-b border-fg/25 pb-3 text-fg-muted">
+              <span>Ficha de solicitação</span>
+              <span>Envio simulado</span>
+            </p>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <TextField

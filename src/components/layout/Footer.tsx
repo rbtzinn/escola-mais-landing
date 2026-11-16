@@ -11,22 +11,22 @@ export function Footer() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
   return (
-    <footer className="border-t border-border bg-muted">
-      <Container className="grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="border-t border-fg">
+      <Container className="grid gap-10 py-14 md:grid-cols-[1.6fr_1fr_1fr]">
         <div>
-          <Logo />
-          <p className="mt-4 max-w-sm leading-relaxed text-fg-muted">
-            Gestão escolar mais simples para quem cuida do dia a dia da escola pública.
+          <Logo className="!text-4xl" />
+          <p className="mt-5 max-w-sm font-display text-xl leading-snug text-fg-muted italic">
+            Gestão mais simples para quem cuida do dia a dia da escola pública.
           </p>
         </div>
         <nav aria-label="Rodapé">
-          <h2 className="mb-3 text-sm font-bold tracking-[0.14em] uppercase">Navegação</h2>
-          <ul className="space-y-1">
+          <h2 className="eyebrow mb-3 text-fg-muted">Nesta página</h2>
+          <ul>
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
                 <a
                   href={l.href}
-                  className="inline-flex min-h-9 items-center text-fg-muted hover:text-primary"
+                  className="inline-flex min-h-9 items-center decoration-accent decoration-2 underline-offset-4 hover:underline"
                 >
                   {l.label}
                 </a>
@@ -35,13 +35,13 @@ export function Footer() {
           </ul>
         </nav>
         <div>
-          <h2 className="mb-3 text-sm font-bold tracking-[0.14em] uppercase">Institucional</h2>
-          <ul className="space-y-1">
+          <h2 className="eyebrow mb-3 text-fg-muted">Institucional</h2>
+          <ul>
             <li>
               <button
                 type="button"
                 onClick={() => setPrivacyOpen(true)}
-                className="inline-flex min-h-9 items-center text-fg-muted underline underline-offset-4 hover:text-primary"
+                className="inline-flex min-h-9 items-center decoration-accent decoration-2 underline-offset-4 hover:underline"
               >
                 Política de privacidade
               </button>
@@ -49,7 +49,7 @@ export function Footer() {
             <li>
               <Link
                 href="/#demonstracao"
-                className="inline-flex min-h-9 items-center text-fg-muted hover:text-primary"
+                className="inline-flex min-h-9 items-center decoration-accent decoration-2 underline-offset-4 hover:underline"
               >
                 Solicitar demonstração
               </Link>
@@ -57,10 +57,10 @@ export function Footer() {
           </ul>
         </div>
       </Container>
-      <div className="border-t border-border">
-        <Container className="flex flex-col gap-1 py-5 text-sm text-fg-muted sm:flex-row sm:justify-between">
-          <p>© 2026 Escola+ — projeto demonstrativo.</p>
-          <p>Dados, números e depoimentos desta página são fictícios.</p>
+      <div className="border-t border-fg/20">
+        <Container className="eyebrow flex flex-col gap-1 py-5 text-fg-muted sm:flex-row sm:justify-between">
+          <p>© 2026 Escola+ · projeto demonstrativo</p>
+          <p>Dados, números e depoimentos são fictícios</p>
         </Container>
       </div>
 

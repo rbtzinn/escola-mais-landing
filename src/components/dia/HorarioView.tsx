@@ -128,7 +128,7 @@ export function HorarioView() {
       <label
         htmlFor="grade-arquivo"
         className={clsx(
-          'peer-focus-visible:outline-ring inline-flex min-h-10 items-center gap-2 rounded-full border border-border bg-surface px-4 text-sm font-semibold peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 hover:border-primary hover:text-primary',
+          'peer-focus-visible:outline-ring inline-flex min-h-10 items-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-semibold peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 hover:border-primary hover:text-primary',
           lendo && 'pointer-events-none opacity-60',
         )}
       >
@@ -145,7 +145,7 @@ export function HorarioView() {
     >
       {!timetable ? (
         <section className="space-y-3 rounded-3xl border border-border bg-surface p-4 sm:p-6">
-          <h2 className="font-display text-lg font-bold">Falta a grade de horário</h2>
+          <h2 className="font-display text-lg font-semibold">Falta a grade de horário</h2>
           <p className="text-fg-muted">
             Envie uma planilha com as colunas <strong className="text-fg">Turma</strong>,{' '}
             <strong className="text-fg">Dia</strong> (segunda a sexta ou 1 a 5),{' '}
@@ -186,7 +186,7 @@ export function HorarioView() {
                   aria-pressed={dia === i + 1}
                   onClick={() => setDia(i + 1)}
                   className={clsx(
-                    'min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors',
+                    'min-h-10 rounded-md border px-3 text-sm font-semibold transition-colors',
                     dia === i + 1
                       ? 'border-primary bg-primary text-on-primary'
                       : 'border-border bg-surface hover:border-primary',
@@ -197,7 +197,7 @@ export function HorarioView() {
               ))}
             </div>
             <div>
-              <h2 id="horario-faltas" className="font-display text-lg font-bold">
+              <h2 id="horario-faltas" className="font-display text-lg font-semibold">
                 Quem faltou hoje?
               </h2>
               <p className="text-sm text-fg-muted">Toque no nome de quem não veio.</p>
@@ -212,7 +212,7 @@ export function HorarioView() {
                       aria-pressed={on}
                       onClick={() => demoStore.toggleFaltou(p)}
                       className={clsx(
-                        'min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors',
+                        'min-h-10 rounded-md border px-3 text-sm font-semibold transition-colors',
                         on
                           ? 'border-danger bg-danger/10 text-danger'
                           : 'border-border bg-surface hover:border-primary',
@@ -233,7 +233,7 @@ export function HorarioView() {
 
           <section aria-labelledby="horario-plano" className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="horario-plano" className="font-display text-lg font-bold">
+              <h2 id="horario-plano" className="font-display text-lg font-semibold">
                 {faltaram.length === 0
                   ? `${DIAS[dia - 1]}: horário normal`
                   : `${DIAS[dia - 1]}: ${afetadas.length} ${afetadas.length === 1 ? 'turma afetada' : 'turmas afetadas'}`}
@@ -255,7 +255,7 @@ export function HorarioView() {
                   className="overflow-hidden rounded-2xl border border-border bg-surface"
                 >
                   <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-                    <h3 className="font-display font-bold">{p.turma}</h3>
+                    <h3 className="font-display font-semibold">{p.turma}</h3>
                     {p.saiAs && (
                       <span className="text-sm font-semibold text-primary">
                         Pode sair às {p.saiAs}

@@ -188,11 +188,15 @@ Em `src/components/ui/`, feitos sem biblioteca externa:
 
 ## Cores e tema
 
-Paleta **Verde ipê + índigo**:
+Visual **editorial escolar**: papel, tinta e material de escola, com cantos quase retos, linhas finas no lugar de cartões e seções numeradas. A paleta tem um papel para cada cor:
 
-- `#1f5f4a` (primary, verde)
-- `#3b3f8f` (secondary, índigo)
-- `#e8b321` (accent, amarelo ipê)
+- `#f5f3ea` (bg, papel) e `#17201b` (text, tinta)
+- `#1b4d3e` (primary, verde de quadro)
+- `#2b3a8c` (secondary, azul de caneta; usado em anotações)
+- `#b3261e` (danger, caneta vermelha)
+- `#f2c230` (accent, marca-texto; a classe `.marker` pinta a faixa atrás de uma palavra)
+
+No tema escuro a página vira o próprio quadro-verde. Os raios do Tailwind (`rounded-lg`, `rounded-2xl`...) foram reduzidos no `@theme` para valer no site todo.
 
 Os tokens ficam em `src/app/globals.css`: `:root` para o tema claro e `[data-theme='dark']` para o escuro. Eles são mapeados para classes Tailwind como `bg-primary`, `text-fg-muted` e `border-border`.
 
@@ -200,7 +204,7 @@ O tema segue o sistema por padrão. O botão no cabeçalho alterna entre claro e
 
 ## Tipografia
 
-Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` em `src/app/layout.tsx`.
+Newsreader (títulos, serifa; classe `font-display`), Source Sans 3 (texto) e IBM Plex Mono (rótulos e números de seção; classe `.eyebrow`), carregadas com `next/font/google` em `src/app/layout.tsx`.
 
 ## Acessibilidade
 

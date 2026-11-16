@@ -58,9 +58,9 @@ const useOrigin = () =>
 /** Cartaz para imprimir e colar na entrada. */
 function Poster({ url }: { url: string }) {
   return (
-    <div className="qr-light rounded-3xl border border-border bg-surface p-6 text-center text-fg">
-      <p className="text-sm font-bold tracking-[0.14em] text-fg-muted uppercase">Escola+</p>
-      <p className="mt-1 font-display text-2xl font-extrabold">Chegou atrasado?</p>
+    <div className="qr-light border border-fg bg-surface p-6 text-center text-fg">
+      <p className="eyebrow text-fg-muted">Escola+</p>
+      <p className="mt-1 font-display text-3xl font-medium">Chegou atrasado?</p>
       <p className="text-fg-muted">Leia o QR com a câmera do celular e registre sua chegada.</p>
       <QrCode
         value={url}
@@ -88,7 +88,7 @@ export function DiaHub() {
         <TodayStats />
       </div>
 
-      <p className="mb-6 flex items-start gap-2 rounded-xl border border-border bg-muted p-3 text-sm text-fg-muted">
+      <p className="mb-8 flex items-start gap-2 border-l-2 border-primary bg-muted p-3 text-sm text-fg-muted">
         <Icon name="info" size={18} className="mt-0.5 shrink-0 text-primary" />
         Demonstração sem servidor: os registros ficam só nesta aba e somem ao recarregar. Por isso o
         celular do aluno aparece simulado aqui ao lado; num celular de verdade o link abre, mas não
@@ -97,7 +97,7 @@ export function DiaHub() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         <section aria-labelledby="qr-titulo" className="space-y-3">
-          <h2 id="qr-titulo" className="font-display text-xl font-bold">
+          <h2 id="qr-titulo" className="font-display text-2xl font-medium">
             1. O QR da entrada
           </h2>
           <p className="text-fg-muted">
@@ -118,7 +118,7 @@ export function DiaHub() {
         </section>
 
         <section aria-labelledby="celular-titulo" className="space-y-3">
-          <h2 id="celular-titulo" className="font-display text-xl font-bold">
+          <h2 id="celular-titulo" className="font-display text-2xl font-medium">
             2. O celular do aluno (simulado)
           </h2>
           <p className="text-fg-muted">
@@ -142,23 +142,22 @@ export function DiaHub() {
       </div>
 
       <section aria-labelledby="equipe-titulo" className="mt-10">
-        <h2 id="equipe-titulo" className="mb-3 font-display text-xl font-bold">
+        <h2 id="equipe-titulo" className="mb-4 font-display text-2xl font-medium">
           3. As telas da equipe
         </h2>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-x-8 border-t border-fg sm:grid-cols-2 lg:grid-cols-3">
           {STAFF.map((s) => (
-            <li key={s.href}>
-              <Link
-                href={s.href}
-                className="flex h-full items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-primary hover:bg-muted"
-              >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon name={s.icon} size={22} />
-                </span>
+            <li key={s.href} className="border-b border-fg/20">
+              <Link href={s.href} className="group flex h-full items-start gap-3 py-4">
+                <Icon name={s.icon} size={22} className="mt-1 shrink-0 text-primary" />
                 <span className="min-w-0">
-                  <span className="flex items-center gap-1 font-semibold">
+                  <span className="flex items-center gap-1.5 font-display text-xl font-medium decoration-accent decoration-2 underline-offset-4 group-hover:underline">
                     {s.title}
-                    <Icon name="arrow" size={16} className="text-fg-muted" />
+                    <Icon
+                      name="arrow"
+                      size={16}
+                      className="text-fg-muted transition-transform group-hover:translate-x-0.5"
+                    />
                   </span>
                   <span className="block text-sm text-fg-muted">{s.text}</span>
                 </span>

@@ -60,7 +60,7 @@ export function ClassSheet({
         ).map(([label, value, delta]) => (
           <div key={label} className="rounded-xl bg-bg px-3 py-2">
             <dt className="text-xs font-semibold">{label}</dt>
-            <dd className="font-display text-xl font-extrabold text-fg">{value}</dd>
+            <dd className="font-display text-xl font-semibold text-fg">{value}</dd>
             {delta && <dd>{delta}</dd>}
           </div>
         ))}

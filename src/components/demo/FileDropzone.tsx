@@ -33,14 +33,14 @@ export function FileDropzone({ onFile, onSample, loading, error }: Props) {
           if (file) onFile(file);
         }}
         className={clsx(
-          'flex flex-col items-center rounded-3xl border-2 border-dashed px-6 py-12 text-center transition-colors',
-          dragging ? 'border-primary bg-primary/10' : 'border-border bg-surface',
+          'flex flex-col items-center border border-dashed px-6 py-12 text-center transition-colors',
+          dragging ? 'border-primary bg-primary/10' : 'border-fg/50 bg-bg',
         )}
       >
-        <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <Icon name="sheet" size={28} />
-        </span>
-        <p className="mt-5 font-display text-xl font-bold">Arraste a planilha da sua escola aqui</p>
+        <Icon name="sheet" size={36} strokeWidth={1.25} className="text-primary" />
+        <p className="mt-4 font-display text-2xl font-medium sm:text-3xl">
+          Arraste a planilha da sua escola aqui
+        </p>
         <p className="mt-1 text-fg-muted">Formatos aceitos: .csv e .xlsx, até 5 MB</p>
 
         <input
@@ -58,7 +58,7 @@ export function FileDropzone({ onFile, onSample, loading, error }: Props) {
         <label
           htmlFor="arquivo-planilha"
           className={clsx(
-            'peer-focus-visible:outline-ring mt-6 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-primary px-6 py-2.5 font-semibold text-on-primary peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 hover:brightness-110',
+            'peer-focus-visible:outline-ring mt-6 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md bg-primary px-6 py-2.5 font-semibold text-on-primary peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 hover:brightness-110',
             loading && 'pointer-events-none opacity-60',
           )}
         >

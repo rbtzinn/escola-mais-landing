@@ -20,7 +20,7 @@ export function TodayActions({
   if (actions.length === 0) return null;
   return (
     <section aria-labelledby="acoes-titulo">
-      <h3 id="acoes-titulo" className="mb-2 font-display text-lg font-bold">
+      <h3 id="acoes-titulo" className="mb-2 font-display text-lg font-semibold">
         O que fazer hoje
       </h3>
       <ol className="space-y-2">
@@ -31,7 +31,7 @@ export function TodayActions({
               onClick={() => onAction(a)}
               className="flex w-full min-w-0 items-center gap-3 rounded-2xl border border-border bg-surface p-3 text-left transition-colors hover:border-primary"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-primary/40 text-primary">
                 <Icon name={ICON[a.kind]} size={20} />
               </span>
               <span className="min-w-0 flex-1">

@@ -131,15 +131,16 @@ export function DemoApp() {
     <Container className={onDashboard ? 'py-4 sm:py-10' : 'py-12 sm:py-16'}>
       {onDashboard ? (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h1 className="font-display text-2xl font-extrabold sm:text-3xl">Painel da escola</h1>
+          <h1 className="font-display text-3xl font-medium sm:text-4xl">Painel da escola</h1>
           {sourceName && <Badge tone={isSample ? 'accent' : 'neutral'}>{sourceName}</Badge>}
         </div>
       ) : (
-        <div className="mb-8 max-w-2xl">
-          <p className="mb-3 text-sm font-bold tracking-[0.14em] text-secondary uppercase">
+        <div className="mb-10 max-w-2xl">
+          <p className="eyebrow mb-5 flex items-center gap-3 text-fg-muted">
+            <span aria-hidden="true" className="h-px w-8 bg-fg/40" />
             Demonstração
           </p>
-          <h1 className="font-display text-3xl leading-tight font-extrabold text-balance sm:text-4xl">
+          <h1 className="font-display text-4xl leading-[1.05] font-medium text-balance sm:text-6xl">
             Teste com a planilha da sua escola
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-fg-muted">
@@ -149,14 +150,14 @@ export function DemoApp() {
         </div>
       )}
 
-      <div className="rounded-3xl border border-border bg-surface p-3 shadow-card sm:p-8">
+      <div className="border border-fg/60 bg-surface p-3 shadow-card sm:p-8">
         {onDashboard ? (
           <h2 className="sr-only" aria-live="polite">
             {TITLES[step]}
           </h2>
         ) : (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
-            <h2 className="font-display text-xl font-bold" aria-live="polite">
+            <h2 className="font-display text-2xl font-medium" aria-live="polite">
               {TITLES[step]}
             </h2>
             {step === 'map' && (

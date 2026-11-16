@@ -45,7 +45,7 @@ export function StudentSheet({
   const stat = (label: string, value: string, low: boolean, delta?: React.ReactNode) => (
     <div className="rounded-xl bg-bg px-3 py-2">
       <dt className="text-xs font-semibold">{label}</dt>
-      <dd className={clsx('font-display text-xl font-extrabold', low ? 'text-danger' : 'text-fg')}>
+      <dd className={clsx('font-display text-xl font-semibold', low ? 'text-danger' : 'text-fg')}>
         {value}
       </dd>
       {delta && <dd>{delta}</dd>}
