@@ -5,6 +5,7 @@ export const NAV_LINKS = [
   { href: '/#problemas', label: 'Problemas' },
   { href: '/#funcionalidades', label: 'Funcionalidades' },
   { href: '/#como-funciona', label: 'Como funciona' },
+  { href: '/#amostra', label: 'Amostra' },
   { href: '/#impacto', label: 'Impacto' },
   { href: '/#faq', label: 'Dúvidas' },
   { href: '/demo', label: 'Testar' },

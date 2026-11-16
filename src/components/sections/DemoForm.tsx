@@ -67,7 +67,7 @@ export function DemoForm() {
         <Reveal className="lg:col-span-5">
           <SectionHeading
             id="demo-titulo"
-            index="07"
+            index="08"
             eyebrow="Demonstração"
             title="Veja o Escola+ com os dados da sua escola"
             description="Preencha o formulário e agende uma conversa com a nossa equipe."

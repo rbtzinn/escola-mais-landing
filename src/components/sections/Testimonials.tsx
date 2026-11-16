@@ -11,7 +11,7 @@ export function Testimonials() {
         <Reveal>
           <SectionHeading
             id="depoimentos-titulo"
-            index="05"
+            index="06"
             eyebrow="Depoimentos ilustrativos"
             title="O que gestores de escola poderiam dizer"
             description="As falas abaixo são exemplos, sem pessoas reais."
