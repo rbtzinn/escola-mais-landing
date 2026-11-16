@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { Icon } from '@/components/icons';
 import { Modal } from '@/components/ui/Modal';
 import type { Comparison } from '@/lib/spreadsheet/compare';
 import { LEVEL_LABEL, classLevel, riskShare } from '@/lib/spreadsheet/insights';
@@ -28,26 +29,36 @@ export function ClassSheet({
   const { mediaMin } = analysis.options;
 
   return (
-    <Modal open onClose={onClose} title={`Turma ${t.turma}`}>
-      <p className="flex items-center gap-2 font-semibold text-fg">
-        <span className={clsx('size-3 rounded-full', LEVEL_DOT[level])} aria-hidden="true" />
-        Situação: {LEVEL_LABEL[level]} · {formatNumber(riskShare(t.emRisco, t.alunos), 0)}% em risco
-      </p>
-      <dl className="grid grid-cols-3 gap-2 text-center">
-        {[
-          ['Alunos', String(t.alunos), null],
+    <Modal
+      open
+      onClose={onClose}
+      variant="side"
+      title={`Turma ${t.turma}`}
+      subtitle={
+        <span className="flex items-center gap-2 font-semibold">
+          <span className={clsx('size-2.5 rounded-full', LEVEL_DOT[level])} aria-hidden="true" />
+          Situação: {LEVEL_LABEL[level]} · {formatNumber(riskShare(t.emRisco, t.alunos), 0)}% em
+          risco
+        </span>
+      }
+    >
+      <dl className="grid grid-cols-3 gap-2">
+        {(
           [
-            'Frequência',
-            t.frequencia === null ? '—' : `${formatNumber(t.frequencia, 0)}%`,
-            d && <DeltaTag value={d.frequencia} higherIsBetter unit=" p.p." />,
-          ],
-          [
-            'Média',
-            t.media === null ? '—' : formatNumber(t.media),
-            d && <DeltaTag value={d.media} higherIsBetter />,
-          ],
-        ].map(([label, value, delta]) => (
-          <div key={label as string} className="rounded-xl bg-bg p-2">
+            ['Alunos', String(t.alunos), null],
+            [
+              'Frequência',
+              t.frequencia === null ? '—' : `${formatNumber(t.frequencia, 0)}%`,
+              d && <DeltaTag value={d.frequencia} higherIsBetter unit=" p.p." />,
+            ],
+            [
+              'Média',
+              t.media === null ? '—' : formatNumber(t.media),
+              d && <DeltaTag value={d.media} higherIsBetter />,
+            ],
+          ] as const
+        ).map(([label, value, delta]) => (
+          <div key={label} className="rounded-xl bg-bg px-3 py-2">
             <dt className="text-xs font-semibold">{label}</dt>
             <dd className="font-display text-xl font-extrabold text-fg">{value}</dd>
             {delta && <dd>{delta}</dd>}
@@ -56,47 +67,49 @@ export function ClassSheet({
       </dl>
 
       {analysis.disciplinas.length > 0 && (
-        <div>
-          <h3 className="mb-1 font-semibold text-fg">Média por disciplina</h3>
-          <ul className="space-y-1">
+        <section>
+          <h3 className="mb-1.5 text-sm font-semibold text-fg">Média por disciplina</h3>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             {analysis.disciplinas.map((disc) => {
               const v = t.mediasPorDisciplina[disc];
               const low = v !== null && v < mediaMin;
               return (
-                <li key={disc} className="flex justify-between gap-3 text-sm">
-                  <span>{disc}</span>
-                  <span className={clsx('font-bold', low ? 'text-danger' : 'text-fg')}>
+                <div key={disc} className="flex justify-between gap-2 border-b border-border py-1">
+                  <dt>{disc}</dt>
+                  <dd className={clsx('font-bold', low ? 'text-danger' : 'text-fg')}>
                     {v === null ? '—' : formatNumber(v)}
-                    {low && ' · abaixo'}
-                  </span>
-                </li>
+                  </dd>
+                </div>
               );
             })}
-          </ul>
-        </div>
+          </dl>
+        </section>
       )}
 
-      <div>
-        <h3 className="mb-1 font-semibold text-fg">Alunos em risco ({risco.length})</h3>
+      <section>
+        <h3 className="mb-1.5 text-sm font-semibold text-fg">Alunos em risco ({risco.length})</h3>
         {risco.length === 0 ? (
           <p className="text-sm">Ninguém abaixo dos mínimos nesta turma.</p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
             {risco.map(({ student, motivos }) => (
               <li key={student.aluno}>
                 <button
                   type="button"
                   onClick={() => onStudent(student)}
-                  className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-left hover:border-primary"
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-muted"
                 >
-                  <span className="block font-semibold text-fg">{student.aluno}</span>
-                  <span className="block text-sm">{motivos[0]}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-fg">{student.aluno}</span>
+                    <span className="block truncate text-sm text-danger">{motivos[0]}</span>
+                  </span>
+                  <Icon name="arrow" size={16} className="shrink-0" />
                 </button>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </Modal>
   );
 }

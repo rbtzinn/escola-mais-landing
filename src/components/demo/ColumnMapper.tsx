@@ -16,7 +16,7 @@ interface Props {
   onBack: () => void;
 }
 
-type Single = 'aluno' | 'turma' | 'faltas' | 'atrasos' | 'telefone';
+type Single = 'aluno' | 'turma' | 'faltas' | 'atrasos' | 'telefone' | 'matricula';
 
 /** Passo 2: indicar qual coluna é aluno, turma, faltas, atrasos e quais são notas. */
 export function ColumnMapper({ table, mapping, onChange, onSubmit, onBack }: Props) {
@@ -43,6 +43,7 @@ export function ColumnMapper({ table, mapping, onChange, onSubmit, onBack }: Pro
     mapping.faltas,
     mapping.atrasos,
     mapping.telefone,
+    mapping.matricula,
   ]);
   const gradeColumns = columns.filter((c) => !taken.has(Number(c.value)));
   const ready = mapping.aluno !== null && mapping.turma !== null;
@@ -68,6 +69,7 @@ export function ColumnMapper({ table, mapping, onChange, onSubmit, onBack }: Pro
         {field('faltas', 'Coluna de faltas', false)}
         {field('atrasos', 'Coluna de atrasos', false)}
         {field('telefone', 'Telefone do responsável (para o WhatsApp)', false)}
+        {field('matricula', 'Matrícula (para o registro de atrasos)', false)}
       </div>
 
       <fieldset className="mt-7">

@@ -27,7 +27,7 @@ type Tab = 'resumo' | 'turmas' | 'alunos';
 
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'resumo', label: 'Resumo', icon: 'home' },
-  { id: 'turmas', label: 'Turmas', icon: 'school' },
+  { id: 'turmas', label: 'Turmas', icon: 'grid' },
   { id: 'alunos', label: 'Alunos', icon: 'users' },
 ];
 
@@ -46,6 +46,8 @@ interface Props {
   compareProps: CompareProps;
   /** Atrasos registrados hoje em /demo/registro. */
   records?: LateRecord[];
+  /** Botões (Critérios, Registrar atrasos...) na mesma linha das abas, à direita. */
+  actions?: React.ReactNode;
 }
 
 /** Painel em 3 abas. No celular, as abas ficam fixas embaixo, como em um app. */
@@ -55,6 +57,7 @@ export function Dashboard({
   hasLateColumn,
   compareProps,
   records = [],
+  actions,
 }: Props) {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('resumo');
@@ -129,39 +132,58 @@ export function Dashboard({
 
   return (
     <div ref={topRef} className="min-w-0 scroll-mt-20 pb-24 sm:pb-0">
-      <div
-        role="tablist"
-        aria-label="Seções do painel"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:static sm:mb-5 sm:inline-grid sm:rounded-full sm:border sm:p-1 sm:backdrop-blur-none"
-      >
-        {TABS.map((t) => {
-          const on = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              ref={(el) => {
-                tabRefs.current[t.id] = el;
-              }}
-              type="button"
-              role="tab"
-              id={`aba-${t.id}`}
-              aria-selected={on}
-              aria-controls={`painel-${t.id}`}
-              tabIndex={on ? 0 : -1}
-              onClick={() => go(t.id)}
-              onKeyDown={onKey}
-              className={clsx(
-                'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-semibold transition-colors sm:min-h-10 sm:flex-row sm:gap-2 sm:rounded-full sm:px-5 sm:text-sm',
-                on
-                  ? 'text-primary sm:bg-primary sm:text-on-primary'
-                  : 'text-fg-muted hover:text-fg',
-              )}
-            >
-              <Icon name={t.icon} size={22} />
-              {t.label}
-            </button>
-          );
-        })}
+      {/* Cabeçalho: no computador, abas sublinhadas + ações na mesma linha; no celular, as abas
+          ficam fixas embaixo e aqui sobram só as ações. */}
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mb-6 sm:border-b sm:border-border">
+        <div
+          role="tablist"
+          aria-label="Seções do painel"
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-border bg-surface/95 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:flex sm:gap-1 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
+        >
+          {TABS.map((t) => {
+            const on = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                ref={(el) => {
+                  tabRefs.current[t.id] = el;
+                }}
+                type="button"
+                role="tab"
+                id={`aba-${t.id}`}
+                aria-selected={on}
+                aria-controls={`painel-${t.id}`}
+                tabIndex={on ? 0 : -1}
+                onClick={() => go(t.id)}
+                onKeyDown={onKey}
+                className={clsx(
+                  'group flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-semibold transition-colors',
+                  'sm:-mb-px sm:min-h-12 sm:flex-row sm:gap-2 sm:border-b-2 sm:px-4 sm:text-[0.95rem]',
+                  on
+                    ? 'text-primary sm:border-primary'
+                    : 'text-fg-muted hover:text-fg sm:border-transparent sm:hover:border-border',
+                )}
+              >
+                <span
+                  className={clsx(
+                    'flex h-8 w-14 items-center justify-center rounded-full transition-colors sm:h-auto sm:w-auto',
+                    on
+                      ? 'bg-primary/15 sm:bg-transparent'
+                      : 'group-hover:bg-muted sm:group-hover:bg-transparent',
+                  )}
+                >
+                  <Icon name={t.icon} size={22} />
+                </span>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {actions && (
+          <div className="-mx-3 flex w-[calc(100%+1.5rem)] [scrollbar-width:none] items-center gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-2">
+            {actions}
+          </div>
+        )}
       </div>
 
       {analysis.avisos.length > 0 && (
@@ -250,7 +272,7 @@ export function Dashboard({
   );
 }
 
-/** Atrasos registrados hoje (portaria, totem, professor, coordenação) e avisos que faltam mandar. */
+/** Atrasos registrados hoje (aluno pelo QR, portaria, professor, coordenação) e avisos que faltam mandar. */
 function TodayLate({ records }: { records: LateRecord[] }) {
   const pendentes = pendingNotices(records).length;
   return (

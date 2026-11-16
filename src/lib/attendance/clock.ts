@@ -45,3 +45,18 @@ export const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
+
+/** Antes da entrada (em minutos) e depois dela em que o link do aluno aceita registro. */
+export const CHECKIN_WINDOW = { antes: 30, depois: 120 } as const;
+
+/**
+ * O link do QR só aceita registro perto do horário de entrada: evita que o aluno se registre de
+ * casa ou mais tarde. Fora da janela, a tela manda procurar a portaria.
+ */
+export function checkinWindow(at: Date, settings: ClockSettings): 'aberto' | 'cedo' | 'encerrado' {
+  const entrada = toMinutes(settings.entrada) ?? 7 * 60;
+  const agora = at.getHours() * 60 + at.getMinutes();
+  if (agora < entrada - CHECKIN_WINDOW.antes) return 'cedo';
+  if (agora > entrada + CHECKIN_WINDOW.depois) return 'encerrado';
+  return 'aberto';
+}

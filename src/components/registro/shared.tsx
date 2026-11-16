@@ -5,7 +5,13 @@ import { useState } from 'react';
 import { TextField } from '@/components/ui/TextField';
 import { formatHora } from '@/lib/attendance/clock';
 import type { RegisterResult } from '@/lib/attendance/records';
-import { CHANNEL_LABEL, type LateRecord, type RosterEntry } from '@/lib/attendance/types';
+import {
+  CHANNEL_LABEL,
+  type LateRecord,
+  MOTIVO_LABEL,
+  type Motivo,
+  type RosterEntry,
+} from '@/lib/attendance/types';
 import { normalizeText } from '@/lib/text';
 
 export type Feedback = { tone: 'ok' | 'info' | 'error'; title: string; detail?: string };
@@ -33,8 +39,8 @@ export function describe(result: RegisterResult, aluno: string): Feedback {
 
 export const NOT_FOUND: Feedback = {
   tone: 'error',
-  title: 'Carteirinha não reconhecida',
-  detail: 'Confira o código ou procure o aluno pelo nome.',
+  title: 'Matrícula não encontrada nesta turma',
+  detail: 'Confira a turma e o número. Se não der certo, procure a portaria.',
 };
 
 export function FeedbackBox({
@@ -118,14 +124,14 @@ export function StudentSearch({
           {results.map((r) => {
             const reg = registered.get(r.key);
             return (
-              <li key={r.code}>
+              <li key={r.key}>
                 <button
                   type="button"
                   onClick={() => {
                     onPick(r);
                     setQuery('');
                   }}
-                  className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-left hover:border-primary"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-muted"
                 >
                   <span>
                     <span className="font-semibold">{r.aluno}</span>{' '}
@@ -142,6 +148,41 @@ export function StudentSearch({
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** Motivo do atraso (opcional). Nunca vai para a mensagem da família. */
+export function MotivoChips({
+  value,
+  onChange,
+  label = 'Motivo (opcional, não vai para a família)',
+}: {
+  value: Motivo | null;
+  onChange: (m: Motivo | null) => void;
+  label?: string;
+}) {
+  return (
+    <div role="group" aria-label={label}>
+      <p className="mb-1.5 text-sm font-semibold text-fg">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {(Object.keys(MOTIVO_LABEL) as Motivo[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            aria-pressed={value === m}
+            onClick={() => onChange(value === m ? null : m)}
+            className={clsx(
+              'min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors',
+              value === m
+                ? 'border-primary bg-primary text-on-primary'
+                : 'border-border bg-surface text-fg hover:border-primary',
+            )}
+          >
+            {MOTIVO_LABEL[m]}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

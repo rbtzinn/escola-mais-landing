@@ -33,7 +33,8 @@ export type IconName =
   | 'copy'
   | 'qr'
   | 'camera'
-  | 'clock';
+  | 'clock'
+  | 'grid';
 
 const PATHS: Record<IconName, string> = {
   sheet: 'M4 5h16v14H4zM4 10h16M9 5v14',
@@ -70,6 +71,7 @@ const PATHS: Record<IconName, string> = {
   qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2',
   camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 10.5a3 3 0 100 6 3 3 0 000-6z',
   clock: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2',
+  grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {

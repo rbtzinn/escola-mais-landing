@@ -12,6 +12,8 @@ export interface Mapping {
   atrasos: number | null;
   /** Telefone do responsável (opcional): usado no botão de WhatsApp. */
   telefone: number | null;
+  /** Matrícula (opcional): o aluno se identifica com ela no registro de atrasos. */
+  matricula: number | null;
   /** Colunas com uma nota (0 a 10) por disciplina. */
   disciplinas: number[];
 }
@@ -44,6 +46,8 @@ export interface Student {
   notas: Record<string, number>;
   /** Telefone do responsável como veio da planilha (ou null). */
   telefone: string | null;
+  /** Matrícula como veio da planilha (ou null). */
+  matricula: string | null;
 }
 
 export interface ClassSummary {
