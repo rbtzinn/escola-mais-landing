@@ -148,7 +148,7 @@ export function AlunoCheckin({
             inputMode="numeric"
             autoComplete="off"
             maxLength={2}
-            placeholder="15"
+            placeholder="DD"
             value={dia}
             onChange={(v) => {
               setDia(v.replace(/\D/g, ''));
@@ -161,7 +161,7 @@ export function AlunoCheckin({
             inputMode="numeric"
             autoComplete="off"
             maxLength={2}
-            placeholder="03"
+            placeholder="MM"
             value={mes}
             onChange={(v) => {
               setMes(v.replace(/\D/g, ''));
