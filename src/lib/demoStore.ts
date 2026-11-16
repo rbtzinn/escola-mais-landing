@@ -47,6 +47,8 @@ export interface DemoState {
   timetable: { aulas: Aula[]; nome: string } | null;
   /** Professores que faltaram hoje. */
   faltaram: string[];
+  /** Nome de quem faz a chamada, perguntado uma vez (só nesta aba). */
+  professorNome: string | null;
 }
 
 const defaultOptionsText: OptionsText = {
@@ -67,6 +69,7 @@ const INITIAL: DemoState = {
   mealDeadline: DEFAULT_MEAL_DEADLINE,
   timetable: null,
   faltaram: [],
+  professorNome: null,
 };
 
 /** O dia recomeça quando a escola muda: registros, chamadas, merenda e faltas são da escola anterior. */
@@ -149,6 +152,10 @@ export const demoStore = {
   },
   setMealDeadline(mealDeadline: string) {
     set({ mealDeadline });
+  },
+
+  setProfessorNome(professorNome: string | null) {
+    set({ professorNome: professorNome?.trim() || null });
   },
 
   setTimetable(timetable: DemoState['timetable']) {

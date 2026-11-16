@@ -144,48 +144,86 @@ describe('Dia a dia', () => {
     expect(screen.queryByRole('button', { name: 'Vou comer' })).not.toBeInTheDocument();
   });
 
-  it('chamada marca ausentes; quem chega atrasado depois volta a contar como presente', async () => {
+  it('chamada pede o nome uma vez e depois mostra a turma', async () => {
     const user = userEvent.setup();
+    renderWith(<ChamadaView />);
+    await user.type(screen.getByLabelText('Seu nome'), 'Prof. Rita');
+    await user.click(screen.getByRole('button', { name: 'Começar a chamada' }));
+    expect(screen.getByRole('button', { name: /Prof\. Rita, trocar nome/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '6A' })).toHaveAttribute('aria-selected', 'true');
+    // Todos começam presentes.
+    const ana = screen.getByRole('group', { name: 'Ana Souza' });
+    expect(within(ana).getByRole('button', { name: 'Presente' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('chamada com P/F/A: salva faltas e atrasos e oferece a próxima turma', async () => {
+    const user = userEvent.setup();
+    act(() => demoStore.setProfessorNome('Prof. Rita'));
     const { unmount } = renderWith(<ChamadaView />);
-    const lista = screen.getByRole('list', { name: 'Alunos da turma 6A' });
-    await user.click(within(lista).getByRole('button', { name: 'Marcar falta de Bia Lima' }));
-    await user.click(screen.getByRole('button', { name: /Salvar chamada/ }));
-    expect(result()).toHaveTextContent('1 presentes e 1 ausente');
+    await user.click(
+      within(screen.getByRole('group', { name: 'Bia Lima' })).getByRole('button', {
+        name: 'Falta',
+      }),
+    );
+    await user.click(
+      within(screen.getByRole('group', { name: 'Ana Souza' })).getByRole('button', {
+        name: 'Atraso',
+      }),
+    );
+    expect(screen.getByText('1 falta')).toBeInTheDocument();
+    // Nada é gravado antes de salvar.
+    expect(demoStore.get().records).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: /Salvar 6A/ }));
+    expect(result()).toHaveTextContent('Chamada do 6A salva');
+    expect(result()).toHaveTextContent('0 presentes, 1 falta, 1 atraso');
     expect(demoStore.get().chamadas['6A'].ausentes).toHaveLength(1);
+    expect(demoStore.get().records[0]).toMatchObject({
+      aluno: 'Ana Souza',
+      channel: 'professor',
+      registradoPor: 'Prof. Rita',
+    });
+    await user.click(screen.getByRole('button', { name: /Ir para 6B/ }));
+    expect(screen.getByRole('tab', { name: '6B' })).toHaveAttribute('aria-selected', 'true');
     unmount();
 
-    const hub = renderWith(<DiaHub />);
-    expect(screen.getByRole('link', { name: /Presentes hoje/ })).toHaveTextContent('1/2');
-    hub.unmount();
-
-    // Bia chega atrasada e é registrada na portaria.
-    renderWith(<PortariaView />);
+    // Bia chega atrasada pela portaria: volta a contar como presente e aparece travada em A.
+    const portaria = renderWith(<PortariaView />);
     await user.type(screen.getByLabelText('Buscar aluno pelo nome'), 'bia');
     await user.click(screen.getByRole('button', { name: /Bia Lima/ }));
     await user.click(screen.getByRole('button', { name: /Registrar atraso/ }));
+    portaria.unmount();
     renderWith(<DiaHub />);
     expect(screen.getByRole('link', { name: /Presentes hoje/ })).toHaveTextContent('2/2');
   });
 
-  it('professor marca e pode desfazer o atraso por 5 minutos', async () => {
+  it('atraso do professor pode ser trocado por 5 minutos; depois fica travado', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 10, 16, 10, 0, 0));
+    act(() => demoStore.setProfessorNome('Prof. Rita'));
     const user = userEvent.setup();
     renderWith(<ChamadaView />);
-    const lista = screen.getByRole('list', { name: 'Alunos da turma 6A' });
+    const bia = () => screen.getByRole('group', { name: 'Bia Lima' });
 
-    await user.click(within(lista).getByRole('button', { name: 'Marcar atraso de Bia Lima' }));
-    await user.click(
-      within(lista).getByRole('button', { name: /Desfazer atraso de Bia Lima \(5:00\)/ }),
-    );
-    expect(result()).toHaveTextContent('Atraso de Bia Lima desfeito');
+    await user.click(within(bia()).getByRole('button', { name: 'Atraso' }));
+    await user.click(screen.getByRole('button', { name: /Salvar 6A/ }));
+    expect(demoStore.get().records).toHaveLength(1);
+    expect(screen.getByText(/dá para trocar por 5:00/)).toBeInTheDocument();
 
-    await user.click(within(lista).getByRole('button', { name: 'Marcar atraso de Bia Lima' }));
+    // Dentro dos 5 minutos: volta para P e salva de novo, o atraso some.
+    await user.click(within(bia()).getByRole('button', { name: 'Presente' }));
+    await user.click(screen.getByRole('button', { name: /Salvar 6A/ }));
+    expect(demoStore.get().records).toHaveLength(0);
+
+    await user.click(within(bia()).getByRole('button', { name: 'Atraso' }));
+    await user.click(screen.getByRole('button', { name: /Salvar 6A/ }));
     vi.setSystemTime(new Date(2026, 10, 16, 10, 5, 1));
     expect(
-      await within(lista).findByText(/fale com a coordenação/, {}, { timeout: 2500 }),
+      await screen.findByText(/fale com a coordenação/, {}, { timeout: 2500 }),
     ).toBeInTheDocument();
-    expect(within(lista).queryByRole('button', { name: /Desfazer/ })).not.toBeInTheDocument();
+    expect(within(bia()).getByRole('button', { name: 'Presente' })).toBeDisabled();
   });
 
   it('horário: ao marcar um professor faltando, adianta a aula e mostra quem está livre', async () => {

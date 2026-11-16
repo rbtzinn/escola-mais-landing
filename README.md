@@ -138,9 +138,12 @@ O dia a dia da escola, com **uma tela para cada pessoa**, todas gravando no **me
   - **Cheguei atrasado:** só perto do horário de entrada (30 min antes até 2 h depois); fora disso, manda procurar a portaria;
   - **Merenda de hoje:** "Vou comer" ou "Não vou comer", até o prazo (padrão 9h00).
   - O link é público: nunca lista alunos e mostra só o primeiro nome e a inicial.
-- **Chamada (`/demo/dia/chamada`):** o professor do 1º horário marca só **quem faltou**; os demais contam como presentes.
-  - Também marca quem entrou atrasado e pode **desfazer por 5 minutos**.
-  - "Salvar chamada" atualiza a contagem do dia e a merenda; dá para refazer.
+- **Chamada (`/demo/dia/chamada`):** tela de app para o celular do professor, sem o menu do site.
+  - Na primeira vez, pede o nome; depois aparece "Prof. Rita · trocar" no topo (fica só nesta aba).
+  - Turmas em abas no topo (✓ nas que já têm chamada) e contadores ao vivo: presentes, faltas e atrasos.
+  - Lista numerada como no diário de papel, com **P / F / A** em cada aluno (todos começam em P).
+  - Nada é gravado até tocar em **Salvar**, na barra fixa embaixo. Depois de salvar, aparece o resumo e o botão para a próxima turma sem chamada.
+  - Um atraso marcado pelo professor pode ser trocado por **5 minutos**; depois disso, fica travado ("fale com a coordenação"). Atrasos da portaria ou do QR já aparecem em A e travados.
 - **Portaria (`/demo/dia/portaria`):** registra pelo nome a chegada de quem não conseguiu ler o QR.
 - **Merenda (`/demo/dia/merenda`):** refeições para preparar, no total e por turma.
   - Conta os presentes, menos quem respondeu "não vou". **Quem não respondeu conta**, para o aluno sem celular não ficar sem merenda.
