@@ -194,3 +194,16 @@ body {
   --text-muted: #57534e;
   --border: #e4ded3;
 }
+
+/* Impressão do cartaz do QR da entrada: só a área de impressão aparece. */
+.print-only {
+  display: none;
+}
+@media print {
+  body > *:not(.print-only) {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+}

@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { Button, buttonClasses } from '@/components/ui/Button';
 import { formatHora } from '@/lib/attendance/clock';
 import { lateMessage } from '@/lib/attendance/message';
@@ -12,13 +13,19 @@ import {
   LIBERADO_LABEL,
   type LateRecord,
   type Liberado,
-  type RosterEntry,
 } from '@/lib/attendance/types';
 import { demoStore } from '@/lib/demoStore';
-import type { Analysis } from '@/lib/spreadsheet/types';
 import { familyMessage, whatsappUrl } from '@/lib/spreadsheet/whatsapp';
-import { MotivoChips } from './PortariaView';
-import { type Feedback, FeedbackBox, OperatorField, StudentSearch, describe } from './shared';
+import { RegistroShell } from './RegistroShell';
+import {
+  type Feedback,
+  FeedbackBox,
+  MotivoChips,
+  OperatorField,
+  StudentSearch,
+  describe,
+} from './shared';
+import { useRegistro } from './useRegistro';
 
 const AVISO_LABEL: Record<LateRecord['aviso'], string> = {
   pendente: 'Aviso pendente',
@@ -26,16 +33,11 @@ const AVISO_LABEL: Record<LateRecord['aviso'], string> = {
   dispensado: 'Aviso dispensado',
 };
 
-interface Props {
-  roster: RosterEntry[];
-  records: LateRecord[];
-  now: () => Date;
-  /** Análise com os atrasos de hoje somados (para os reincidentes). */
-  analysis: Analysis | null;
-}
+const card = 'rounded-3xl border border-border bg-surface p-4 sm:p-6';
 
-/** Coordenação: registra, edita o dia, envia os avisos (grátis, via wa.me) e vê reincidentes. */
-export function CoordenacaoView({ roster, records, now, analysis }: Props) {
+/** Coordenação: registra, corrige o dia, envia os avisos (grátis, via wa.me) e vê reincidentes. */
+export function CoordenacaoView() {
+  const { roster, records, now, analysis } = useRegistro();
   const [operator, setOperator] = useState('Coordenação');
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const phones = new Map(roster.map((r) => [r.key, r.telefone]));
@@ -51,163 +53,179 @@ export function CoordenacaoView({ roster, records, now, analysis }: Props) {
   };
 
   return (
-    <div className="space-y-6">
-      <section aria-labelledby="coord-registrar" className="space-y-3">
-        <h2 id="coord-registrar" className="font-display text-xl font-bold">
-          Coordenação
-        </h2>
-        <OperatorField id="coord-nome" label="Seu nome" value={operator} onChange={setOperator} />
-        <FeedbackBox feedback={feedback} />
-        <StudentSearch
-          id="coord-busca"
-          roster={roster}
-          records={records}
-          onPick={(entry) =>
-            setFeedback(
-              describe(
-                demoStore.register({
-                  entry,
-                  channel: 'coordenacao',
-                  registradoPor: operator,
-                  at: now(),
-                }),
-                entry.aluno,
-              ),
-            )
-          }
-        />
-      </section>
+    <RegistroShell
+      title="Coordenação"
+      subtitle="Corrija os registros do dia, avise as famílias e acompanhe quem atrasa sempre."
+    >
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-6">
+          <section aria-labelledby="coord-registrar" className={clsx(card, 'space-y-3')}>
+            <h2 id="coord-registrar" className="font-display text-lg font-bold">
+              Registrar atraso
+            </h2>
+            <div className="max-w-sm">
+              <OperatorField
+                id="coord-nome"
+                label="Seu nome"
+                value={operator}
+                onChange={setOperator}
+              />
+            </div>
+            <FeedbackBox feedback={feedback} />
+            <StudentSearch
+              id="coord-busca"
+              roster={roster}
+              records={records}
+              onPick={(entry) =>
+                setFeedback(
+                  describe(
+                    demoStore.register({
+                      entry,
+                      channel: 'coordenacao',
+                      registradoPor: operator,
+                      at: now(),
+                    }),
+                    entry.aluno,
+                  ),
+                )
+              }
+            />
+          </section>
 
-      <section aria-labelledby="coord-fila" className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 id="coord-fila" className="font-display text-lg font-bold">
-            Fila de avisos ({fila.length})
-          </h3>
-          {fila.length > 0 && (
-            <Button onClick={openNext} className="!min-h-10 !px-4 text-sm">
-              <Icon name="message" size={18} />
-              Enviar próximo
-            </Button>
+          <section aria-labelledby="coord-fila" className={clsx(card, 'space-y-3')}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="coord-fila" className="font-display text-lg font-bold">
+                Fila de avisos ({fila.length})
+              </h2>
+              {fila.length > 0 && (
+                <Button variant="whatsapp" size="sm" onClick={openNext}>
+                  <WhatsAppIcon size={18} />
+                  Enviar próximo
+                </Button>
+              )}
+            </div>
+            <p className="text-sm text-fg-muted">
+              Grátis e dentro das regras do WhatsApp: cada aviso abre a conversa com o texto pronto
+              (só nome, turma e horário) e você confere antes de enviar.
+            </p>
+            {fila.length === 0 ? (
+              <p className="text-sm">Nenhum aviso pendente.</p>
+            ) : (
+              <ul aria-label="Avisos pendentes" className="divide-y divide-border">
+                {fila.map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-2 py-2">
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold">{r.aluno}</span>
+                      <span className="text-sm text-fg-muted">
+                        {r.turma} · {formatHora(new Date(r.at))}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 gap-1">
+                      <a
+                        href={linkFor(r)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => send(r)}
+                        aria-label={`Avisar a família de ${r.aluno} no WhatsApp`}
+                        className={buttonClasses('whatsapp', undefined, 'sm')}
+                      >
+                        <WhatsAppIcon size={18} />
+                        Avisar
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => demoStore.update(r.id, { aviso: 'dispensado' })}
+                        aria-label={`Dispensar aviso de ${r.aluno}`}
+                      >
+                        Dispensar
+                      </Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <div className="space-y-6">
+          <section aria-labelledby="coord-hoje" className={clsx(card, 'space-y-3')}>
+            <h2 id="coord-hoje" className="font-display text-lg font-bold">
+              Atrasos de hoje ({records.length})
+            </h2>
+            {records.length === 0 ? (
+              <p className="text-sm text-fg-muted">
+                Nenhum atraso registrado ainda. Use o QR da entrada, a portaria ou o professor.
+              </p>
+            ) : (
+              <ul aria-label="Atrasos de hoje" className="space-y-2">
+                {[...records]
+                  .sort((a, b) => a.at.localeCompare(b.at))
+                  .map((r) => (
+                    <RecordCard key={r.id} r={r} />
+                  ))}
+              </ul>
+            )}
+          </section>
+
+          {analysis && (
+            <section aria-labelledby="coord-reincidentes" className={clsx(card, 'space-y-3')}>
+              <h2 id="coord-reincidentes" className="font-display text-lg font-bold">
+                Reincidentes ({analysis.atrasos.length})
+              </h2>
+              <p className="text-sm text-fg-muted">
+                {analysis.options.atrasosMin} atrasos ou mais (planilha + hoje, sem os
+                justificados).
+              </p>
+              <ul className="divide-y divide-border">
+                {analysis.atrasos.slice(0, 10).map((s) => (
+                  <li
+                    key={`${s.turma}-${s.aluno}`}
+                    className="flex items-center justify-between gap-2 py-2"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold">{s.aluno}</span>
+                      <span className="text-sm text-fg-muted">
+                        {s.turma} · <strong className="text-danger">{s.atrasos} atrasos</strong>
+                      </span>
+                    </span>
+                    <a
+                      href={whatsappUrl(s.telefone, familyMessage(s, analysis.options))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Chamar a família de ${s.aluno} para conversar`}
+                      className={buttonClasses('secondary', 'shrink-0', 'sm')}
+                    >
+                      <WhatsAppIcon size={18} className="text-whatsapp" />
+                      Conversar
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              {analysis.atrasos.length > 10 && (
+                <p className="text-sm text-fg-muted">
+                  Mostrando os 10 com mais atrasos. A lista completa está no painel, aba Alunos,
+                  filtro Atrasos.
+                </p>
+              )}
+            </section>
           )}
         </div>
-        <p className="text-sm text-fg-muted">
-          Grátis e dentro das regras do WhatsApp: cada aviso abre a conversa com o texto pronto (só
-          nome, turma e horário) e você confere antes de enviar. Justificados não entram na fila.
-        </p>
-        {fila.length === 0 ? (
-          <p className="text-sm">Nenhum aviso pendente.</p>
-        ) : (
-          <ul aria-label="Avisos pendentes" className="space-y-1.5">
-            {fila.map((r) => (
-              <li
-                key={r.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2"
-              >
-                <span className="min-w-0">
-                  <span className="font-semibold">{r.aluno}</span>{' '}
-                  <span className="text-sm text-fg-muted">
-                    {r.turma} · {formatHora(new Date(r.at))}
-                  </span>
-                </span>
-                <span className="flex gap-1.5">
-                  <a
-                    href={linkFor(r)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => send(r)}
-                    aria-label={`Avisar a família de ${r.aluno} no WhatsApp`}
-                    className={buttonClasses('primary', '!min-h-9 !px-3 text-sm')}
-                  >
-                    WhatsApp
-                  </a>
-                  <Button
-                    variant="ghost"
-                    onClick={() => demoStore.update(r.id, { aviso: 'dispensado' })}
-                    aria-label={`Dispensar aviso de ${r.aluno}`}
-                    className="!min-h-9 !px-3 text-sm"
-                  >
-                    Dispensar
-                  </Button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section aria-labelledby="coord-hoje" className="space-y-3">
-        <h3 id="coord-hoje" className="font-display text-lg font-bold">
-          Atrasos de hoje ({records.length})
-        </h3>
-        {records.length === 0 ? (
-          <p className="text-sm text-fg-muted">
-            Nenhum atraso registrado ainda. Use o totem, a portaria ou o professor.
-          </p>
-        ) : (
-          <ul aria-label="Atrasos de hoje" className="space-y-2">
-            {[...records]
-              .sort((a, b) => a.at.localeCompare(b.at))
-              .map((r) => (
-                <RecordCard key={r.id} r={r} />
-              ))}
-          </ul>
-        )}
-      </section>
-
-      {analysis && (
-        <section aria-labelledby="coord-reincidentes" className="space-y-3">
-          <h3 id="coord-reincidentes" className="font-display text-lg font-bold">
-            Reincidentes ({analysis.atrasos.length})
-          </h3>
-          <p className="text-sm text-fg-muted">
-            {analysis.options.atrasosMin} atrasos ou mais (total da planilha + registros de hoje,
-            sem os justificados).
-          </p>
-          <ul className="space-y-1.5">
-            {analysis.atrasos.slice(0, 10).map((s) => (
-              <li
-                key={`${s.turma}-${s.aluno}`}
-                className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2"
-              >
-                <span className="min-w-0">
-                  <span className="font-semibold">{s.aluno}</span>{' '}
-                  <span className="text-sm text-fg-muted">{s.turma}</span>{' '}
-                  <span className="text-sm font-bold text-danger">{s.atrasos} atrasos</span>
-                </span>
-                <a
-                  href={whatsappUrl(s.telefone, familyMessage(s, analysis.options))}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Chamar a família de ${s.aluno} para conversar`}
-                  className={buttonClasses('secondary', '!min-h-9 shrink-0 !px-3 text-sm')}
-                >
-                  Conversar
-                </a>
-              </li>
-            ))}
-          </ul>
-          {analysis.atrasos.length > 10 && (
-            <p className="text-sm text-fg-muted">
-              Mostrando os 10 com mais atrasos. A lista completa está no painel, aba Alunos, filtro
-              Atrasos.
-            </p>
-          )}
-        </section>
-      )}
-    </div>
+      </div>
+    </RegistroShell>
   );
 }
 
-/** Um atraso do dia, com motivo, justificativa e liberação editáveis. */
+/** Um atraso do dia: motivo, justificativa, liberação e exclusão. */
 function RecordCard({ r }: { r: LateRecord }) {
   const [open, setOpen] = useState(false);
   return (
-    <li className="rounded-xl border border-border bg-surface p-3">
+    <li className="rounded-xl border border-border bg-surface">
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="flex w-full items-center justify-between gap-2 rounded-xl p-3 text-left transition-colors hover:bg-muted"
       >
         <span className="min-w-0">
           <span className="font-semibold">{r.aluno}</span>{' '}
@@ -230,7 +248,7 @@ function RecordCard({ r }: { r: LateRecord }) {
         />
       </button>
       {open && (
-        <div className="mt-3 space-y-3 border-t border-border pt-3">
+        <div className="space-y-3 border-t border-border p-3">
           <MotivoChips
             label="Motivo"
             value={r.motivo}
@@ -267,7 +285,7 @@ function RecordCard({ r }: { r: LateRecord }) {
                 aria-pressed={r.liberado === l}
                 onClick={() => demoStore.update(r.id, { liberado: r.liberado === l ? null : l })}
                 className={clsx(
-                  'min-h-10 rounded-full border px-3 text-sm font-semibold',
+                  'min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors',
                   r.liberado === l
                     ? 'border-primary bg-primary text-on-primary'
                     : 'border-border bg-surface hover:border-primary',
@@ -276,6 +294,18 @@ function RecordCard({ r }: { r: LateRecord }) {
                 {LIBERADO_LABEL[l]}
               </button>
             ))}
+          </div>
+          <div className="border-t border-border pt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-danger"
+              onClick={() => demoStore.remove(r.id)}
+              aria-label={`Excluir registro de ${r.aluno}`}
+            >
+              <Icon name="close" size={16} />
+              Excluir registro
+            </Button>
           </div>
         </div>
       )}

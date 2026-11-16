@@ -25,7 +25,17 @@ export function ClockSettingsModal({ open, onClose, value, onChange }: Props) {
   const commit = (patch: Partial<ClockSettings>) => onChange({ ...value, ...patch });
 
   return (
-    <Modal open={open} onClose={onClose} title="Relógio e horário">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Relógio e horário"
+      subtitle="Entrada, tolerância e a hora usada pela demonstração."
+      footer={
+        <Button size="sm" onClick={onClose}>
+          Pronto
+        </Button>
+      }
+    >
       <div className="grid grid-cols-2 gap-3">
         <TextField
           id="relogio-entrada"
@@ -71,7 +81,8 @@ export function ClockSettingsModal({ open, onClose, value, onChange }: Props) {
               </div>
               <Button
                 variant="secondary"
-                className="mb-0.5 !px-3"
+                size="sm"
+                className="mb-1"
                 onClick={() => commit({ simulada: addMinutes(value.simulada!, -5) })}
                 aria-label="Voltar 5 minutos"
               >
@@ -79,26 +90,24 @@ export function ClockSettingsModal({ open, onClose, value, onChange }: Props) {
               </Button>
               <Button
                 variant="secondary"
-                className="mb-0.5 !px-3"
+                size="sm"
+                className="mb-1"
                 onClick={() => commit({ simulada: addMinutes(value.simulada!, 5) })}
                 aria-label="Avançar 5 minutos"
               >
                 +5
               </Button>
             </div>
-            <Button variant="ghost" onClick={() => commit({ simulada: null })}>
+            <Button variant="ghost" size="sm" onClick={() => commit({ simulada: null })}>
               Usar a hora real
             </Button>
           </>
         ) : (
-          <Button variant="secondary" onClick={() => commit({ simulada: '07:12' })}>
+          <Button variant="secondary" size="sm" onClick={() => commit({ simulada: '07:12' })}>
             Usar hora simulada (7h12)
           </Button>
         )}
       </div>
-      <Button onClick={onClose} className="w-full">
-        Pronto
-      </Button>
     </Modal>
   );
 }
