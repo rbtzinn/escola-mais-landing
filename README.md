@@ -133,7 +133,7 @@ O dia a dia da escola, com **uma tela para cada pessoa**, todas gravando no **me
 
 - **Hoje na escola (`/demo/dia`):**
   - números ao vivo: presentes, atrasos e avisos pendentes, refeições, professores faltando;
-  - o **QR único da entrada**, com cartaz para imprimir, e um **celular simulado** com a tela do aluno;
+  - o **QR único da entrada**, com cartaz para imprimir (que também serve de **plaquinha NFC**: uma etiqueta gravada com o mesmo link, com passo a passo e botão para copiar o link), e um **celular simulado** com a tela do aluno;
   - os links das telas.
 - **Aluno (`/demo/dia/aluno`):** abre ao ler o QR com o próprio celular. O aluno se identifica com **turma e matrícula** ("Olá, Ana S.!") e então:
   - **Cheguei atrasado:** só perto do horário de entrada (30 min antes até 2 h depois); fora disso, manda procurar a portaria;
