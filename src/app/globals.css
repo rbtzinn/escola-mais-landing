@@ -253,3 +253,13 @@ body {
     display: block;
   }
 }
+
+/* Lista de matrículas da portaria: uma turma por folha. */
+@media print {
+  .print-page {
+    break-after: page;
+  }
+  .print-page:last-child {
+    break-after: auto;
+  }
+}

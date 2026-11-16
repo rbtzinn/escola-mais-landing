@@ -162,6 +162,27 @@ describe('Dia a dia', () => {
     expect(screen.queryByText(/não tem a coluna Nascimento/)).not.toBeInTheDocument();
   });
 
+  it('portaria mostra a matrícula do aluno e imprime a lista por turma', async () => {
+    const user = userEvent.setup();
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    renderWith(<PortariaView />);
+    const lista = screen.getByTestId('lista-matriculas');
+    const folhas = within(lista).getAllByRole('heading', { level: 2 });
+    expect(folhas.map((h) => h.textContent)).toEqual([
+      expect.stringMatching(/^Turma 6A · impresso em/),
+      expect.stringMatching(/^Turma 6B · impresso em/),
+    ]);
+    expect(within(lista).getAllByText(/Não afixar/)).toHaveLength(2);
+    expect(within(lista).getByRole('row', { name: /Bia Lima 222222/ })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Buscar aluno pelo nome'), 'bia');
+    await user.click(screen.getByRole('button', { name: /Bia Lima/ }));
+    expect(screen.getByText('222222', { selector: 'strong' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Imprimir lista de matrículas' }));
+    expect(print).toHaveBeenCalled();
+  });
+
   it('matrícula de outra turma não é aceita', async () => {
     const user = userEvent.setup();
     renderWith(<AlunoPage />);
