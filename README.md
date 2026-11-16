@@ -25,12 +25,12 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 
 ## Estrutura
 
-- `src/app`: rotas `/` (landing), `/demo` e `/demo/registro`.
+- `src/app`: rotas `/` (landing), `/demo` e `/demo/registro` (Entrada) com `/aluno`, `/portaria`, `/professor` e `/coordenacao`.
 - `src/components/sections`: seções da landing, uma por arquivo.
 - `src/components/ui`: componentes próprios e acessíveis.
 - `src/components/layout`: cabeçalho e rodapé.
-- `src/components/registro`: registro de atrasos (totem, portaria, professor, coordenação, carteirinhas e leitor de QR).
-- `src/lib/attendance`: regras do registro (código opaco, relógio, registros, mensagem), funções puras e testadas.
+- `src/components/registro`: registro de atrasos (Entrada com QR e celular simulado, tela do aluno, portaria, professor e coordenação).
+- `src/lib/attendance`: regras do registro (matrícula, relógio e janela de horário, registros, desfazer, mensagem), funções puras e testadas.
 - `src/components/demo`: app da rota `/demo` (envio, mapeamento de colunas, painel em abas, fichas e imagem de compartilhamento).
 - `src/lib/spreadsheet`: leitura de CSV e Excel, análise e exportação em CSV.
 - `src/data`: textos e opções.
@@ -127,23 +127,34 @@ Dependência: `read-excel-file`, carregada só quando um `.xlsx` é aberto.
 
 ## Registro de atrasos (`/demo/registro`)
 
-Simula como os atrasos chegam ao painel. Quatro jeitos de registrar, todos gravando no **mesmo lugar** (se um aluno já foi registrado hoje, os outros canais veem "já registrado por X às H" e nada é duplicado):
+Simula como os atrasos chegam ao painel. **Cada pessoa tem a sua tela**, e todas gravam no **mesmo lugar**: se o aluno já foi registrado hoje, as outras telas mostram "já registrado por X às H" e nada é duplicado.
 
-- **Totem:** o aluno aproxima a carteirinha; a câmera lê o QR (`jsqr`, carregado só nesta tela). Tela pública: mostra só primeiro nome e inicial. A câmera é desligada ao sair.
-- **Portaria:** busca pelo nome (quem não tem carteirinha ou celular) ou lê o QR; motivo opcional.
-- **Professor(a):** escolhe a turma e marca "Atrasado" na chamada.
-- **Coordenação:** registra pelo nome, edita cada atraso (motivo, justificado, entrou no 1º ou 2º horário), envia a **fila de avisos** e vê os **reincidentes** (total da planilha + registros de hoje ≥ limite de atrasos).
+- **Entrada (`/demo/registro`):**
+  - mostra o **QR único da entrada**, com botão para imprimir o cartaz;
+  - ao lado, um **celular simulado** com a tela do aluno, para testar ali mesmo;
+  - traz os links das telas da equipe.
+- **Aluno (`/demo/registro/aluno`):** é o que abre ao ler o QR com a câmera do próprio celular.
+  - O aluno escolhe a turma, digita a **matrícula**, confirma "Você é Ana S.?" e registra.
+  - O link é público: mostra só o primeiro nome e a inicial e nunca lista alunos.
+  - Só aceita registros **perto do horário de entrada** (30 min antes até 2 h depois); fora disso, manda procurar a portaria.
+- **Portaria (`/demo/registro/portaria`):** link aberto no celular do porteiro, para quem não tem celular ou internet. Busca pelo nome, motivo opcional e lista das chegadas atrasadas do dia.
+- **Professor(a) (`/demo/registro/professor`):** escolhe a turma e marca "Atrasado". Pode **desfazer por 5 minutos**, com contagem regressiva na hora real; depois disso, a correção é com a coordenação.
+- **Coordenação (`/demo/registro/coordenacao`):** duas colunas no computador.
+  - Registra pelo nome.
+  - Fila de avisos às famílias.
+  - Atrasos do dia: motivo, justificado, entrou no 1º ou 2º horário e **excluir**.
+  - Reincidentes: total da planilha + hoje ≥ limite.
 
 Regras:
 
+- Matrícula: vem da coluna "Matrícula" da planilha (só os dígitos contam). Sem a coluna, o sistema gera 6 dígitos estáveis por aluno; a escola de exemplo já tem a coluna.
 - Atraso = chegada depois da entrada + tolerância (padrão 7h00 + 10 min, em "Relógio e horário"). Dentro da tolerância, "chegou no horário" e nada é registrado.
 - A demo usa uma **hora simulada** (começa em 7h12, com −5/+5 min) para funcionar fora do horário de entrada; há a opção de usar a hora real.
 - Justificado não conta no total e dispensa o aviso.
-- Os atrasos registrados somam à coluna de atrasos da planilha no painel da `/demo` (ou criam a coluna "Atrasos (registrados)"); o Resumo mostra "Hoje: N atrasos · M avisos pendentes".
+- Os atrasos registrados somam à coluna de atrasos da planilha no painel da `/demo` (ou criam a coluna "Atrasos (registrados)"). O Resumo mostra "Hoje: N atrasos · M avisos pendentes".
 - Sem planilha carregada, usa a escola de exemplo. Trocar de planilha zera os registros.
-- Tudo fica **só em memória nesta aba** (`src/lib/demoStore.ts`): sobrevive à navegação entre `/demo` e `/demo/registro`, some ao recarregar.
-
-Carteirinhas: o botão "Carteirinhas" gera cartões com QR (`qrcode-generator`, carregado só ao abrir) por turma, para abrir em outro celular ou imprimir. O QR guarda só um **código opaco** (`EM-XXXXXX`, hash do aluno), sem nome nem turma.
+- Tudo fica **só em memória nesta aba** (`src/lib/demoStore.ts`): sobrevive à navegação entre as telas e some ao recarregar. Por isso, um celular de verdade que ler o QR abre a tela do aluno, mas o registro não chega a esta aba; na escola real, isso exige um servidor.
+- QR gerado com `qrcode-generator` e desenhado em SVG, sempre escuro sobre claro (`.qr-light`), também no tema escuro.
 
 Avisos às famílias, custo e LGPD:
 
@@ -201,11 +212,11 @@ Plus Jakarta Sans (títulos) e Inter (texto), carregadas com `next/font/google` 
 - `spreadsheet/columns`: sugestão de colunas pelo nome (sem acento e sem maiúsculas) e reconhecimento das colunas de notas.
 - `spreadsheet/analyze`: frequência, média, alunos em risco com motivos, atrasos, indicadores gerais, critérios alterados, dias letivos zerados, avisos e CSV de risco.
 - `spreadsheet/insights`, `whatsapp`, `compare` e `sample` (`tests/spreadsheet/insights.test.ts`): faixas do semáforo, frase-resumo, ações do dia, telefone e mensagem do WhatsApp, comparação entre planilhas e escola de exemplo estável.
-- `attendance` (`tests/attendance/attendance.test.ts`): código opaco estável e sem nome, busca por código, nome público, hora simulada, tolerância, um registro por dia, justificado fora da fila e da soma, soma à planilha (com e sem coluna) e mensagem mínima.
-- Registro (`tests/Registro.test.tsx`): escola de exemplo sem planilha, portaria e professor no mesmo registro, totem por código sem duplicar e com código inválido, tolerância, fila de avisos com link do WhatsApp, justificar e liberar, reincidentes e soma no painel da `/demo`.
+- `attendance` (`tests/attendance/attendance.test.ts`): matrícula gerada estável, coluna de matrícula, busca só na turma escolhida, nome público, hora simulada, tolerância, janela do link do aluno, desfazer em 5 minutos, excluir, um registro por dia, justificado fora da fila e da soma, soma à planilha (com e sem coluna) e mensagem mínima.
+- Registro (`tests/Registro.test.tsx`): escola de exemplo sem planilha, Entrada com QR e links, aluno por turma e matrícula (certa, de outra turma, fora do horário), portaria e aluno no mesmo registro, professor marcando e desfazendo (e o desfazer sumindo após 5 min), coordenação com WhatsApp, justificar, excluir e reincidentes, e soma no painel da `/demo`.
 - `DemoApp` (`tests/DemoApp.test.tsx`): painel aberto direto quando as colunas são reconhecidas, veredito, ficha do aluno com link do WhatsApp, abas por clique e teclado, busca e filtros, critérios no modal, conferência de colunas, escola de exemplo com comparação, comparação com planilha enviada e erros de arquivo.
 
-Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom) nem para a leitura pela câmera (conferida no navegador com vídeo simulado). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
+Não há testes para tema, contadores, toast isolado, visual nem para a imagem de compartilhamento (canvas não existe no jsdom). Também não há testes para leitura de `.xlsx`, para o Windows-1252 nem para os limites de 5 MB e 5.000 linhas.
 
 ## Deploy
 
