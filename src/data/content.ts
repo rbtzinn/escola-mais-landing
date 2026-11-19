@@ -6,7 +6,6 @@ export const NAV_LINKS = [
   { href: '/#funcionalidades', label: 'Funcionalidades' },
   { href: '/#como-funciona', label: 'Como funciona' },
   { href: '/#amostra', label: 'Amostra' },
-  { href: '/#impacto', label: 'Impacto' },
   { href: '/#faq', label: 'Dúvidas' },
   { href: '/demo', label: 'Testar' },
 ];
@@ -94,34 +93,6 @@ export const STEPS = [
   {
     title: 'Deixe o Escola+ avisar',
     text: 'Mensagens automáticas aos pais, alertas de alunos em risco e relatórios prontos para o conselho.',
-  },
-];
-
-export const IMPACT: { value: number; prefix?: string; suffix?: string; label: string }[] = [
-  { value: 12, suffix: ' h', label: 'a menos por semana em planilhas e papelada' },
-  { value: 85, suffix: '%', label: 'das famílias avisadas no mesmo dia' },
-  { value: 60, suffix: '%', label: 'menos mensagens repetidas no WhatsApp' },
-  { value: 1, suffix: ' min', label: 'para emitir uma declaração' },
-];
-
-export const TESTIMONIALS = [
-  {
-    quote:
-      'Antes, o que chegava da Secretaria, da GRE e das famílias se misturava no WhatsApp. Agora tudo entra em uma fila, com prazo e responsável.',
-    role: 'Diretor de escola estadual',
-    context: 'Escola técnica',
-  },
-  {
-    quote:
-      'A declaração que levava a manhã sai em minutos, e a contagem do dia fecha sem papel. A secretaria respira.',
-    role: 'Secretária escolar',
-    context: 'Escola de 600 alunos',
-  },
-  {
-    quote:
-      'Os pais recebem o aviso sozinhos e, quando um professor falta, refaço o horário dos alunos na hora, sem planilha.',
-    role: 'Coordenadora pedagógica',
-    context: 'Ensino médio',
   },
 ];
 

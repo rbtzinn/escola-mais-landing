@@ -1,3 +1,5 @@
+'use client';
+
 import qrcode from 'qrcode-generator';
 import { useMemo } from 'react';
 

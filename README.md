@@ -12,7 +12,7 @@ Landing de apresentação do **Escola+**, uma plataforma de gestão para a dire�
 - Manutenção e ocorrências.
 
 - **Landing visual:** a página não tem backend, login nem banco de dados. A rota `/demo` é a exceção: funciona de verdade no navegador, sem backend, sem envio e sem armazenamento de dados.
-- **Dados fictícios:** números, painel e depoimentos são ilustrativos.
+- **Dados de exemplo:** o painel do topo e a amostra usam uma escola fictícia; a foto do topo é gerada por IA. Não há depoimentos nem números inventados.
 - **Formulário de demonstração:** não envia nada. O "envio" é simulado no navegador e nenhum dado é guardado.
 
 ## Stack
@@ -71,13 +71,12 @@ Ordem em `src/app/page.tsx`. Cabeçalho e rodapé ficam fora de `<main>`.
 | Seção (id)                                | Componente                                                                   | O que mostra                                                                                                                                                                                                                                          |
 | ----------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Cabeçalho                                 | `src/components/layout/Header.tsx`                                           | Menu, troca de tema e menu mobile                                                                                                                                                                                                                     |
-| Hero (`#topo`)                            | `src/components/sections/Hero.tsx` (usa `DashboardMockup.tsx`)               | Proposta de valor, botões e painel ilustrativo com dados fictícios                                                                                                                                                                                    |
-| Problemas (`#problemas`)                  | `src/components/sections/Problems.tsx`                                       | Planilhas soltas, pais avisados tarde, aluno em risco sem alerta e prestação de contas                                                                                                                                                                |
+| Topo (`#topo`)                            | `src/components/sections/Hero.tsx` (tela do celular em `PhoneScreen.tsx`)    | Metade rosa com o título pixel "Hoje na escola", metade azul com a promessa e o botão para `/demo`, e a coordenadora (foto gerada por IA) mostrando no celular um painel desenhado por código                                                         |
+| Cada pessoa na sua tela                   | `src/components/sections/Roles.tsx`                                          | Crachás que abrem a tela de cada pessoa: Professor, Portaria, Cozinha e Coordenação                                                                                                                                                                   |
+| Problemas (`#problemas`)                  | `src/components/sections/Problems.tsx`                                       | Bloco azul colado com fita: "O que toma o tempo da direção", em quatro bilhetes                                                                                                                                                                       |
 | Funcionalidades (`#funcionalidades`)      | `src/components/sections/Features.tsx`                                       | Nove áreas: mensagens aos pais, dashboards, frequência/chegada/atrasos, notas e risco, painel de demandas, declarações e documentos, horário e professores, merenda e estoque, manutenção e ocorrências                                               |
-| Como funciona (`#como-funciona`)          | `src/components/sections/HowItWorks.tsx`                                     | Três passos: enviar planilhas, ver o painel e deixar o Escola+ avisar                                                                                                                                                                                 |
+| Como funciona (`#como-funciona`)          | `src/components/sections/HowItWorks.tsx`                                     | Três passos (planilha, painel, avisos) e o cartaz da entrada com QR e plaquinha NFC                                                                                                                                                                   |
 | Amostra (`#amostra`)                      | `src/components/sections/DemoSample.tsx` (painéis em `DemoSamplePanels.tsx`) | Demo em miniatura com a escola de exemplo, em quatro abas que compartilham o estado: painel da planilha, QR da entrada e celular do aluno, chamada e horário, merenda e avisos. Usa as funções de `lib/` com estado próprio, sem tocar no `demoStore` |
-| Impacto (`#impacto`)                      | `src/components/sections/Impact.tsx`                                         | Quatro números fictícios de exemplo                                                                                                                                                                                                                   |
-| Depoimentos (`#depoimentos`)              | `src/components/sections/Testimonials.tsx`                                   | Três depoimentos ilustrativos (direção, coordenação e secretaria escolar)                                                                                                                                                                             |
 | Dúvidas (`#faq`)                          | `src/components/sections/Faq.tsx`                                            | Proteção de dados (LGPD), uso com SIEPE, mensagens aos pais, tecnologia, internet instável e custo                                                                                                                                                    |
 | Demonstração (`#demonstracao`)            | `src/components/sections/DemoForm.tsx`                                       | Formulário com cargo, município, UF e tamanho da escola; envio apenas simulado                                                                                                                                                                        |
 | Rodapé (política de privacidade em modal) | `src/components/layout/Footer.tsx`                                           | Política de privacidade, em modal                                                                                                                                                                                                                     |
@@ -190,23 +189,22 @@ Em `src/components/ui/`, feitos sem biblioteca externa:
 
 ## Cores e tema
 
-Visual **editorial escolar**: papel, tinta e material de escola, com cantos quase retos, linhas finas no lugar de cartões e seções numeradas. A paleta tem um papel para cada cor:
+Visual **papel serigrafado**: rosa `#fc3b7f`, creme `#fef1cf` e azul royal `#0032a8`, com tinta azul-escura `#141a3c` no texto, título em fonte pixel e adesivos em traço creme. Foi desenhado com a skill [impeccable](https://impeccable.style) (`.claude/skills/impeccable`) a partir de uma imagem aprovada (`.impeccable/mocks/comp-2-celular.jpg`); o registro do produto fica em `PRODUCT.md` e o do visual em `DESIGN.md`.
 
-- `#f5f3ea` (bg, papel) e `#17201b` (text, tinta)
-- `#1b4d3e` (primary, verde de quadro)
-- `#2b3a8c` (secondary, azul de caneta; usado em anotações)
-- `#b3261e` (danger, caneta vermelha)
-- `#f2c230` (accent, marca-texto; a classe `.marker` pinta a faixa atrás de uma palavra)
+- Tokens de interface (`bg`, `surface`, `primary`, `accent`, `danger`, `ok`...): valem para todas as telas, inclusive `/demo` e `/demo/dia`, que só trocaram cores e fontes.
+- Tokens de mundo (`pink`, `blue`, `cream`, `ink`, `green`, `yellow`, `line`): pintam a landing e são iguais nos dois temas.
+- Texturas: `.paper-pink`, `.paper-blue` e `.paper-cream` repetem recortes de papel tirados da imagem aprovada (`public/plates/`). `.tape` cola fita nos cantos de um bloco.
+- Contraste: creme sobre rosa só em texto grande; texto pequeno sobre rosa vai em tinta.
 
-No tema escuro a página vira o próprio quadro-verde. Os raios do Tailwind (`rounded-lg`, `rounded-2xl`...) foram reduzidos no `@theme` para valer no site todo.
+No tema escuro a página vira azul-noite (`#0a1236`), com creme no texto e rosa nos destaques; o topo rosa e azul continua igual.
 
-Os tokens ficam em `src/app/globals.css`: `:root` para o tema claro e `[data-theme='dark']` para o escuro. Eles são mapeados para classes Tailwind como `bg-primary`, `text-fg-muted` e `border-border`.
+Os tokens ficam em `src/app/globals.css`: `:root` para o tema claro e `[data-theme='dark']` para o escuro. Eles são mapeados para classes Tailwind como `bg-primary`, `text-fg-muted` e `bg-pink`.
 
 O tema segue o sistema por padrão. O botão no cabeçalho alterna entre claro e escuro e salva a escolha em `localStorage`, na chave `theme`. Um script em `src/app/layout.tsx` aplica o tema antes da primeira pintura.
 
 ## Tipografia
 
-Newsreader (títulos, serifa; classe `font-display`), Source Sans 3 (texto) e IBM Plex Mono (rótulos e números de seção; classe `.eyebrow`), carregadas com `next/font/google` em `src/app/layout.tsx`.
+Jersey 15 (título pixel; classe `font-pixel`), Barlow Condensed (títulos; classe `font-display`), Barlow (texto) e Martian Mono (linhas de dado; classe `font-mono`), carregadas com `next/font/google` em `src/app/layout.tsx`.
 
 ## Acessibilidade
 

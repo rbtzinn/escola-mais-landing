@@ -128,8 +128,6 @@ export function DemoSample() {
         <Reveal>
           <SectionHeading
             id="amostra-titulo"
-            index="04"
-            eyebrow="Amostra"
             title="Mexa aqui mesmo: é a demo de verdade, em miniatura"
             description="Uma escola de exemplo já está carregada. O que você marca numa aba aparece nas outras, como acontece entre a portaria, a sala, a cozinha e a coordenação."
           />

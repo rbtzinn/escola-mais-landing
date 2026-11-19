@@ -47,7 +47,7 @@ export function Verdict({
       {comparison && comparison.emComum > 0 && (
         <p className="mt-2 text-sm font-semibold">
           Desde a planilha anterior:{' '}
-          <span className="text-primary">
+          <span className="text-ok">
             {comparison.sairam} {comparison.sairam === 1 ? 'saiu' : 'saíram'} do risco
           </span>
           ,{' '}

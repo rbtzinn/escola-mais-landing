@@ -1,43 +1,44 @@
+import { Icon } from '@/components/icons';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { PROBLEMS } from '@/data/content';
 
+/** O que toma o tempo da direção: um bloco azul colado com fita, com quatro bilhetes creme. */
 export function Problems() {
   return (
-    <section
-      id="problemas"
-      aria-labelledby="problemas-titulo"
-      className="border-t border-fg py-20 sm:py-28"
-    >
-      <Container className="grid gap-12 lg:grid-cols-12 lg:gap-10">
-        <Reveal className="lg:col-span-5">
-          <div className="lg:sticky lg:top-28">
+    <section id="problemas" aria-labelledby="problemas-titulo" className="py-16 sm:py-24">
+      <Container>
+        <div className="paper-blue tape rounded-3xl px-5 py-12 sm:px-12 sm:py-16">
+          <Reveal>
             <SectionHeading
               id="problemas-titulo"
-              index="01"
-              eyebrow="O problema"
-              title="Gerir uma escola não deveria depender de planilha solta, papelada e grupo de WhatsApp"
+              tone="cream"
+              align="center"
+              className="max-w-3xl"
+              title="O que toma o tempo da direção"
+              description="Gerir uma escola não deveria depender de planilha solta, papelada e grupo de WhatsApp."
             />
-          </div>
-        </Reveal>
-        <ol className="border-t border-fg lg:col-span-7">
-          {PROBLEMS.map((p, i) => (
-            <li key={p.title} className="border-b border-fg/20">
-              <Reveal delay={i * 60} className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-7 sm:py-8">
-                <span aria-hidden="true" className="eyebrow pt-2 text-danger">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <div>
-                  <h3 className="font-display text-2xl leading-tight font-medium sm:text-[1.75rem]">
+          </Reveal>
+          <ul className="mt-10 grid gap-4 sm:mt-12 md:grid-cols-2 lg:gap-5">
+            {PROBLEMS.map((p, i) => (
+              <li key={p.title}>
+                <Reveal
+                  delay={i * 60}
+                  className="h-full rounded-2xl bg-cream p-6 text-ink shadow-card sm:p-7"
+                >
+                  <span className="flex size-11 items-center justify-center rounded-full bg-pink text-cream">
+                    <Icon name={p.icon} size={22} />
+                  </span>
+                  <h3 className="mt-4 font-display text-[1.75rem] leading-[1.05] font-extrabold">
                     {p.title}
                   </h3>
-                  <p className="mt-2 max-w-xl text-lg leading-relaxed text-fg-muted">{p.text}</p>
-                </div>
-              </Reveal>
-            </li>
-          ))}
-        </ol>
+                  <p className="mt-2 text-lg leading-relaxed text-ink/75">{p.text}</p>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </div>
       </Container>
     </section>
   );

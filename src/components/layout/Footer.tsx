@@ -11,22 +11,22 @@ export function Footer() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
   return (
-    <footer className="border-t border-fg">
+    <footer className="paper-blue text-cream">
       <Container className="grid gap-10 py-14 md:grid-cols-[1.6fr_1fr_1fr]">
         <div>
           <Logo className="!text-4xl" />
-          <p className="mt-5 max-w-sm font-display text-xl leading-snug text-fg-muted italic">
+          <p className="mt-5 max-w-sm font-display text-2xl leading-tight font-bold text-cream/90">
             Gestão mais simples para quem cuida do dia a dia da escola pública.
           </p>
         </div>
         <nav aria-label="Rodapé">
-          <h2 className="eyebrow mb-3 text-fg-muted">Nesta página</h2>
+          <h2 className="mb-3 font-mono text-xs text-cream/70">Nesta página</h2>
           <ul>
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
                 <a
                   href={l.href}
-                  className="inline-flex min-h-9 items-center decoration-accent decoration-2 underline-offset-4 hover:underline"
+                  className="inline-flex min-h-9 items-center decoration-pink decoration-2 underline-offset-4 hover:underline"
                 >
                   {l.label}
                 </a>
@@ -35,13 +35,13 @@ export function Footer() {
           </ul>
         </nav>
         <div>
-          <h2 className="eyebrow mb-3 text-fg-muted">Institucional</h2>
+          <h2 className="mb-3 font-mono text-xs text-cream/70">Institucional</h2>
           <ul>
             <li>
               <button
                 type="button"
                 onClick={() => setPrivacyOpen(true)}
-                className="inline-flex min-h-9 items-center decoration-accent decoration-2 underline-offset-4 hover:underline"
+                className="inline-flex min-h-9 items-center decoration-pink decoration-2 underline-offset-4 hover:underline"
               >
                 Política de privacidade
               </button>
@@ -49,7 +49,7 @@ export function Footer() {
             <li>
               <Link
                 href="/#demonstracao"
-                className="inline-flex min-h-9 items-center decoration-accent decoration-2 underline-offset-4 hover:underline"
+                className="inline-flex min-h-9 items-center decoration-pink decoration-2 underline-offset-4 hover:underline"
               >
                 Solicitar demonstração
               </Link>
@@ -57,10 +57,10 @@ export function Footer() {
           </ul>
         </div>
       </Container>
-      <div className="border-t border-fg/20">
-        <Container className="eyebrow flex flex-col gap-1 py-5 text-fg-muted sm:flex-row sm:justify-between">
+      <div className="border-t border-cream/25">
+        <Container className="flex flex-col gap-1 py-5 font-mono text-xs text-cream/75 sm:flex-row sm:justify-between">
           <p>© 2026 Escola+ · projeto demonstrativo</p>
-          <p>Dados, números e depoimentos são fictícios</p>
+          <p>Dados de exemplo · foto gerada por IA</p>
         </Container>
       </div>
 

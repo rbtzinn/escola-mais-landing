@@ -6,9 +6,8 @@ import { Faq } from '@/components/sections/Faq';
 import { Features } from '@/components/sections/Features';
 import { Hero } from '@/components/sections/Hero';
 import { HowItWorks } from '@/components/sections/HowItWorks';
-import { Impact } from '@/components/sections/Impact';
 import { Problems } from '@/components/sections/Problems';
-import { Testimonials } from '@/components/sections/Testimonials';
+import { Roles } from '@/components/sections/Roles';
 
 export default function Home() {
   return (
@@ -16,12 +15,11 @@ export default function Home() {
       <Header />
       <main id="conteudo" tabIndex={-1}>
         <Hero />
+        <Roles />
         <Problems />
         <Features />
         <HowItWorks />
         <DemoSample />
-        <Impact />
-        <Testimonials />
         <Faq />
         <DemoForm />
       </main>

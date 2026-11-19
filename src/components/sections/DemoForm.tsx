@@ -58,25 +58,20 @@ export function DemoForm() {
   };
 
   return (
-    <section
-      id="demonstracao"
-      aria-labelledby="demo-titulo"
-      className="border-t border-fg bg-muted py-20 sm:py-28"
-    >
+    <section id="demonstracao" aria-labelledby="demo-titulo" className="paper-pink py-16 sm:py-24">
       <Container className="grid gap-12 lg:grid-cols-12 lg:gap-10">
         <Reveal className="lg:col-span-5">
           <SectionHeading
             id="demo-titulo"
-            index="08"
-            eyebrow="Demonstração"
+            tone="pink"
             title="Veja o Escola+ com os dados da sua escola"
             description="Preencha o formulário e agende uma conversa com a nossa equipe."
           />
-          <ul className="mt-9 border-t border-fg/40">
+          <ul className="mt-9 border-t-2 border-ink/60 text-ink">
             {DEMO_BENEFITS.map((b) => (
-              <li key={b} className="flex items-start gap-3 border-b border-fg/20 py-3.5">
-                <Icon name="check" size={20} className="mt-0.5 shrink-0 text-primary" />
-                <span className="leading-relaxed">{b}</span>
+              <li key={b} className="flex items-start gap-3 border-b border-ink/25 py-3.5">
+                <Icon name="check" size={20} className="mt-0.5 shrink-0 text-ink" />
+                <span className="text-lg leading-relaxed font-semibold">{b}</span>
               </li>
             ))}
           </ul>
@@ -87,11 +82,11 @@ export function DemoForm() {
             noValidate
             onSubmit={onSubmit}
             aria-labelledby="demo-titulo"
-            className="border border-fg/70 bg-surface p-6 shadow-card sm:p-9"
+            className="tape rounded-3xl bg-surface p-6 shadow-card sm:p-9"
           >
-            <p className="eyebrow mb-6 flex justify-between gap-4 border-b border-fg/25 pb-3 text-fg-muted">
+            <p className="mb-6 flex justify-between gap-4 border-b-2 border-line pb-3 font-display text-xl font-extrabold">
               <span>Ficha de solicitação</span>
-              <span>Envio simulado</span>
+              <span className="font-mono text-xs font-normal text-fg-muted">Envio simulado</span>
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
