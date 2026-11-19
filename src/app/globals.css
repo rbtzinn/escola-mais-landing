@@ -1,46 +1,58 @@
 @import 'tailwindcss';
 
 /*
- * Paleta "material escolar": papel, tinta, verde de quadro, caneta azul, caneta vermelha e
- * marca-texto. Tokens claros por padrão; no escuro, a página vira o próprio quadro-verde.
+ * Paleta "papel serigrafado": rosa, creme e azul royal, com tinta azul-escura para o texto.
+ * Os tokens de interface (bg, surface, primary...) servem a todas as telas; os de mundo
+ * (pink, blue, cream, ink) pintam a landing e são iguais nos dois temas.
+ * No escuro, a página vira azul-noite, com creme no texto e rosa nos destaques.
  */
 :root {
-  --bg: #f5f3ea;
-  --surface: #fffefa;
-  --surface-muted: #ebe7d9;
-  --border: #d5cfbd;
-  --text: #17201b;
-  --text-muted: #525a52;
-  --primary: #1b4d3e;
-  --on-primary: #fffefa;
-  --secondary: #2b3a8c;
-  --accent: #f2c230;
-  --on-accent: #17201b;
+  --pink: #fc3b7f;
+  --blue: #0032a8;
+  --cream: #fef1cf;
+  --ink: #141a3c;
+  --green: #0ba95a;
+  --yellow: #f8c925;
+
+  --bg: #fef1cf;
+  --surface: #fff8e7;
+  --surface-muted: #f7e6bd;
+  --border: #e2cc97;
+  --text: #141a3c;
+  --text-muted: #4b5070;
+  --primary: #0032a8;
+  --on-primary: #fef1cf;
+  --secondary: #c81e5c;
+  --accent: #f8c925;
+  --on-accent: #141a3c;
   --danger: #b3261e;
   /* Faixa de marca-texto atrás de uma palavra. */
-  --marker: #f6d667;
+  --marker: rgb(252 59 127 / 0.32);
   /* Verde da marca WhatsApp, com texto escuro (contraste AA). */
   --whatsapp: #25d366;
   --on-whatsapp: #052e16;
-  --ring: #2b3a8c;
-  --shadow: 0 1px 0 rgb(23 32 27 / 0.05), 0 14px 30px -20px rgb(23 32 27 / 0.35);
+  --ring: #c81e5c;
+  --shadow: 0 1px 0 rgb(20 26 60 / 0.06), 0 16px 32px -20px rgb(20 26 60 / 0.4);
+  --paper-pink: url('/plates/chao-rosa.png');
+  --paper-blue: url('/plates/chao-azul.png');
+  --paper-cream: url('/plates/chao-creme.png');
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #0f1a16;
-  --surface: #15231d;
-  --surface-muted: #1b2c25;
-  --border: #2f433a;
-  --text: #eef0e6;
-  --text-muted: #a8b3a8;
-  --primary: #8fd4b4;
-  --on-primary: #0c2219;
-  --secondary: #aab5f6;
-  --danger: #f4877b;
-  --marker: rgb(242 194 48 / 0.32);
-  --ring: #aab5f6;
-  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 14px 30px -20px rgb(0 0 0 / 0.7);
+  --bg: #0a1236;
+  --surface: #111b48;
+  --surface-muted: #18245a;
+  --border: #2b3b7a;
+  --text: #fef1cf;
+  --text-muted: #c9c6e0;
+  --primary: #ff6fa0;
+  --on-primary: #1a0a22;
+  --secondary: #ff8fb6;
+  --danger: #ff8a80;
+  --marker: rgb(252 59 127 / 0.4);
+  --ring: #ff8fb6;
+  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 16px 32px -20px rgb(0 0 0 / 0.75);
   color-scheme: dark;
 }
 
@@ -59,20 +71,27 @@
   --color-danger: var(--danger);
   --color-whatsapp: var(--whatsapp);
   --color-on-whatsapp: var(--on-whatsapp);
+  --color-pink: var(--pink);
+  --color-blue: var(--blue);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
   --font-sans: var(--font-body), system-ui, sans-serif;
-  --font-display: var(--font-serif), Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-condensed), 'Arial Narrow', sans-serif;
+  --font-pixel: var(--font-bitmap), var(--font-condensed), monospace;
   --font-mono: var(--font-code), ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --shadow-card: var(--shadow);
 }
 
-/* Cantos quase retos em todo o site: cara de impresso, não de aplicativo. */
+/* Cantos arredondados de crachá e botão de papel. */
 @theme {
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 4px;
-  --radius-2xl: 6px;
-  --radius-3xl: 8px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 22px;
 }
 
 html {
@@ -106,10 +125,63 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Títulos em serifa: algarismos alinhados e um pouco mais juntos. */
+/* Títulos condensados: algarismos alinhados e caixa um pouco mais junta. */
 .font-display {
   font-variant-numeric: lining-nums;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.005em;
+}
+
+/* Partes do navegador também vestem a paleta. */
+::selection {
+  background: var(--pink);
+  color: var(--cream);
+}
+html {
+  accent-color: var(--primary);
+  caret-color: var(--primary);
+  scrollbar-color: var(--primary) var(--surface-muted);
+}
+
+/* Papel serigrafado: textura recortada da imagem aprovada, repetida. */
+.paper-pink {
+  background-color: var(--pink);
+  background-image: var(--paper-pink);
+}
+.paper-blue {
+  background-color: var(--blue);
+  background-image: var(--paper-blue);
+}
+.paper-cream {
+  background-color: var(--cream);
+  background-image: var(--paper-cream);
+}
+[data-theme='dark'] .paper-cream {
+  background-color: var(--bg);
+  background-image: none;
+}
+
+/* Fita adesiva nos cantos de um bloco colado. */
+.tape {
+  position: relative;
+}
+.tape::before,
+.tape::after {
+  content: '';
+  position: absolute;
+  top: -0.9rem;
+  width: 6.5rem;
+  height: 1.8rem;
+  background: rgb(254 241 207 / 0.72);
+  box-shadow: 0 2px 4px -2px rgb(20 26 60 / 0.35);
+  pointer-events: none;
+}
+.tape::before {
+  left: -1.4rem;
+  transform: rotate(-32deg);
+}
+.tape::after {
+  right: -1.4rem;
+  transform: rotate(32deg);
 }
 
 /* Rótulo pequeno em monoespaçada (número de seção, cabeçalho de tabela, carimbo). */
@@ -236,9 +308,9 @@ body {
 /* QR sempre escuro sobre claro (leitores de QR esperam esse contraste), mesmo no tema escuro. */
 .qr-light {
   --surface: #ffffff;
-  --text: #17201b;
-  --text-muted: #525a52;
-  --border: #d5cfbd;
+  --text: #141a3c;
+  --text-muted: #4b5070;
+  --border: #e2cc97;
 }
 
 /* Impressão do cartaz do QR da entrada: só a área de impressão aparece. */

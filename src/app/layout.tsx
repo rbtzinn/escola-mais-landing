@@ -1,23 +1,29 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Mono, Newsreader, Source_Sans_3 } from 'next/font/google';
+import { Barlow, Barlow_Condensed, Jersey_15, Martian_Mono } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
 
-// Texto: Source Sans 3 (humanista, boa em tela pequena). Títulos: Newsreader (serifa de jornal).
-// Rótulos e números de seção: IBM Plex Mono.
-const body = Source_Sans_3({
+// Texto: Barlow (clara em tela pequena). Títulos: Barlow Condensed pesada.
+// Título pixel da landing: Jersey 15. Linhas de dado e de máquina: Martian Mono.
+const body = Barlow({
   variable: '--font-body',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
-const serif = Newsreader({
-  variable: '--font-serif',
+const condensed = Barlow_Condensed({
+  variable: '--font-condensed',
   subsets: ['latin'],
-  style: ['normal', 'italic'],
-  axes: ['opsz'],
+  weight: ['600', '700', '800'],
   display: 'swap',
 });
-const code = IBM_Plex_Mono({
+const bitmap = Jersey_15({
+  variable: '--font-bitmap',
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+});
+const code = Martian_Mono({
   variable: '--font-code',
   subsets: ['latin'],
   weight: ['400', '500'],
@@ -39,8 +45,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f5f3ea' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f1a16' },
+    { media: '(prefers-color-scheme: light)', color: '#fef1cf' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a1236' },
   ],
 };
 
@@ -51,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="pt-BR"
-      className={`${body.variable} ${serif.variable} ${code.variable}`}
+      className={`${body.variable} ${condensed.variable} ${bitmap.variable} ${code.variable}`}
       suppressHydrationWarning
     >
       <head>
