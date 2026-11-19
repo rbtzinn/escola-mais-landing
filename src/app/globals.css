@@ -26,12 +26,16 @@
   --accent: #f8c925;
   --on-accent: #141a3c;
   --danger: #b3261e;
+  /* Verde do semáforo ("está tudo bem"), legível sobre o creme. */
+  --ok: #0a7a43;
   /* Faixa de marca-texto atrás de uma palavra. */
   --marker: rgb(252 59 127 / 0.32);
   /* Verde da marca WhatsApp, com texto escuro (contraste AA). */
   --whatsapp: #25d366;
   --on-whatsapp: #052e16;
   --ring: #c81e5c;
+  /* Traço de tinta das réguas e contornos da landing (creme no escuro). */
+  --line: #141a3c;
   --shadow: 0 1px 0 rgb(20 26 60 / 0.06), 0 16px 32px -20px rgb(20 26 60 / 0.4);
   --paper-pink: url('/plates/chao-rosa.png');
   --paper-blue: url('/plates/chao-azul.png');
@@ -50,8 +54,10 @@
   --on-primary: #1a0a22;
   --secondary: #ff8fb6;
   --danger: #ff8a80;
+  --ok: #5ad696;
   --marker: rgb(252 59 127 / 0.4);
   --ring: #ff8fb6;
+  --line: #fef1cf;
   --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 16px 32px -20px rgb(0 0 0 / 0.75);
   color-scheme: dark;
 }
@@ -69,8 +75,10 @@
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
+  --color-ok: var(--ok);
   --color-whatsapp: var(--whatsapp);
   --color-on-whatsapp: var(--on-whatsapp);
+  --color-line: var(--line);
   --color-pink: var(--pink);
   --color-blue: var(--blue);
   --color-cream: var(--cream);
@@ -171,8 +179,8 @@ html {
   top: -0.9rem;
   width: 6.5rem;
   height: 1.8rem;
-  background: rgb(254 241 207 / 0.72);
-  box-shadow: 0 2px 4px -2px rgb(20 26 60 / 0.35);
+  background: rgb(232 214 170 / 0.82);
+  box-shadow: 0 2px 4px -2px rgb(20 26 60 / 0.3);
   pointer-events: none;
 }
 .tape::before {

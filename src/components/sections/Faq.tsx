@@ -6,14 +6,16 @@ import { FAQ } from '@/data/content';
 
 export function Faq() {
   return (
-    <section id="faq" aria-labelledby="faq-titulo" className="border-t border-fg py-20 sm:py-28">
+    <section
+      id="faq"
+      aria-labelledby="faq-titulo"
+      className="border-t-2 border-line py-16 sm:py-24"
+    >
       <Container className="grid gap-12 lg:grid-cols-12 lg:gap-10">
         <Reveal className="lg:col-span-4">
           <div className="lg:sticky lg:top-28">
             <SectionHeading
               id="faq-titulo"
-              index="07"
-              eyebrow="Dúvidas"
               title="Perguntas que costumam surgir"
               description="Não achou a sua? Fale com a gente na demonstração."
             />

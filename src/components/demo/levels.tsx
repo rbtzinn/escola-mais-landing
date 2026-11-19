@@ -6,19 +6,19 @@ import { formatNumber } from '@/lib/spreadsheet/numbers';
 
 /** Cores do semáforo, só com tokens. O texto sempre repete a situação (a cor não é a única pista). */
 export const LEVEL_CARD: Record<Level, string> = {
-  ok: 'border-primary/50 bg-primary/10',
+  ok: 'border-ok/50 bg-ok/10',
   atencao: 'border-accent bg-accent/25',
   critico: 'border-danger/60 bg-danger/10',
 };
 
 export const LEVEL_DOT: Record<Level, string> = {
-  ok: 'bg-primary',
+  ok: 'bg-ok',
   atencao: 'bg-accent',
   critico: 'bg-danger',
 };
 
 export const LEVEL_TEXT: Record<Level, string> = {
-  ok: 'text-primary',
+  ok: 'text-ok',
   atencao: 'text-fg',
   critico: 'text-danger',
 };
@@ -52,7 +52,7 @@ export function DeltaTag({
     <span
       className={clsx(
         'inline-flex items-center gap-0.5 text-xs font-bold whitespace-nowrap',
-        good ? 'text-primary' : 'text-danger',
+        good ? 'text-ok' : 'text-danger',
         className,
       )}
     >

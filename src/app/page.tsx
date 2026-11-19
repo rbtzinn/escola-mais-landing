@@ -7,6 +7,7 @@ import { Features } from '@/components/sections/Features';
 import { Hero } from '@/components/sections/Hero';
 import { HowItWorks } from '@/components/sections/HowItWorks';
 import { Problems } from '@/components/sections/Problems';
+import { Roles } from '@/components/sections/Roles';
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <Header />
       <main id="conteudo" tabIndex={-1}>
         <Hero />
+        <Roles />
         <Problems />
         <Features />
         <HowItWorks />
