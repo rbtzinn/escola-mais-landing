@@ -18,19 +18,19 @@ export function PhoneScreen() {
         transform: 'rotate(-6.1deg)',
       }}
     >
-      <div className="flex h-full flex-col items-center px-[9cqw] pt-[17cqw] text-center text-ink">
-        <p className="font-sans text-[8cqw] leading-none font-bold text-blue">Escola+</p>
-        <span className="hero-badge mt-[11cqw] rounded-full bg-yellow px-[5cqw] py-[1.6cqw] font-sans text-[6.2cqw] leading-none font-bold">
+      <div className="flex h-full flex-col items-center px-[7cqw] pt-[15cqw] text-center text-ink">
+        <p className="font-sans text-[10cqw] leading-none font-bold text-blue">Escola+</p>
+        <span className="hero-badge mt-[12cqw] rounded-full bg-yellow px-[6cqw] py-[2cqw] font-sans text-[7.6cqw] leading-none font-bold">
           Atenção
         </span>
-        <p className="mt-[4cqw] font-sans text-[8.4cqw] leading-[1.15] font-semibold">
+        <p className="mt-[4cqw] font-sans text-[10.4cqw] leading-[1.12] font-semibold">
           3 turmas precisam de atenção hoje
         </p>
-        <p className="mt-[2.5cqw] font-sans text-[4.2cqw] leading-tight text-ink/70">
+        <p className="mt-[3cqw] font-sans text-[5.1cqw] leading-tight text-ink/70">
           142/144 presentes · 5 atrasos · 133 refeições
         </p>
-        <span className="mt-[5cqw] inline-flex items-center gap-[2cqw] rounded-full bg-green px-[5cqw] py-[2.4cqw] font-sans text-[5cqw] leading-none font-semibold text-cream">
-          <WhatsAppIcon size={14} className="size-[5.6cqw]" />
+        <span className="mt-[6cqw] inline-flex items-center gap-[2cqw] rounded-full bg-green px-[6cqw] py-[3cqw] font-sans text-[6.2cqw] leading-none font-semibold text-cream">
+          <WhatsAppIcon size={14} className="size-[6.8cqw]" />
           Avisar no WhatsApp
         </span>
       </div>

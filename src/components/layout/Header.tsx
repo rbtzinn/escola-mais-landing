@@ -12,6 +12,9 @@ import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
 import { ThemeToggle } from './ThemeToggle';
 
+// Sobre o topo da landing, só os quatro atalhos da imagem aprovada; os outros ficam no menu e no rodapé.
+const HOME_NAV = ['/#problemas', '/#funcionalidades', '/#como-funciona', '/demo'];
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,7 +49,7 @@ export function Header() {
         )}
       >
         <Link href="/" aria-label="Escola+, ir para o início" className="rounded-sm">
-          <Logo />
+          <Logo className={home ? 'lg:text-[2.9vw]' : undefined} />
         </Link>
         <nav
           aria-label="Principal"
@@ -55,7 +58,7 @@ export function Header() {
             home ? 'lg:ml-auto lg:flex lg:gap-[2.2vw]' : 'md:flex',
           )}
         >
-          {NAV_LINKS.map((l) => (
+          {(home ? NAV_LINKS.filter((l) => HOME_NAV.includes(l.href)) : NAV_LINKS).map((l) => (
             <a
               key={l.href}
               href={l.href}

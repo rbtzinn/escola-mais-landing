@@ -46,12 +46,13 @@ export function Hero() {
           <p className="font-display text-[13vw] leading-[0.92] font-extrabold text-balance text-cream sm:text-[9vw] lg:text-[5.25vw]">
             A escola inteira no seu celular.
           </p>
-          <p className="mt-6 max-w-[32ch] font-mono text-[0.95rem] leading-relaxed text-cream sm:text-lg lg:mt-[2.2vw] lg:max-w-none lg:text-[1.43vw]">
-            Funciona com a planilha que você já usa. Nada é enviado.
+          <p className="mt-6 max-w-[32ch] font-mono text-[0.95rem] leading-relaxed text-cream sm:text-lg lg:mt-[1.6vw] lg:max-w-none lg:text-[1.15vw]">
+            Funciona com a planilha que você já usa. <br className="max-lg:hidden" />
+            Nada é enviado.
           </p>
           <Link
             href="/demo"
-            className="mt-8 flex min-h-16 items-center justify-center rounded-2xl bg-cream px-6 text-center font-display text-[1.6rem] leading-none font-extrabold text-blue transition-transform hover:-translate-y-0.5 hover:-rotate-1 focus-visible:outline-cream sm:text-3xl lg:mt-[2.4vw] lg:min-h-[5.6vw] lg:text-[2.6vw]"
+            className="mt-8 flex min-h-16 items-center justify-center rounded-2xl bg-cream px-6 text-center font-display text-[1.6rem] leading-none font-extrabold text-blue transition-transform hover:-translate-y-0.5 hover:-rotate-1 focus-visible:outline-cream sm:text-3xl lg:mt-[1.9vw] lg:min-h-[5vw] lg:text-[2.5vw]"
           >
             Testar com a minha planilha
           </Link>
