@@ -81,18 +81,19 @@ export const FEATURES: { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
+// Como a escola recebe o Escola+ dela: um núcleo só, montado com a planilha de cada escola.
 export const STEPS = [
   {
-    title: 'Envie suas planilhas',
-    text: 'Suba matrículas, notas e faltas das planilhas que você já usa, ou a exportação do sistema atual, como o SIEPE.',
+    title: 'Você manda só o cabeçalho',
+    text: 'Os nomes das colunas da planilha que a escola já usa (ou da exportação do SIEPE). Nenhum dado de aluno nessa etapa.',
   },
   {
-    title: 'Veja a escola em um painel',
-    text: 'Em minutos, os dados viram dashboards de turmas, frequência e notas, sem refazer nada. Já dá para testar.',
+    title: 'Montamos o Escola+ da sua escola',
+    text: 'Com o nome da escola, as suas turmas, as suas regras e só as telas que vocês usam: chamada, portaria, merenda, horário, avisos.',
   },
   {
-    title: 'Deixe o Escola+ avisar',
-    text: 'Mensagens automáticas aos pais, alertas de alunos em risco e relatórios prontos para o conselho.',
+    title: 'Ajustamos juntos',
+    text: 'Vocês testam no dia a dia e a gente ajusta até ficar do jeito da escola. As cores e o cuidado com os dados são os do Escola+.',
   },
 ];
 
