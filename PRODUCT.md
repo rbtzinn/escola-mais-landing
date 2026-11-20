@@ -20,6 +20,8 @@ Escola+ tira da direção as contagens e planilhas manuais: a planilha que a esc
 
 Funciona com o que a escola pública já tem: a planilha de hoje, o celular de cada um e um QR (ou plaquinha NFC) na entrada. Sem instalar nada, sem enviar dados na demonstração. Feito a partir das dores contadas por quem trabalha numa escola pública (contagem diária, merenda, horário remanejado, atrasos).
 
+**Modelo de entrega (decidido em nov/2026):** um núcleo único, configurado por escola. Cada escola recebe "o Escola+ da sua escola": nome, turmas, colunas da planilha, regras e só as telas que usa, sempre com as cores do Escola+. No primeiro contato, pede-se **só o cabeçalho** da planilha (sem dado de aluno). Nada de uma cópia de código por escola.
+
 ## Operating Context
 
 - Celular primeiro (direção, porteiro, professor, aluno); computador na secretaria.

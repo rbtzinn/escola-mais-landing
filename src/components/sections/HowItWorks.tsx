@@ -56,7 +56,8 @@ export function HowItWorks() {
           <Reveal>
             <SectionHeading
               id="como-titulo"
-              title="Da planilha ao painel, e da entrada à coordenação"
+              title="O Escola+ da sua escola, montado com a sua planilha"
+              description="Não é um pacote igual para todas: cada escola recebe o seu, feito a partir do que ela já usa."
             />
           </Reveal>
           <ol className="mt-10 space-y-7">
