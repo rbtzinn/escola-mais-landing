@@ -48,6 +48,7 @@ function setup() {
   setupUsers_(made.users);
   secret_();
   writeSummary_(made.summary, sheet);
+  styleSummary_(made.summary);
   installSummaryTrigger_(sheet.getParent());
   removeEmptyDefaultSheet_(sheet.getParent());
 
@@ -283,6 +284,7 @@ function readApproved(header, rows, toKey) {
   var h = header.map(normText);
   var ic = h.indexOf('cpf');
   var inasc = h.indexOf('data de nascimento');
+  var inome = h.indexOf('nome');
   var im = h.indexOf('modalidade');
   var icur = h.indexOf('curso');
   if (ic < 0 || inasc < 0) return [];
@@ -291,6 +293,7 @@ function readApproved(header, rows, toKey) {
       return {
         cpf: normCpf(r[ic]),
         nasc: (toKey || dateKey)(r[inasc]),
+        nome: inome >= 0 ? String(r[inome] || '').trim() : '',
         modalidade: im >= 0 ? String(r[im] || '').trim() : '',
         curso: icur >= 0 ? String(r[icur] || '').trim() : '',
       };
@@ -497,6 +500,8 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     if (!data || typeof data !== 'object') return json({ status: 'erro', message: 'Envio vazio.' });
+    // "ping": o site chama ao abrir só para acordar o script; não lê token nem planilha.
+    if (data.action === 'ping') return json({ status: 'ok' });
     if (data.action === 'login' || ADMIN_ACTIONS.indexOf(data.action) >= 0) return json(admin_(data));
 
     var token = PropertiesService.getScriptProperties().getProperty('FORM_TOKEN');
@@ -506,9 +511,14 @@ function doPost(e) {
       var invalid = validatePayload(data);
       if (invalid) return json({ status: 'erro', message: invalid });
     }
-    return json(withLock_(function () {
-      return data.action === 'check' ? check_(data) : save_(data);
-    }));
+    // A conferência do começo só lê: não entra na fila das gravações. Os contadores de tentativas
+    // (CacheService) podem contar a menos numa corrida, o que é aceitável.
+    if (data.action === 'check') return json(check_(data));
+    return json(
+      withLock_(function () {
+        return save_(data);
+      }),
+    );
   } catch (err) {
     return json({ status: 'erro', message: 'Falha ao gravar na planilha.' });
   }
@@ -675,28 +685,35 @@ function admin_(data) {
 
   if (data.action === 'painel') return painel_(made, session);
   return withLock_(function () {
-    switch (data.action) {
-      case 'status':
-        return setStatus_(made, session, data);
-      case 'periodo':
-        return setPeriod_(made, data);
-      case 'aprovados_add':
-        return addApproved_(made, data);
-      case 'aprovados_remover':
-        return removeApproved_(made, data);
-      case 'excecao_add':
-        return addException_(made, session, data);
-      case 'excecao_remover':
-        return removeException_(made, data);
-      case 'usuario_add':
-        return addUser_(made, data);
-      case 'usuario_senha':
-        return setPassword_(made, data);
-      case 'usuario_ativo':
-        return setActive_(made, data);
-    }
-    return { status: 'erro', message: 'Ação desconhecida.' };
+    var r = runAction_(made, session, data);
+    // O painel já volta atualizado: o site não precisa de uma segunda viagem para recarregar.
+    if (r && r.status === 'ok') r.painel = painel_(made, session);
+    return r;
   });
+}
+
+function runAction_(made, session, data) {
+  switch (data.action) {
+    case 'status':
+      return setStatus_(made, session, data);
+    case 'periodo':
+      return setPeriod_(made, data);
+    case 'aprovados_add':
+      return addApproved_(made, data);
+    case 'aprovados_remover':
+      return removeApproved_(made, data);
+    case 'excecao_add':
+      return addException_(made, session, data);
+    case 'excecao_remover':
+      return removeException_(made, data);
+    case 'usuario_add':
+      return addUser_(made, data);
+    case 'usuario_senha':
+      return setPassword_(made, data);
+    case 'usuario_ativo':
+      return setActive_(made, data);
+  }
+  return { status: 'erro', message: 'Ação desconhecida.' };
 }
 
 function login_(data) {
@@ -739,7 +756,7 @@ function painel_(made, session) {
   };
   if (session.papel === 'direcao') {
     out.aprovados = readApprovedSheet_(made.approved).map(function (a, i) {
-      return { cpf: a.cpf, nasc: formatKey(a.nasc), modalidade: a.modalidade, curso: a.curso, nome: approvedNames_(made.approved)[a.cpf] || '' };
+      return { cpf: a.cpf, nasc: formatKey(a.nasc), modalidade: a.modalidade, curso: a.curso, nome: a.nome };
     });
     out.excecoes = readExceptionsSheet_(made.exceptions).map(function (e) {
       return {
@@ -761,25 +778,6 @@ function painel_(made, session) {
     });
   }
   return out;
-}
-
-var approvedNamesCache_ = null;
-function approvedNames_(sheet) {
-  if (approvedNamesCache_) return approvedNamesCache_;
-  var map = {};
-  var lastRow = sheet.getLastRow();
-  if (lastRow >= 2) {
-    var values = sheet.getRange(1, 1, lastRow, Math.max(sheet.getLastColumn(), 1)).getDisplayValues();
-    var h = values[0].map(normText);
-    var ic = h.indexOf('cpf');
-    var inome = h.indexOf('nome');
-    if (ic >= 0 && inome >= 0)
-      values.slice(1).forEach(function (r) {
-        map[normCpf(r[ic])] = String(r[inome] || '').trim();
-      });
-  }
-  approvedNamesCache_ = map;
-  return map;
 }
 
 function setStatus_(made, session, data) {
@@ -818,7 +816,7 @@ function setPeriod_(made, data) {
   var end = data.fim ? dateKey(data.fim) : '';
   if ((data.inicio && !start) || (data.fim && !end)) return { status: 'erro', message: 'Data inválida.' };
   if (start && end && end < start) return { status: 'erro', message: 'O fim é antes do início.' };
-  setupConfig_(made.config);
+  if (made.config.getLastRow() === 0) setupConfig_(made.config);
   var rows = made.config.getRange(1, 1, made.config.getLastRow(), 1).getValues();
   rows.forEach(function (r, i) {
     var label = normText(r[0]);
@@ -832,7 +830,7 @@ function setPeriod_(made, data) {
 function addApproved_(made, data) {
   var checked = checkApprovedLines(data.linhas);
   var sheet = made.approved;
-  setupApproved_(sheet);
+  if (sheet.getLastRow() === 0) setupApproved_(sheet);
   var width = Math.max(sheet.getLastColumn(), APPROVED_COLUMNS.length);
   var header = sheet.getRange(1, 1, 1, width).getValues()[0].map(normText);
   var col = function (n) {
@@ -890,7 +888,6 @@ function addException_(made, session, data) {
   if (!validade || validade < todayKey_()) return { status: 'erro', message: 'O prazo tem que ser hoje ou depois.' };
   if (!data.periodo && !data.lista && !data.reenvio) return { status: 'erro', message: 'Escolha o que a exceção libera.' };
   var sheet = made.exceptions;
-  setupExceptions_(sheet);
   var yes = function (v) {
     return v ? YES : '';
   };
@@ -968,17 +965,15 @@ function findActiveCpf_(sheet, cpf) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return false;
   var header = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
-  var rows = sheet.getRange(2, 1, lastRow - 1, header.length).getValues();
   var ic = header.indexOf('CPF do aluno');
   var is = header.indexOf('Status');
   if (ic < 0) return false;
-  var active = rows
-    .filter(function (r) {
-      return is < 0 || String(r[is]).trim() !== 'Cancelado';
-    })
-    .map(function (r) {
-      return r[ic];
-    });
+  // Lê só as duas colunas que importam, não as 100 e tantas da matrícula.
+  var n = lastRow - 1;
+  var cpfs = sheet.getRange(2, ic + 1, n, 1).getValues();
+  var statuses = is >= 0 ? sheet.getRange(2, is + 1, n, 1).getValues() : null;
+  var active = [];
+  for (var i = 0; i < n; i++) if (!statuses || String(statuses[i][0]).trim() !== 'Cancelado') active.push(cpfs[i][0]);
   return findCpfRow(active, cpf) >= 0;
 }
 
@@ -1013,28 +1008,46 @@ function readPeriod_(sheet) {
 }
 
 /** A planilha: a do SHEET_ID (script aberto pelo script.new) ou aquela onde o script foi colado. */
+/* Cada execução do Apps Script roda o arquivo do zero: estas variáveis valem só para um pedido. */
+var ss_ = null;
+var made_ = null;
+
 function spreadsheet_() {
+  if (ss_) return ss_;
   var id = extractSheetId(PropertiesService.getScriptProperties().getProperty('SHEET_ID'));
-  if (id) return SpreadsheetApp.openById(id);
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss)
-    throw new Error(
-      'Planilha não encontrada. Em Configurações do projeto > Propriedades do script, crie SHEET_ID com o link da planilha.',
-    );
-  return ss;
+  if (id) ss_ = SpreadsheetApp.openById(id);
+  else {
+    ss_ = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss_)
+      throw new Error(
+        'Planilha não encontrada. Em Configurações do projeto > Propriedades do script, crie SHEET_ID com o link da planilha.',
+      );
+  }
+  return ss_;
 }
 
+/** As abas do projeto, buscadas numa chamada só (cada getSheetByName é uma ida ao Google). */
 function ensureSheets_() {
+  if (made_) return made_;
   var ss = spreadsheet_();
-  var sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME, 0);
-  var summary = ss.getSheetByName(SUMMARY_NAME) || ss.insertSheet(SUMMARY_NAME);
-  var approved = ss.getSheetByName(APPROVED_NAME) || ss.insertSheet(APPROVED_NAME);
-  var config = ss.getSheetByName(CONFIG_NAME) || ss.insertSheet(CONFIG_NAME);
-  var exceptions = ss.getSheetByName(EXCEPTIONS_NAME) || ss.insertSheet(EXCEPTIONS_NAME);
-  var users = ss.getSheetByName(USERS_NAME) || ss.insertSheet(USERS_NAME);
+  var byName = {};
+  ss.getSheets().forEach(function (sh) {
+    byName[sh.getName()] = sh;
+  });
+  var get = function (name, index) {
+    if (!byName[name]) byName[name] = index === undefined ? ss.insertSheet(name) : ss.insertSheet(name, index);
+    return byName[name];
+  };
+  var sheet = get(SHEET_NAME, 0);
+  var summary = get(SUMMARY_NAME);
+  var approved = get(APPROVED_NAME);
+  var config = get(CONFIG_NAME);
+  var exceptions = get(EXCEPTIONS_NAME);
+  var users = get(USERS_NAME);
   if (users.getLastRow() === 0) users.getRange(1, 1, 1, USER_COLUMNS.length).setValues([USER_COLUMNS]);
   if (exceptions.getLastRow() === 0) exceptions.getRange(1, 1, 1, EXCEPTION_COLUMNS.length).setValues([EXCEPTION_COLUMNS]);
-  return { sheet: sheet, summary: summary, approved: approved, config: config, exceptions: exceptions, users: users };
+  made_ = { sheet: sheet, summary: summary, approved: approved, config: config, exceptions: exceptions, users: users };
+  return made_;
 }
 
 /** Aba "Aprovados": cabeçalho e colunas como texto (CPF não perde o zero do começo). */
@@ -1109,13 +1122,29 @@ function installSummaryTrigger_(ss) {
   ScriptApp.newTrigger('atualizarResumo').forSpreadsheet(ss).onEdit().create();
 }
 
-/** Reescreve a aba de resumo: matrículas por modalidade e curso, confirmadas e o total. */
+/**
+ * Reescreve os números da aba de resumo. Lê só as colunas Modalidade, Curso e Status (não a
+ * matrícula inteira) e não mexe na formatação, que o `setup` aplica uma vez (styleSummary_).
+ */
 function writeSummary_(summary, sheet) {
   var lastRow = sheet.getLastRow();
-  var lastCol = Math.max(sheet.getLastColumn(), 1);
-  var header = lastRow > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-  var rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastCol).getValues() : [];
-  var table = countByCourse(header, rows);
+  var wanted = ['Modalidade', 'Curso', 'Status'];
+  var rows = [];
+  if (lastRow > 1) {
+    var head = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    var n = lastRow - 1;
+    var cols = wanted.map(function (name) {
+      var i = head.indexOf(name);
+      return i >= 0 ? sheet.getRange(2, i + 1, n, 1).getValues() : null;
+    });
+    for (var r = 0; r < n; r++)
+      rows.push(
+        cols.map(function (c) {
+          return c ? c[r][0] : '';
+        }),
+      );
+  }
+  var table = countByCourse(wanted, rows);
   var total = 0;
   var pending = 0;
   table.forEach(function (t) {
@@ -1123,7 +1152,7 @@ function writeSummary_(summary, sheet) {
     pending += t[3];
   });
 
-  summary.clear();
+  summary.clearContents();
   summary.getRange('A1:D1').setValues([['Modalidade', 'Curso', 'Matrículas', 'Pendentes']]);
   if (table.length) summary.getRange(2, 1, table.length, 4).setValues(table);
   else summary.getRange('A2').setValue('Sem matrículas ainda');
@@ -1131,6 +1160,10 @@ function writeSummary_(summary, sheet) {
     ['Total', 'Pendentes'],
     [total, pending],
   ]);
+}
+
+/** Formatação da aba de resumo (uma vez, no setup). */
+function styleSummary_(summary) {
   summary.getRange('A1:G1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
   summary.getRange('E1').setBackground(null);
   summary.getRange('F2:G2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
