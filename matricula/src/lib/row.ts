@@ -1,9 +1,16 @@
 import { OUTRO, type Step, type Values, isVisible } from './schema';
 
-/** Cabeçalho e valores da linha da planilha, na ordem das etapas. Campo escondido vai vazio. */
-export function toRow(steps: Step[], v: Values): { columns: string[]; row: string[] } {
-  const columns: string[] = [];
-  const row: string[] = [];
+/**
+ * Cabeçalho e valores da linha da planilha, na ordem das etapas. Campo escondido vai vazio.
+ * `fixed` são colunas que o aluno não responde (ex.: ano de ingresso), postas no começo.
+ */
+export function toRow(
+  steps: Step[],
+  v: Values,
+  fixed: Record<string, string> = {},
+): { columns: string[]; row: string[] } {
+  const columns: string[] = Object.keys(fixed);
+  const row: string[] = Object.values(fixed);
   const push = (col: string, val: string) => {
     columns.push(col);
     row.push(val);

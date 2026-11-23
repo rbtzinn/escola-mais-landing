@@ -31,7 +31,7 @@ function display(f: Field, v: Values): string {
 
 /** Baixa as respostas em CSV (quando a planilha ainda não foi ligada). */
 function downloadCsv(values: Values) {
-  const { columns, row } = toRow(STEPS, values);
+  const { columns, row } = toRow(STEPS, values, { 'Ano de ingresso': String(CONFIG.ano) });
   const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
   const csv = `\uFEFF${columns.map(esc).join(';')}\n${row.map(esc).join(';')}\n`;
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -126,7 +126,7 @@ export default function App() {
       return;
     }
     setSending('sending');
-    const { columns, row } = toRow(STEPS, values);
+    const { columns, row } = toRow(STEPS, values, { 'Ano de ingresso': String(CONFIG.ano) });
     const r = await submitMatricula(CONFIG.appsScriptUrl, {
       token: CONFIG.token,
       cpf: String(values.aluno_cpf ?? ''),

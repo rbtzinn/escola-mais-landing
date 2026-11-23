@@ -161,8 +161,10 @@ describe('planilha, rascunho e envio', () => {
       mora_com_outro: 'Madrinha',
       'interesses:Teatro': 'Quero aprender',
     };
-    const { columns, row } = toRow(steps, v);
+    const { columns, row } = toRow(steps, v, { 'Ano de ingresso': '2026' });
     const at = (c: string) => row[columns.indexOf(c)];
+    expect(columns[0]).toBe('Ano de ingresso');
+    expect(row[0]).toBe('2026');
     expect(columns.length).toBe(row.length);
     expect(at('Consentimento LGPD')).toBe('Sim');
     expect(at('Seu nome completo')).toBe('Ana Souza');
