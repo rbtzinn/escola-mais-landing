@@ -38,6 +38,7 @@ const gs = fakeModule.exports as {
   statusError: (status: string, obs: string) => string | null;
   checkApprovedLines: (l: unknown[]) => { ok: { cpf: string; nasc: string }[]; bad: { linha: number; motivo: string }[] };
   FIXED_COLUMNS: string[];
+  STATUS: string[];
 };
 type Exc = { linha: number; cpf: string; nasc: string; periodo: boolean; lista: boolean; reenvio: boolean; validade: string; usadaEm: string };
 type Hmac = (msg: string, secret: string) => string;

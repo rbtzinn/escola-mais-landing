@@ -8,12 +8,15 @@ export function toRow(
   steps: Step[],
   v: Values,
   fixed: Record<string, string> = {},
-): { columns: string[]; row: string[] } {
+): { columns: string[]; row: string[]; stepIds: string[] } {
   const columns: string[] = Object.keys(fixed);
   const row: string[] = Object.values(fixed);
+  const stepIds: string[] = columns.map(() => '');
+  let stepId = '';
   const push = (col: string, val: string) => {
     columns.push(col);
     row.push(val);
+    stepIds.push(stepId);
   };
   const text = (id: string) => (typeof v[id] === 'string' ? (v[id] as string).trim() : '');
   // Rótulos repetidos em etapas diferentes ("Estado", "Cidade", "Qual?") ganham o nome da etapa.
@@ -21,6 +24,7 @@ export function toRow(
   for (const s of steps) for (const f of s.fields) count.set(f.label, (count.get(f.label) ?? 0) + 1);
 
   for (const step of steps) {
+    stepId = step.id;
     for (const f of step.fields) {
       const visible = isStepVisible(step, v) && isVisible(f, v);
       if (f.kind === 'consent') {
@@ -44,7 +48,7 @@ export function toRow(
       push((count.get(f.label) ?? 0) > 1 ? `${f.label} (${step.short})` : f.label, val);
     }
   }
-  return { columns, row };
+  return { columns, row, stepIds };
 }
 
 const shortLabel = (label: string) => (label.length > 30 ? 'Interesse' : label);

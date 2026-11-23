@@ -21,7 +21,7 @@ export interface Payload {
   row: string[];
 }
 
-type Reply = {
+export type Reply = {
   status?: string;
   protocolo?: string;
   message?: string;
@@ -35,14 +35,14 @@ type Reply = {
  * POST para o app da web do Apps Script. Usa text/plain de propósito: assim o navegador não faz
  * a checagem prévia de CORS, que o Apps Script não responde.
  */
-async function post(url: string, body: object, fetcher: typeof fetch): Promise<Reply | null> {
+export async function post<T = Reply>(url: string, body: object, fetcher: typeof fetch = fetch): Promise<T | null> {
   try {
     const res = await fetcher(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(body),
     });
-    return (await res.json()) as Reply;
+    return (await res.json()) as T;
   } catch {
     return null;
   }

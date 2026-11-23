@@ -2,6 +2,13 @@ import type { SVGProps } from 'react';
 
 const PATHS = {
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  logout: 'M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l-5-5 5-5M5 12h11',
+  plus: 'M12 5v14M5 12h14',
+  trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  key: 'M14 4a6 6 0 11-4.6 9.8L4 19v-3h3v-3h2.2A6 6 0 0114 4zM16 8h.01',
   close: 'M6 6l12 12M18 6L6 18',
   sun: 'M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',
   moon: 'M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z',
