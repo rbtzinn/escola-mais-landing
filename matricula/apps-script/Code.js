@@ -22,28 +22,8 @@ function setup() {
   if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, FIXED_COLUMNS.length).setValues([FIXED_COLUMNS]);
   styleHeader_(sheet, Math.max(sheet.getLastColumn(), FIXED_COLUMNS.length));
 
-  var summary = made.summary;
-  summary.clear();
-  summary.getRange('A1:C1').setValues([['Modalidade', 'Curso', 'Matrículas']]);
-  // Acha as colunas "Modalidade" e "Curso" pelo nome, então funciona mesmo se a ordem mudar.
-  // Apps Script grava fórmulas na sintaxe em inglês (vírgulas), qualquer que seja o idioma.
-  var col = function (name) {
-    return "INDEX('" + SHEET_NAME + "'!A2:ZZ,0,MATCH(\"" + name + "\",'" + SHEET_NAME + "'!A1:ZZ1,0))";
-  };
-  summary
-    .getRange('A2')
-    .setFormula(
-      '=IFERROR(QUERY({' + col('Modalidade') + ',' + col('Curso') +
-        "},\"select Col1, Col2, count(Col2) where Col2 is not null group by Col1, Col2 label count(Col2) ''\",0),\"Sem matrículas ainda\")",
-    );
-  summary.getRange('E1').setValue('Total');
-  summary.getRange('E2').setFormula("=COUNTA('" + SHEET_NAME + "'!B2:B)");
-  summary.getRange('A1:E1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
-  summary.getRange('E2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
-  summary.setColumnWidth(1, 140);
-  summary.setColumnWidth(2, 200);
-  summary.setColumnWidth(3, 120);
-  summary.setFrozenRows(1);
+  writeSummary_(made.summary, sheet);
+  removeEmptyDefaultSheet_(made.sheet.getParent());
   Logger.log('Pronto: abas "' + SHEET_NAME + '" e "' + SUMMARY_NAME + '" criadas na planilha "' + made.sheet.getParent().getName() + '".');
 }
 
@@ -130,6 +110,33 @@ function findCpfRow(cpfColumn, cpf) {
   return -1;
 }
 
+/**
+ * Contagem por modalidade e curso a partir das linhas da planilha (sem o cabeçalho).
+ * Feita pelo script, e não por fórmula, para funcionar em planilha de qualquer idioma.
+ */
+function countByCourse(header, rows) {
+  var im = header.indexOf('Modalidade');
+  var ic = header.indexOf('Curso');
+  if (ic < 0) return [];
+  var counts = {};
+  var order = [];
+  rows.forEach(function (r) {
+    var curso = String(r[ic] || '').trim();
+    if (!curso) return;
+    var mod = im >= 0 ? String(r[im] || '').trim() : '';
+    var key = mod + '\u0000' + curso;
+    if (!(key in counts)) {
+      counts[key] = 0;
+      order.push(key);
+    }
+    counts[key]++;
+  });
+  return order.sort().map(function (k) {
+    var parts = k.split('\u0000');
+    return [parts[0], parts[1], counts[k]];
+  });
+}
+
 /** Aceita o link inteiro da planilha ou só o ID ("…/spreadsheets/d/<ID>/edit" → "<ID>"). */
 function extractSheetId(raw) {
   var s = String(raw == null ? '' : raw).trim();
@@ -185,6 +192,7 @@ function doPost(e) {
       var row = buildRow(header, data, protocolo, stamp);
       var target = sheet.getRange(dataRows + 2, 1, 1, row.length);
       target.setNumberFormat('@').setValues([row]);
+      writeSummary_(ensureSheets_().summary, sheet);
       return json({ status: 'ok', protocolo: protocolo });
     } finally {
       lock.releaseLock();
@@ -213,6 +221,36 @@ function ensureSheets_() {
   return { sheet: sheet, summary: summary };
 }
 
+/** Reescreve a aba de resumo: matrículas por modalidade e curso, e o total. */
+function writeSummary_(summary, sheet) {
+  var lastRow = sheet.getLastRow();
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var header = lastRow > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  var rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastCol).getValues() : [];
+  var table = countByCourse(header, rows);
+
+  summary.clear();
+  summary.getRange('A1:C1').setValues([['Modalidade', 'Curso', 'Matrículas']]);
+  if (table.length) summary.getRange(2, 1, table.length, 3).setValues(table);
+  else summary.getRange('A2').setValue('Sem matrículas ainda');
+  summary.getRange('E1:E2').setValues([['Total'], [rows.length]]);
+  summary.getRange('A1:E1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
+  summary.getRange('E2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
+  summary.setColumnWidth(1, 140);
+  summary.setColumnWidth(2, 200);
+  summary.setColumnWidth(3, 120);
+  summary.setFrozenRows(1);
+}
+
+/** Apaga a aba vazia que vem na planilha nova ("Página1" / "Sheet1"), se ela estiver vazia. */
+function removeEmptyDefaultSheet_(ss) {
+  ss.getSheets().forEach(function (sh) {
+    var name = sh.getName();
+    if (name !== SHEET_NAME && name !== SUMMARY_NAME && /^(Página|Sheet|Planilha)\s?1$/.test(name) && sh.getLastRow() === 0)
+      ss.deleteSheet(sh);
+  });
+}
+
 function styleHeader_(sheet, width) {
   var header = sheet.getRange(1, 1, 1, width);
   header
@@ -222,7 +260,8 @@ function styleHeader_(sheet, width) {
     .setWrap(true)
     .setVerticalAlignment('middle');
   sheet.setFrozenRows(1);
-  sheet.setFrozenColumns(3);
+  // Só o cabeçalho fica fixo: no celular, colunas congeladas escondem as do lado.
+  sheet.setFrozenColumns(0);
   sheet.setRowHeight(1, 48);
   sheet.setColumnWidths(1, width, 180);
   sheet.setColumnWidth(1, 130);
@@ -257,6 +296,7 @@ if (typeof module !== 'undefined') {
     findCpfRow: findCpfRow,
     makeProtocol: makeProtocol,
     extractSheetId: extractSheetId,
+    countByCourse: countByCourse,
     FIXED_COLUMNS: FIXED_COLUMNS,
   };
 }

@@ -14,6 +14,7 @@ const gs = fakeModule.exports as {
   findCpfRow: (col: string[], cpf: string) => number;
   makeProtocol: (y: number, n: number) => string;
   extractSheetId: (s: string | null) => string;
+  countByCourse: (h: string[], rows: string[][]) => [string, string, number][];
   FIXED_COLUMNS: string[];
 };
 
@@ -45,6 +46,20 @@ describe('Apps Script (funções puras)', () => {
     expect(gs.findCpfRow(['11144477735', '529.982.247-25'], '52998224725')).toBe(1);
     expect(gs.findCpfRow([], '52998224725')).toBe(-1);
     expect(gs.makeProtocol(2026, 7)).toBe('MAT-2026-0007');
+  });
+  it('conta por modalidade e curso (sem fórmula)', () => {
+    const header = ['Enviado em', 'Modalidade', 'Curso'];
+    const rows = [
+      ['x', 'Integrado', 'Farmácia'],
+      ['x', 'Subsequente', 'Farmácia'],
+      ['x', 'Integrado', 'Farmácia'],
+      ['x', 'Integrado', ''],
+    ];
+    expect(gs.countByCourse(header, rows)).toEqual([
+      ['Integrado', 'Farmácia', 2],
+      ['Subsequente', 'Farmácia', 1],
+    ]);
+    expect(gs.countByCourse(['Enviado em'], rows)).toEqual([]);
   });
   it('aceita o link inteiro da planilha ou só o ID', () => {
     expect(gs.extractSheetId('https://docs.google.com/spreadsheets/d/1AbC-_x9/edit#gid=0')).toBe('1AbC-_x9');
