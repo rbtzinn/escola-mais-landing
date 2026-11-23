@@ -4,17 +4,34 @@ import { CONFIG } from '@/config';
 import { FieldView } from '@/components/FieldView';
 import { Icon } from '@/components/icons';
 import { useTheme } from '@/hooks/useTheme';
-import { hideCpf } from '@/lib/cpf';
+import { hideCpf, onlyDigits } from '@/lib/cpf';
 import { clearDraft, loadDraft, saveDraft } from '@/lib/draft';
 import { toRow } from '@/lib/row';
-import { OUTRO, buildSteps, isStepVisible, isVisible, type Field, type Values } from '@/lib/schema';
-import { submitMatricula, type SubmitResult } from '@/lib/submit';
+import {
+  APROVADO_CHAVE,
+  APROVADO_CURSO,
+  APROVADO_MODALIDADE,
+  OUTRO,
+  buildSteps,
+  isStepVisible,
+  isVisible,
+  matchOption,
+  type Field,
+  type Values,
+} from '@/lib/schema';
+import { blockedMessage, checkAprovado, submitMatricula, type SubmitResult } from '@/lib/submit';
 import { firstInvalidStep, validateStep } from '@/lib/validate';
 
 type Phase = 'form' | 'review' | 'done';
 type Sending = 'idle' | 'sending' | Exclude<SubmitResult, { status: 'ok' }>;
 
 const STEPS = buildSteps(CONFIG);
+const MODALIDADES = Object.keys(CONFIG.cursos);
+const TODOS_CURSOS = [...new Set(Object.values(CONFIG.cursos).flat())];
+const IDENT_FIELDS = ['aluno_cpf', 'aluno_nascimento'];
+
+/** Chave do que foi conferido na lista de aprovados: muda se o aluno trocar CPF ou nascimento. */
+const identKey = (v: Values) => `${onlyDigits(String(v.aluno_cpf ?? ''))}|${String(v.aluno_nascimento ?? '').trim()}`;
 
 /** Valor legível de um campo, para a revisão. */
 function display(f: Field, v: Values): string {
@@ -68,6 +85,9 @@ export default function App() {
   const [sending, setSending] = useState<Sending>('idle');
   const [protocolo, setProtocolo] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkMsg, setCheckMsg] = useState('');
+  const checkRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
@@ -85,6 +105,11 @@ export default function App() {
     if (phase !== 'done') saveDraft({ values, step });
   }, [values, step, phase]);
 
+  // Recusa da lista de aprovados: rola até o aviso (no celular ele fica abaixo da dobra).
+  useEffect(() => {
+    if (checkMsg) checkRef.current?.scrollIntoView?.({ block: 'center' });
+  }, [checkMsg]);
+
   // A cada troca de etapa: volta ao topo e leva o foco ao título (leitor de tela anuncia a etapa).
   useEffect(() => {
     if (firstRender.current) {
@@ -95,7 +120,10 @@ export default function App() {
     headingRef.current?.focus();
   }, [step, phase]);
 
-  const onChange = (id: string, value: string | string[]) => setValues((v) => ({ ...v, [id]: value }));
+  const onChange = (id: string, value: string | string[]) => {
+    if (IDENT_FIELDS.includes(id)) setCheckMsg('');
+    setValues((v) => ({ ...v, [id]: value }));
+  };
   const onPatch = (patch: Values) => setValues((v) => ({ ...v, ...patch }));
   const onBlur = (id: string) => setTouched((t) => (t.has(id) ? t : new Set(t).add(id)));
 
@@ -106,13 +134,45 @@ export default function App() {
     setPhase('form');
   };
 
-  const next = () => {
+  /**
+   * Confere CPF e nascimento na lista de aprovados (uma vez por combinação). Se a lista diz a
+   * modalidade e o curso, eles ficam escolhidos e são as únicas opções na etapa do curso.
+   */
+  const verify = async (): Promise<boolean> => {
+    const key = identKey(values);
+    if (values[APROVADO_CHAVE] === key) return true;
+    setChecking(true);
+    setCheckMsg('');
+    const r = await checkAprovado(CONFIG.appsScriptUrl, {
+      token: CONFIG.token,
+      cpf: String(values.aluno_cpf ?? ''),
+      nascimento: String(values.aluno_nascimento ?? ''),
+    });
+    setChecking(false);
+    if (r.status === 'sem_configuracao') return true; // demonstração, sem planilha
+    if (r.status !== 'ok') {
+      setCheckMsg(blockedMessage(r));
+      return false;
+    }
+    const mod = matchOption(r.modalidade, MODALIDADES);
+    const curso = matchOption(r.curso, mod ? CONFIG.cursos[mod] : TODOS_CURSOS);
+    setValues((v) => {
+      const patch: Values = { [APROVADO_CHAVE]: key, [APROVADO_MODALIDADE]: mod, [APROVADO_CURSO]: curso };
+      if (mod && v.modalidade !== mod) Object.assign(patch, { modalidade: mod, curso: '' });
+      if (mod && curso) patch.curso = curso;
+      return { ...v, ...patch };
+    });
+    return true;
+  };
+
+  const next = async () => {
     const ids = Object.keys(errors);
     if (ids.length) {
       setShowAll(true);
       document.getElementById(ids[0])?.focus();
       return;
     }
+    if (current.id === 'identificacao' && !(await verify())) return;
     if (returnToReview) {
       setReturnToReview(false);
       setPhase('review');
@@ -231,7 +291,7 @@ export default function App() {
               noValidate
               onSubmit={(e) => {
                 e.preventDefault();
-                next();
+                if (!checking) void next();
               }}
               className="space-y-6"
             >
@@ -261,6 +321,15 @@ export default function App() {
                   ))}
               </div>
 
+              <div ref={checkRef} role="status" aria-live="polite">
+                {checkMsg && (
+                  <p className="flex items-start gap-2 rounded-2xl border-2 border-danger/50 bg-danger/10 p-4 font-semibold">
+                    <Icon name="alert" size={20} className="mt-0.5 shrink-0 text-danger" />
+                    {checkMsg}
+                  </p>
+                )}
+              </div>
+
               {showAll && Object.keys(errors).length > 0 && (
                 <p role="alert" className="flex items-center gap-2 rounded-xl bg-danger/10 px-4 py-3 font-semibold text-danger">
                   <Icon name="alert" size={20} />
@@ -281,10 +350,17 @@ export default function App() {
                 )}
                 <button
                   type="submit"
-                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-on-primary hover:brightness-110 sm:flex-none"
+                  disabled={checking}
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-on-primary hover:brightness-110 disabled:opacity-60 sm:flex-none"
                 >
-                  {returnToReview ? 'Voltar para a revisão' : visible[pos] === last ? 'Revisar' : 'Continuar'}
-                  <Icon name="arrow" size={20} />
+                  {checking
+                    ? 'Conferindo…'
+                    : returnToReview
+                      ? 'Voltar para a revisão'
+                      : visible[pos] === last
+                        ? 'Revisar'
+                        : 'Continuar'}
+                  <Icon name={checking ? 'refresh' : 'arrow'} size={20} />
                 </button>
               </div>
             </form>
@@ -333,9 +409,9 @@ export default function App() {
               <div role="status" aria-live="polite">
                 {sending !== 'idle' && sending !== 'sending' && (
                   <div className="rounded-2xl border-2 border-danger/50 bg-danger/10 p-4">
-                    {sending.status === 'cpf_duplicado' && (
+                    {sending.status !== 'erro' && sending.status !== 'sem_configuracao' && (
                       <p className="font-semibold">
-                        Esse CPF já foi matriculado. Procure a secretaria da escola. Suas respostas continuam salvas neste aparelho.
+                        {blockedMessage(sending)} Suas respostas continuam salvas neste aparelho.
                       </p>
                     )}
                     {sending.status === 'erro' && (

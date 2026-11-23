@@ -65,6 +65,21 @@ export interface Step {
 
 export const OUTRO = 'Outro';
 
+/**
+ * Respostas guardadas pela conferência na lista de aprovados (não viram coluna da planilha):
+ * a chave "cpf|nascimento" já conferida e o curso da aprovação, quando a lista diz.
+ */
+export const APROVADO_CHAVE = '_aprovado';
+export const APROVADO_MODALIDADE = '_aprovado_modalidade';
+export const APROVADO_CURSO = '_aprovado_curso';
+
+/** Opção da configuração que corresponde ao texto da lista ("farmacia" → "Farmácia"), ou "". */
+export function matchOption(text: string, options: string[]): string {
+  const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const t = norm(text);
+  return t ? (options.find((o) => norm(o) === t) ?? '') : '';
+}
+
 const str = (v: Values, id: string) => (typeof v[id] === 'string' ? (v[id] as string) : '');
 
 /** Modalidade Subsequente (quem já terminou o ensino médio; pode ser adulto). */
@@ -191,6 +206,21 @@ export function buildSteps(config: Config): Step[] {
       ],
     },
     {
+      id: 'identificacao',
+      title: 'Confirme quem é você',
+      short: 'Identidade',
+      description: 'A escola confere seu CPF e sua data de nascimento na lista de aprovados antes de você continuar.',
+      fields: [
+        {
+          id: 'aluno_cpf',
+          label: 'Seu CPF',
+          kind: 'cpf',
+          hint: 'Está no RG novo, na certidão de nascimento recente ou no app gov.br.',
+        },
+        { id: 'aluno_nascimento', label: 'Data de nascimento', kind: 'date', autoComplete: 'bday' },
+      ],
+    },
+    {
       id: 'curso',
       title: 'Seu curso',
       short: 'Curso',
@@ -200,6 +230,8 @@ export function buildSteps(config: Config): Step[] {
           label: 'Modalidade',
           kind: 'choice',
           options: Object.keys(config.cursos),
+          // Se a lista de aprovados diz a modalidade, só ela aparece.
+          optionsFrom: (v) => (str(v, APROVADO_MODALIDADE) ? [str(v, APROVADO_MODALIDADE)] : Object.keys(config.cursos)),
           clears: ['curso'],
           hint: 'Integrado: junto com o ensino médio. Subsequente: para quem já terminou o ensino médio.',
         },
@@ -207,7 +239,11 @@ export function buildSteps(config: Config): Step[] {
           id: 'curso',
           label: 'Curso',
           kind: 'choice',
-          optionsFrom: (v) => config.cursos[str(v, 'modalidade')] ?? [],
+          optionsFrom: (v) => {
+            const cursos = config.cursos[str(v, 'modalidade')] ?? [];
+            const aprovado = str(v, APROVADO_CURSO);
+            return aprovado && cursos.includes(aprovado) ? [aprovado] : cursos;
+          },
           showIf: (v) => !!str(v, 'modalidade'),
         },
       ],
@@ -218,7 +254,6 @@ export function buildSteps(config: Config): Step[] {
       short: 'Você',
       fields: [
         { id: 'aluno_nome', label: 'Seu nome completo', kind: 'name', hint: 'Igual ao do RG ou da certidão.', autoComplete: 'name' },
-        { id: 'aluno_nascimento', label: 'Data de nascimento', kind: 'date', autoComplete: 'bday' },
         { id: 'aluno_sexo', label: 'Sexo', kind: 'choice', options: ['Feminino', 'Masculino'] },
         {
           id: 'aluno_cor',
@@ -241,12 +276,6 @@ export function buildSteps(config: Config): Step[] {
       title: 'Seus documentos',
       short: 'Documentos',
       fields: [
-        {
-          id: 'aluno_cpf',
-          label: 'Seu CPF',
-          kind: 'cpf',
-          hint: 'Está no RG novo, na certidão de nascimento recente ou no app gov.br.',
-        },
         { id: 'aluno_rg', label: 'Número do RG', kind: 'rg', hint: 'Só os números (e o X, se tiver).' },
         { id: 'aluno_rg_orgao', label: 'Órgão expedidor do RG', kind: 'select', options: ORGAOS, other: true },
         { id: 'aluno_rg_uf', label: 'Estado que emitiu o RG', kind: 'uf' },

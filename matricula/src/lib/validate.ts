@@ -44,7 +44,8 @@ export function fieldError(f: Field, v: Values, today = new Date()): string | nu
       const date = parseDate(value)!;
       if (f.id === 'aluno_nascimento') {
         const age = ageAt(date, today);
-        const [min, max] = subsequente(v) ? [15, 70] : [12, 30];
+        // Antes de escolher a modalidade (a data vem logo no começo), aceita as duas faixas.
+        const [min, max] = subsequente(v) ? [15, 70] : text(v, 'modalidade') ? [12, 30] : [12, 70];
         if (age < min || age > max) return `Confira o ano: por essa data, você teria ${age} anos.`;
       }
       if (f.afterField) {
