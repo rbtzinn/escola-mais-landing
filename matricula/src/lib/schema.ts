@@ -26,11 +26,15 @@ export interface Field {
   id: string;
   label: string;
   kind: FieldKind;
-  /** Obrigatória por padrão. */
-  required?: boolean;
+  /** Obrigatória por padrão; pode depender das respostas (ex.: só para menores de idade). */
+  required?: boolean | ((v: Values) => boolean);
   hint?: string;
   placeholder?: string;
   options?: string[];
+  /** Opções que dependem de outra resposta (ex.: cursos da modalidade escolhida). */
+  optionsFrom?: (v: Values) => string[];
+  /** Ao mudar esta resposta, apaga estas outras (que dependiam dela). */
+  clears?: string[];
   /** Acrescenta "Outro" com um campo de texto (`<id>_outro`). */
   other?: boolean;
   /** Opção que desmarca as outras ("Nenhuma", "Não utilizo"). */
@@ -50,6 +54,8 @@ export interface Field {
 
 export interface Step {
   id: string;
+  /** Etapa só aparece quando a condição vale (ex.: responsável só para menores). */
+  showIf?: (v: Values) => boolean;
   title: string;
   /** Título curto para a barra de etapas. */
   short: string;
@@ -60,6 +66,25 @@ export interface Step {
 export const OUTRO = 'Outro';
 
 const str = (v: Values, id: string) => (typeof v[id] === 'string' ? (v[id] as string) : '');
+
+/** Modalidade Subsequente (quem já terminou o ensino médio; pode ser adulto). */
+export const subsequente = (v: Values) => str(v, 'modalidade') === 'Subsequente';
+
+/** Idade pela data de nascimento digitada (null enquanto a data está incompleta ou inválida). */
+export function ageOf(v: Values, today = new Date()): number | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str(v, 'aluno_nascimento'));
+  if (!m) return null;
+  const birth = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  if (birth.getDate() !== Number(m[1])) return null;
+  let age = today.getFullYear() - birth.getFullYear();
+  const d = today.getMonth() - birth.getMonth();
+  if (d < 0 || (d === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+/** Maior de idade: o próprio aluno responde e os dados dos pais ficam opcionais. */
+export const adulto = (v: Values) => (ageOf(v) ?? 0) >= 18;
+const menor = (v: Values) => !adulto(v);
 
 const ESCOLARIDADE = [
   'Não estudou',
@@ -111,6 +136,8 @@ function family(
   who: string,
   show: (v: Values) => boolean,
   extra: Field[] = [],
+  /** Os dados além do nome são obrigatórios? (mãe e pai: só para menores de idade). */
+  req: (v: Values) => boolean = () => true,
 ): Field[] {
   return [
     { id: `${prefix}_nome`, label: `Nome completo ${who}`, kind: 'name', showIf: show, autoComplete: 'off' },
@@ -119,6 +146,7 @@ function family(
       id: `${prefix}_cpf`,
       label: `CPF ${who}`,
       kind: 'cpf',
+      required: req,
       showIf: show,
       differentFrom: ['aluno_cpf', 'mae_cpf', 'pai_cpf'].filter((id) => id !== `${prefix}_cpf`),
     },
@@ -132,10 +160,10 @@ function family(
       required: false,
       showIf: (v) => show(v) && !!str(v, `${prefix}_rg`),
     },
-    { id: `${prefix}_celular`, label: `Celular (WhatsApp) ${who}`, kind: 'cellphone', showIf: show },
+    { id: `${prefix}_celular`, label: `Celular (WhatsApp) ${who}`, kind: 'cellphone', required: req, showIf: show },
     { id: `${prefix}_email`, label: `E-mail ${who}`, kind: 'email', required: false, showIf: show },
-    { id: `${prefix}_escolaridade`, label: `Escolaridade ${who}`, kind: 'select', options: ESCOLARIDADE, showIf: show },
-    { id: `${prefix}_profissao`, label: `Profissão ${who}`, kind: 'text', showIf: show, placeholder: 'Ex.: cozinheira, pedreiro, do lar' },
+    { id: `${prefix}_escolaridade`, label: `Escolaridade ${who}`, kind: 'select', options: ESCOLARIDADE, required: req, showIf: show },
+    { id: `${prefix}_profissao`, label: `Profissão ${who}`, kind: 'text', required: req, showIf: show, placeholder: 'Ex.: cozinheira, pedreiro, do lar' },
   ];
 }
 
@@ -167,7 +195,21 @@ export function buildSteps(config: Config): Step[] {
       title: 'Seu curso',
       short: 'Curso',
       fields: [
-        { id: 'curso', label: 'Curso', kind: 'choice', options: config.cursos },
+        {
+          id: 'modalidade',
+          label: 'Modalidade',
+          kind: 'choice',
+          options: Object.keys(config.cursos),
+          clears: ['curso'],
+          hint: 'Integrado: junto com o ensino médio. Subsequente: para quem já terminou o ensino médio.',
+        },
+        {
+          id: 'curso',
+          label: 'Curso',
+          kind: 'choice',
+          optionsFrom: (v) => config.cursos[str(v, 'modalidade')] ?? [],
+          showIf: (v) => !!str(v, 'modalidade'),
+        },
       ],
     },
     {
@@ -223,8 +265,27 @@ export function buildSteps(config: Config): Step[] {
           kind: 'text',
           showIf: (v) => str(v, 'nasc_pais') === 'Outro país',
         },
-        { id: 'nasc_uf', label: 'Estado', kind: 'uf', showIf: brasil },
+        { id: 'nasc_uf', label: 'Estado', kind: 'uf', clears: ['nasc_cidade'], showIf: brasil },
         { id: 'nasc_cidade', label: 'Cidade', kind: 'city', ufField: 'nasc_uf', showIf: (v) => brasil(v) && !!str(v, 'nasc_uf') },
+      ],
+    },
+    {
+      id: 'escola_anterior',
+      title: 'Seu ensino médio',
+      short: 'Ensino médio',
+      description: 'O curso subsequente é para quem já terminou o ensino médio.',
+      showIf: subsequente,
+      fields: [
+        { id: 'em_escola', label: 'Escola onde terminou o ensino médio', kind: 'text' },
+        { id: 'em_tipo', label: 'Essa escola era', kind: 'choice', options: ['Pública', 'Particular'] },
+        { id: 'em_uf', label: 'Estado da escola', kind: 'uf', clears: ['em_cidade'] },
+        { id: 'em_cidade', label: 'Cidade da escola', kind: 'city', ufField: 'em_uf', showIf: (v) => !!str(v, 'em_uf') },
+        {
+          id: 'em_ano',
+          label: 'Ano em que terminou',
+          kind: 'select',
+          options: Array.from({ length: 56 }, (_, i) => String(config.ano - i)),
+        },
       ],
     },
     {
@@ -241,7 +302,7 @@ export function buildSteps(config: Config): Step[] {
         { id: 'end_numero', label: 'Número', kind: 'text', hint: 'Sem número? Escreva S/N.' },
         { id: 'end_complemento', label: 'Complemento', kind: 'text', required: false, placeholder: 'Apto, bloco, casa A…' },
         { id: 'end_bairro', label: 'Bairro', kind: 'text' },
-        { id: 'end_uf', label: 'Estado', kind: 'uf' },
+        { id: 'end_uf', label: 'Estado', kind: 'uf', clears: ['end_cidade'] },
         { id: 'end_cidade', label: 'Cidade', kind: 'city', ufField: 'end_uf' },
       ],
     },
@@ -286,7 +347,7 @@ export function buildSteps(config: Config): Step[] {
       short: 'Mãe',
       fields: [
         { id: 'mae_situacao', label: 'Sua mãe', kind: 'choice', options: ['Viva', 'Falecida', 'Não consta na certidão'] },
-        ...family('mae', 'da mãe', maeViva),
+        ...family('mae', 'da mãe', maeViva, [], menor),
       ],
     },
     {
@@ -295,13 +356,14 @@ export function buildSteps(config: Config): Step[] {
       short: 'Pai',
       fields: [
         { id: 'pai_situacao', label: 'Seu pai', kind: 'choice', options: ['Vivo', 'Falecido', 'Não consta na certidão'] },
-        ...family('pai', 'do pai', paiVivo),
+        ...family('pai', 'do pai', paiVivo, [], menor),
       ],
     },
     {
       id: 'responsavel',
       title: 'Responsável pela matrícula',
       short: 'Responsável',
+      showIf: menor,
       description: 'Quem responde por você na escola.',
       fields: [
         {
@@ -401,6 +463,16 @@ export function buildSteps(config: Config): Step[] {
 
 /** O campo aparece agora? (sem condição, sempre). */
 export const isVisible = (f: Field, v: Values) => !f.showIf || f.showIf(v);
+
+/** A etapa aparece agora? */
+export const isStepVisible = (s: Step, v: Values) => !s.showIf || s.showIf(v);
+
+/** A resposta é obrigatória agora? */
+export const isRequired = (f: Field, v: Values) =>
+  typeof f.required === 'function' ? f.required(v) : f.required !== false;
+
+/** Opções do campo agora (fixas, ou dependentes de outra resposta). */
+export const optionsOf = (f: Field, v: Values) => (f.optionsFrom ? f.optionsFrom(v) : (f.options ?? []));
 
 /** Campos que viram colunas da planilha (o consentimento vira uma coluna "Consentimento LGPD"). */
 export const allFields = (steps: Step[]) => steps.flatMap((s) => s.fields);

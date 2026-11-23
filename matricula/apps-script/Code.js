@@ -158,21 +158,25 @@ function setup() {
 
   var summary = made.summary;
   summary.clear();
-  summary.getRange('A1:B1').setValues([['Curso', 'Matrículas']]);
-  // Acha a coluna "Curso" pelo nome, então funciona mesmo se as colunas mudarem de ordem.
+  summary.getRange('A1:C1').setValues([['Modalidade', 'Curso', 'Matrículas']]);
+  // Acha as colunas "Modalidade" e "Curso" pelo nome, então funciona mesmo se a ordem mudar.
+  // Apps Script grava fórmulas na sintaxe em inglês (vírgulas), qualquer que seja o idioma.
+  var col = function (name) {
+    return "INDEX('" + SHEET_NAME + "'!A2:ZZ,0,MATCH(\"" + name + "\",'" + SHEET_NAME + "'!A1:ZZ1,0))";
+  };
   summary
     .getRange('A2')
     .setFormula(
-      // Apps Script grava fórmulas na sintaxe em inglês (vírgulas), qualquer que seja o idioma.
-      "=IFERROR(QUERY({INDEX('" + SHEET_NAME + "'!A2:ZZ,0,MATCH(\"Curso\",'" + SHEET_NAME +
-        "'!A1:ZZ1,0))},\"select Col1, count(Col1) where Col1 is not null group by Col1 label count(Col1) ''\",0),\"Sem matrículas ainda\")",
+      '=IFERROR(QUERY({' + col('Modalidade') + ',' + col('Curso') +
+        "},\"select Col1, Col2, count(Col2) where Col2 is not null group by Col1, Col2 label count(Col2) ''\",0),\"Sem matrículas ainda\")",
     );
-  summary.getRange('D1').setValue('Total');
-  summary.getRange('D2').setFormula("=COUNTA('" + SHEET_NAME + "'!B2:B)");
-  summary.getRange('A1:D1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
-  summary.getRange('D2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
-  summary.setColumnWidth(1, 220);
-  summary.setColumnWidth(2, 120);
+  summary.getRange('E1').setValue('Total');
+  summary.getRange('E2').setFormula("=COUNTA('" + SHEET_NAME + "'!B2:B)");
+  summary.getRange('A1:E1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
+  summary.getRange('E2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
+  summary.setColumnWidth(1, 140);
+  summary.setColumnWidth(2, 200);
+  summary.setColumnWidth(3, 120);
   summary.setFrozenRows(1);
 }
 

@@ -21,6 +21,19 @@ const continuar = (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: /^Continuar|^Revisar|^Voltar para a revisão/ }));
 
 describe('formulário de matrícula', () => {
+  it('trocar a modalidade mostra só os cursos dela e apaga o curso anterior', async () => {
+    const user = userEvent.setup();
+    saveDraft({ values: { consentimento: 'sim' }, step: at('curso') });
+    render(<App />);
+    expect(screen.queryByText('Enfermagem')).not.toBeInTheDocument();
+    await user.click(screen.getByLabelText('Integrado'));
+    await user.click(screen.getByLabelText('Farmácia'));
+    expect(screen.queryByLabelText('Enfermagem')).not.toBeInTheDocument();
+    await user.click(screen.getByLabelText('Subsequente'));
+    expect(screen.getByLabelText('Enfermagem')).toBeInTheDocument();
+    expect(screen.getByLabelText('Farmácia')).not.toBeChecked();
+  });
+
   it('não avança sem o consentimento e mostra o erro', async () => {
     const user = userEvent.setup();
     render(<App />);

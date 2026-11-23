@@ -5,7 +5,8 @@ import { buildSteps, type Values } from '@/lib/schema';
 export function fullValues(): Values {
   const v: Values = {
     consentimento: 'sim',
-    curso: 'Nutrição',
+    modalidade: 'Integrado',
+    curso: 'Nutrição e Dietética',
     aluno_nome: 'Ana Souza Lima',
     aluno_nascimento: '15/03/2010',
     aluno_sexo: 'Feminino',

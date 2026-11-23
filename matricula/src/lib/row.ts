@@ -1,9 +1,16 @@
-import { OUTRO, type Step, type Values, isVisible } from './schema';
+import { OUTRO, type Step, type Values, isStepVisible, isVisible } from './schema';
 
-/** Cabeçalho e valores da linha da planilha, na ordem das etapas. Campo escondido vai vazio. */
-export function toRow(steps: Step[], v: Values): { columns: string[]; row: string[] } {
-  const columns: string[] = [];
-  const row: string[] = [];
+/**
+ * Cabeçalho e valores da linha da planilha, na ordem das etapas. Campo escondido vai vazio.
+ * `fixed` são colunas que o aluno não responde (ex.: ano de ingresso), postas no começo.
+ */
+export function toRow(
+  steps: Step[],
+  v: Values,
+  fixed: Record<string, string> = {},
+): { columns: string[]; row: string[] } {
+  const columns: string[] = Object.keys(fixed);
+  const row: string[] = Object.values(fixed);
   const push = (col: string, val: string) => {
     columns.push(col);
     row.push(val);
@@ -15,7 +22,7 @@ export function toRow(steps: Step[], v: Values): { columns: string[]; row: strin
 
   for (const step of steps) {
     for (const f of step.fields) {
-      const visible = isVisible(f, v);
+      const visible = isStepVisible(step, v) && isVisible(f, v);
       if (f.kind === 'consent') {
         push('Consentimento LGPD', text(f.id) === 'sim' ? 'Sim' : '');
         continue;
