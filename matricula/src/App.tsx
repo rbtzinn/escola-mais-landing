@@ -19,7 +19,13 @@ import {
   type Field,
   type Values,
 } from '@/lib/schema';
-import { blockedMessage, checkAprovado, submitMatricula, type SubmitResult } from '@/lib/submit';
+import {
+  blockedMessage,
+  checkAprovado,
+  submitMatricula,
+  warmUp,
+  type SubmitResult,
+} from '@/lib/submit';
 import { firstInvalidStep, validateStep } from '@/lib/validate';
 
 type Phase = 'form' | 'review' | 'done';
@@ -31,13 +37,15 @@ const TODOS_CURSOS = [...new Set(Object.values(CONFIG.cursos).flat())];
 const IDENT_FIELDS = ['aluno_cpf', 'aluno_nascimento'];
 
 /** Chave do que foi conferido na lista de aprovados: muda se o aluno trocar CPF ou nascimento. */
-const identKey = (v: Values) => `${onlyDigits(String(v.aluno_cpf ?? ''))}|${String(v.aluno_nascimento ?? '').trim()}`;
+const identKey = (v: Values) =>
+  `${onlyDigits(String(v.aluno_cpf ?? ''))}|${String(v.aluno_nascimento ?? '').trim()}`;
 
 /** Valor legível de um campo, para a revisão. */
 function display(f: Field, v: Values): string {
   const t = (id: string) => (typeof v[id] === 'string' ? (v[id] as string).trim() : '');
   if (f.kind === 'consent') return t(f.id) === 'sim' ? 'Concordo' : '';
-  if (f.kind === 'grid') return (f.rows ?? []).map((r) => `${r}: ${t(`${f.id}:${r}`) || '—'}`).join(' · ');
+  if (f.kind === 'grid')
+    return (f.rows ?? []).map((r) => `${r}: ${t(`${f.id}:${r}`) || '—'}`).join(' · ');
   if (f.kind === 'multi') {
     const sel = Array.isArray(v[f.id]) ? (v[f.id] as string[]) : [];
     return sel.map((s) => (s === OUTRO ? `Outro: ${t(`${f.id}_outro`)}` : s)).join(', ');
@@ -93,13 +101,21 @@ export default function App() {
 
   // Etapas que valem agora (o responsável some para maiores de idade; o ensino médio só no Subsequente).
   const visible = STEPS.map((_, i) => i).filter((i) => isStepVisible(STEPS[i], values));
-  const pos = Math.max(0, visible.findIndex((i) => i >= step));
+  const pos = Math.max(
+    0,
+    visible.findIndex((i) => i >= step),
+  );
   const current = STEPS[visible[pos]];
   const last = visible[visible.length - 1];
   const errors = useMemo(() => validateStep(current, values), [current, values]);
   const shown = Object.fromEntries(
     Object.entries(errors).filter(([id]) => showAll || touched.has(id)),
   );
+
+  // Acorda o script da planilha enquanto o aluno lê a primeira tela.
+  useEffect(() => {
+    warmUp(CONFIG.appsScriptUrl);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'done') saveDraft({ values, step });
@@ -157,7 +173,11 @@ export default function App() {
     const mod = matchOption(r.modalidade, MODALIDADES);
     const curso = matchOption(r.curso, mod ? CONFIG.cursos[mod] : TODOS_CURSOS);
     setValues((v) => {
-      const patch: Values = { [APROVADO_CHAVE]: key, [APROVADO_MODALIDADE]: mod, [APROVADO_CURSO]: curso };
+      const patch: Values = {
+        [APROVADO_CHAVE]: key,
+        [APROVADO_MODALIDADE]: mod,
+        [APROVADO_CURSO]: curso,
+      };
       if (mod && v.modalidade !== mod) Object.assign(patch, { modalidade: mod, curso: '' });
       if (mod && curso) patch.curso = curso;
       return { ...v, ...patch };
@@ -235,7 +255,9 @@ export default function App() {
           />
           <div className="min-w-0">
             <p className="font-display text-xl font-bold text-cream/85">{CONFIG.escola}</p>
-            <h1 className="font-pixel text-5xl leading-[0.85] uppercase sm:text-7xl">Matrícula {CONFIG.ano}</h1>
+            <h1 className="font-pixel text-5xl leading-[0.85] uppercase sm:text-7xl">
+              Matrícula {CONFIG.ano}
+            </h1>
           </div>
         </div>
         <div
@@ -246,7 +268,10 @@ export default function App() {
           aria-valuenow={Math.round(progress * 100)}
           className="h-2 bg-cream/20"
         >
-          <div className="h-full bg-pink transition-[width] duration-300" style={{ width: `${progress * 100}%` }} />
+          <div
+            className="h-full bg-pink transition-[width] duration-300"
+            style={{ width: `${progress * 100}%` }}
+          />
         </div>
       </header>
 
@@ -266,16 +291,28 @@ export default function App() {
                     aria-current={here ? 'step' : undefined}
                     className={clsx(
                       'flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-sm transition-colors',
-                      here ? 'bg-primary font-semibold text-on-primary' : done ? 'hover:bg-muted' : 'text-fg-muted',
+                      here
+                        ? 'bg-primary font-semibold text-on-primary'
+                        : done
+                          ? 'hover:bg-muted'
+                          : 'text-fg-muted',
                     )}
                   >
                     <span
                       className={clsx(
                         'flex size-5 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold',
-                        here ? 'bg-on-primary text-primary' : done ? 'bg-ok text-cream' : 'border border-fg/30',
+                        here
+                          ? 'bg-on-primary text-primary'
+                          : done
+                            ? 'bg-ok text-cream'
+                            : 'border border-fg/30',
                       )}
                     >
-                      {done && !here ? <Icon name="check" size={12} strokeWidth={3} /> : visible.indexOf(i) + 1}
+                      {done && !here ? (
+                        <Icon name="check" size={12} strokeWidth={3} />
+                      ) : (
+                        visible.indexOf(i) + 1
+                      )}
                     </span>
                     {s.short}
                   </button>
@@ -299,10 +336,18 @@ export default function App() {
                 <p className="text-sm font-semibold text-fg-muted">
                   Etapa {pos + 1} de {visible.length}
                 </p>
-                <h2 ref={headingRef} tabIndex={-1} className="font-display text-4xl leading-tight font-extrabold outline-none">
+                <h2
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="font-display text-4xl leading-tight font-extrabold outline-none"
+                >
                   {current.title}
                 </h2>
-                {current.description && <p className="mt-2 max-w-prose leading-relaxed text-fg-muted">{current.description}</p>}
+                {current.description && (
+                  <p className="mt-2 max-w-prose leading-relaxed text-fg-muted">
+                    {current.description}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-5">
@@ -331,9 +376,16 @@ export default function App() {
               </div>
 
               {showAll && Object.keys(errors).length > 0 && (
-                <p role="alert" className="flex items-center gap-2 rounded-xl bg-danger/10 px-4 py-3 font-semibold text-danger">
+                <p
+                  role="alert"
+                  className="flex items-center gap-2 rounded-xl bg-danger/10 px-4 py-3 font-semibold text-danger"
+                >
                   <Icon name="alert" size={20} />
-                  Falta corrigir {Object.keys(errors).length === 1 ? '1 campo' : `${Object.keys(errors).length} campos`} nesta etapa.
+                  Falta corrigir{' '}
+                  {Object.keys(errors).length === 1
+                    ? '1 campo'
+                    : `${Object.keys(errors).length} campos`}{' '}
+                  nesta etapa.
                 </p>
               )}
 
@@ -369,16 +421,28 @@ export default function App() {
           {phase === 'review' && (
             <section aria-labelledby="revisao" className="space-y-6">
               <div>
-                <h2 id="revisao" ref={headingRef} tabIndex={-1} className="font-display text-4xl font-extrabold outline-none">
+                <h2
+                  id="revisao"
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="font-display text-4xl font-extrabold outline-none"
+                >
                   Confira antes de enviar
                 </h2>
-                <p className="mt-2 text-fg-muted">Depois de enviar, só a secretaria consegue mudar os dados.</p>
+                <p className="mt-2 text-fg-muted">
+                  Depois de enviar, só a secretaria consegue mudar os dados.
+                </p>
               </div>
               {visible.slice(1).map((i) => {
                 const s = STEPS[i];
-                const items = s.fields.filter((f) => isVisible(f, values)).map((f) => [f, display(f, values)] as const);
+                const items = s.fields
+                  .filter((f) => isVisible(f, values))
+                  .map((f) => [f, display(f, values)] as const);
                 return (
-                  <section key={s.id} className="rounded-2xl border-2 border-fg/15 bg-surface p-4 sm:p-5">
+                  <section
+                    key={s.id}
+                    className="rounded-2xl border-2 border-fg/15 bg-surface p-4 sm:p-5"
+                  >
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <h3 className="font-display text-2xl font-extrabold">{s.title}</h3>
                       <button
@@ -396,9 +460,12 @@ export default function App() {
                     </div>
                     <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
                       {items.map(([f, val]) => (
-                        <div key={f.id} className={clsx('min-w-0', f.kind === 'grid' && 'sm:col-span-2')}>
+                        <div
+                          key={f.id}
+                          className={clsx('min-w-0', f.kind === 'grid' && 'sm:col-span-2')}
+                        >
                           <dt className="text-xs text-fg-muted">{f.label}</dt>
-                          <dd className="break-words font-medium">{val || '—'}</dd>
+                          <dd className="font-medium break-words">{val || '—'}</dd>
                         </div>
                       ))}
                     </dl>
@@ -416,7 +483,8 @@ export default function App() {
                     )}
                     {sending.status === 'erro' && (
                       <p className="font-semibold">
-                        Não foi possível enviar agora ({sending.message}). Suas respostas estão salvas: tente de novo em instantes.
+                        Não foi possível enviar agora ({sending.message}). Suas respostas estão
+                        salvas: tente de novo em instantes.
                       </p>
                     )}
                     {sending.status === 'sem_configuracao' && (
@@ -453,7 +521,11 @@ export default function App() {
                   className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-pink px-6 font-display text-xl font-extrabold text-cream disabled:opacity-60 sm:flex-none"
                 >
                   <Icon name={sending === 'sending' ? 'refresh' : 'send'} size={20} />
-                  {sending === 'sending' ? 'Enviando…' : sending !== 'idle' && sending.status === 'erro' ? 'Tentar de novo' : 'Enviar matrícula'}
+                  {sending === 'sending'
+                    ? 'Enviando…'
+                    : sending !== 'idle' && sending.status === 'erro'
+                      ? 'Tentar de novo'
+                      : 'Enviar matrícula'}
                 </button>
               </div>
             </section>
@@ -464,14 +536,20 @@ export default function App() {
               <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-ok text-cream">
                 <Icon name="check" size={36} strokeWidth={2.5} />
               </span>
-              <h2 id="enviada" ref={headingRef} tabIndex={-1} className="font-display text-4xl font-extrabold outline-none">
+              <h2
+                id="enviada"
+                ref={headingRef}
+                tabIndex={-1}
+                className="font-display text-4xl font-extrabold outline-none"
+              >
                 Matrícula enviada!
               </h2>
               <p className="text-lg">
                 Protocolo <strong className="font-mono">{protocolo}</strong>
               </p>
               <p className="text-fg-muted">
-                CPF {hideCpf(String(values.aluno_cpf ?? ''))}. Tire um print desta tela. Se precisar corrigir algo, procure a secretaria.
+                CPF {hideCpf(String(values.aluno_cpf ?? ''))}. Tire um print desta tela. Se precisar
+                corrigir algo, procure a secretaria.
               </p>
               <button
                 type="button"
@@ -488,17 +566,29 @@ export default function App() {
               {confirmReset ? (
                 <p className="flex flex-wrap items-center gap-3">
                   Apagar tudo o que foi preenchido neste aparelho?
-                  <button type="button" onClick={reset} className="font-semibold text-danger underline underline-offset-4">
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="font-semibold text-danger underline underline-offset-4"
+                  >
                     Sim, apagar
                   </button>
-                  <button type="button" onClick={() => setConfirmReset(false)} className="font-semibold underline underline-offset-4">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(false)}
+                    className="font-semibold underline underline-offset-4"
+                  >
                     Não
                   </button>
                 </p>
               ) : (
                 <p>
                   Suas respostas ficam salvas neste aparelho até enviar.{' '}
-                  <button type="button" onClick={() => setConfirmReset(true)} className="font-semibold underline underline-offset-4">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(true)}
+                    className="font-semibold underline underline-offset-4"
+                  >
                     Começar de novo
                   </button>
                 </p>

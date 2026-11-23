@@ -9,7 +9,8 @@ export type Blocked =
   | { status: 'sem_configuracao' }
   | { status: 'erro'; message: string };
 
-export type SubmitResult = { status: 'ok'; protocolo: string } | { status: 'curso_diferente' } | Blocked;
+export type SubmitResult =
+  { status: 'ok'; protocolo: string } | { status: 'curso_diferente' } | Blocked;
 
 /** Aprovado na lista: a planilha devolve a modalidade e o curso dele (vazios se a lista não diz). */
 export type CheckResult = { status: 'ok'; modalidade: string; curso: string } | Blocked;
@@ -35,7 +36,11 @@ export type Reply = {
  * POST para o app da web do Apps Script. Usa text/plain de propósito: assim o navegador não faz
  * a checagem prévia de CORS, que o Apps Script não responde.
  */
-export async function post<T = Reply>(url: string, body: object, fetcher: typeof fetch = fetch): Promise<T | null> {
+export async function post<T = Reply>(
+  url: string,
+  body: object,
+  fetcher: typeof fetch = fetch,
+): Promise<T | null> {
   try {
     const res = await fetcher(url, {
       method: 'POST',
@@ -62,6 +67,16 @@ function blocked(data: Reply | null): Blocked {
   }
 }
 
+/**
+ * Acorda o script da planilha: o Apps Script "dorme" quando ninguém o usa e o primeiro pedido
+ * paga a espera. Chamado ao abrir a página, para o pedido de verdade já encontrar o script pronto.
+ * Não envia dado nenhum, não espera e ignora falhas.
+ */
+export function warmUp(url: string, fetcher: typeof fetch = fetch): void {
+  if (!url) return;
+  void post(url, { action: 'ping' }, fetcher);
+}
+
 /** Confere CPF e nascimento na lista de aprovados, antes do aluno preencher o resto. */
 export async function checkAprovado(
   url: string,
@@ -70,7 +85,8 @@ export async function checkAprovado(
 ): Promise<CheckResult> {
   if (!url) return { status: 'sem_configuracao' };
   const data = await post(url, { ...input, action: 'check', cpf: onlyDigits(input.cpf) }, fetcher);
-  if (data?.status === 'ok') return { status: 'ok', modalidade: data.modalidade ?? '', curso: data.curso ?? '' };
+  if (data?.status === 'ok')
+    return { status: 'ok', modalidade: data.modalidade ?? '', curso: data.curso ?? '' };
   return blocked(data);
 }
 

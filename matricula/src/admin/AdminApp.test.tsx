@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as adminApi from '@/lib/adminApi';
@@ -122,6 +122,28 @@ describe('painel administrativo', () => {
     );
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('region', { name: 'Ana Souza' })).not.toBeInTheDocument();
+  });
+
+  it('ação que devolve o painel atualiza a tela sem pedir o painel de novo', async () => {
+    const user = userEvent.setup();
+    await entrar(user);
+    const updated = panel('direcao');
+    updated.linhas[0][2] = 'Cancelado';
+    api.mockImplementation(async (action: string) =>
+      action === 'status' ? { status: 'ok', painel: updated } : panel('direcao'),
+    );
+    api.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Matrículas' }));
+    await user.click(screen.getByRole('button', { name: /Ana Souza/ }));
+    const ficha = screen.getByRole('region', { name: 'Ana Souza' });
+    await user.click(within(ficha).getByRole('radio', { name: 'Cancelado' }));
+    await user.click(within(ficha).getByRole('button', { name: 'Salvar status' }));
+    await waitFor(() =>
+      expect(screen.getAllByText('Cancelado', { selector: 'span' }).length).toBeGreaterThan(0),
+    );
+    // A ficha continua aberta e confirma o salvamento (não é recriada ao atualizar).
+    expect(screen.getByText('Status salvo.')).toBeInTheDocument();
+    expect(api.mock.calls.map((c: unknown[]) => c[0])).toEqual(['status']);
   });
 
   it('cria exceção para um aluno', async () => {
