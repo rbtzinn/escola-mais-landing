@@ -2,10 +2,12 @@
  * Escola+ · Matrícula: recebe o formulário e grava na planilha da escola.
  *
  * Como usar (passo a passo em apps-script/README.md):
- *   1. Na planilha da escola: Extensões > Apps Script, cole este arquivo e salve.
- *   2. Rode `setup` uma vez (cria as abas e a formatação).
- *   3. Em Configurações do projeto > Propriedades do script, crie FORM_TOKEN (o mesmo valor de
- *      VITE_FORM_TOKEN na Vercel).
+ *   1. Abra o editor: pela planilha (Extensões > Apps Script) ou direto em https://script.new.
+ *      Cole este arquivo e salve.
+ *   2. Em Configurações do projeto > Propriedades do script, crie:
+ *      - FORM_TOKEN: o mesmo valor de VITE_FORM_TOKEN na Vercel;
+ *      - SHEET_ID: o link (ou o ID) da planilha. Só é preciso se abriu pelo script.new.
+ *   3. Rode `setup` uma vez (cria as abas e a formatação).
  *   4. Implantar > Nova implantação > App da Web: executar como "Eu"; acesso "Qualquer pessoa".
  *
  * As funções puras (sem SpreadsheetApp) ficam no topo e são testadas no projeto com Vitest.
@@ -90,6 +92,13 @@ function findCpfRow(cpfColumn, cpf) {
   var target = onlyDigits(cpf);
   for (var i = 0; i < cpfColumn.length; i++) if (onlyDigits(cpfColumn[i]) === target) return i;
   return -1;
+}
+
+/** Aceita o link inteiro da planilha ou só o ID ("…/spreadsheets/d/<ID>/edit" → "<ID>"). */
+function extractSheetId(raw) {
+  var s = String(raw == null ? '' : raw).trim();
+  var m = /\/d\/([a-zA-Z0-9-_]+)/.exec(s);
+  return m ? m[1] : s;
 }
 
 function makeProtocol(year, n) {
@@ -180,8 +189,20 @@ function setup() {
   summary.setFrozenRows(1);
 }
 
-function ensureSheets_() {
+/** A planilha: a do SHEET_ID (script aberto pelo script.new) ou aquela onde o script foi colado. */
+function spreadsheet_() {
+  var id = extractSheetId(PropertiesService.getScriptProperties().getProperty('SHEET_ID'));
+  if (id) return SpreadsheetApp.openById(id);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss)
+    throw new Error(
+      'Planilha não encontrada. Em Configurações do projeto > Propriedades do script, crie SHEET_ID com o link da planilha.',
+    );
+  return ss;
+}
+
+function ensureSheets_() {
+  var ss = spreadsheet_();
   var sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME, 0);
   var summary = ss.getSheetByName(SUMMARY_NAME) || ss.insertSheet(SUMMARY_NAME);
   return { sheet: sheet, summary: summary };
@@ -230,6 +251,7 @@ if (typeof module !== 'undefined') {
     buildRow: buildRow,
     findCpfRow: findCpfRow,
     makeProtocol: makeProtocol,
+    extractSheetId: extractSheetId,
     FIXED_COLUMNS: FIXED_COLUMNS,
   };
 }

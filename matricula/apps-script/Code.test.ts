@@ -13,6 +13,7 @@ const gs = fakeModule.exports as {
   buildRow: (h: string[], d: { cpf: string; columns: string[]; row: string[] }, p: string, at: string) => string[];
   findCpfRow: (col: string[], cpf: string) => number;
   makeProtocol: (y: number, n: number) => string;
+  extractSheetId: (s: string | null) => string;
   FIXED_COLUMNS: string[];
 };
 
@@ -44,5 +45,10 @@ describe('Apps Script (funções puras)', () => {
     expect(gs.findCpfRow(['11144477735', '529.982.247-25'], '52998224725')).toBe(1);
     expect(gs.findCpfRow([], '52998224725')).toBe(-1);
     expect(gs.makeProtocol(2026, 7)).toBe('MAT-2026-0007');
+  });
+  it('aceita o link inteiro da planilha ou só o ID', () => {
+    expect(gs.extractSheetId('https://docs.google.com/spreadsheets/d/1AbC-_x9/edit#gid=0')).toBe('1AbC-_x9');
+    expect(gs.extractSheetId(' 1AbC-_x9 ')).toBe('1AbC-_x9');
+    expect(gs.extractSheetId(null)).toBe('');
   });
 });
