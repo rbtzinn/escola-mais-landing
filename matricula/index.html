@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fef1cf" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1236" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="Formulário de matrícula da ETE Chico Science." />
+    <title>Matrícula · ETE Chico Science</title>
+    <script>
+      // Aplica o tema salvo (ou o do sistema) antes da primeira pintura.
+      (function () {
+        try {
+          var t = null;
+          try { t = localStorage.getItem('theme'); } catch (e) {}
+          if (t !== 'light' && t !== 'dark')
+            t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
