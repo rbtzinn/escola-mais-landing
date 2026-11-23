@@ -19,7 +19,26 @@ Formulário de matrícula da **ETE Chico Science**, feito para substituir o Goog
 
 ## Configuração anual
 
-Em [`src/config.ts`](./src/config.ts): escola, ano, cursos e salário mínimo.
+Em [`src/config.ts`](./src/config.ts):
+
+- escola e logo (`public/logo-ete.webp`);
+- ano;
+- cursos por modalidade (Integrado: Nutrição e Dietética, Farmácia; Subsequente: Farmácia, Enfermagem);
+- salário mínimo.
+
+## Integrado e Subsequente
+
+O aluno escolhe a modalidade e só vê os cursos dela. No **Subsequente**, para quem já terminou o ensino médio:
+
+- a idade aceita vai até 70 anos;
+- aparece a etapa "Seu ensino médio": escola, pública ou particular, cidade e ano de conclusão.
+
+Para **maiores de 18 anos**, em qualquer modalidade:
+
+- a etapa do responsável some;
+- dos dados da mãe e do pai, só o nome é obrigatório.
+
+A aba "Resumo por curso" da planilha conta por modalidade e curso.
 
 ## Rodar
 

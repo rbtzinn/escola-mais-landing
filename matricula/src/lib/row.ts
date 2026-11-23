@@ -1,4 +1,4 @@
-import { OUTRO, type Step, type Values, isVisible } from './schema';
+import { OUTRO, type Step, type Values, isStepVisible, isVisible } from './schema';
 
 /**
  * Cabeçalho e valores da linha da planilha, na ordem das etapas. Campo escondido vai vazio.
@@ -22,7 +22,7 @@ export function toRow(
 
   for (const step of steps) {
     for (const f of step.fields) {
-      const visible = isVisible(f, v);
+      const visible = isStepVisible(step, v) && isVisible(f, v);
       if (f.kind === 'consent') {
         push('Consentimento LGPD', text(f.id) === 'sim' ? 'Sim' : '');
         continue;

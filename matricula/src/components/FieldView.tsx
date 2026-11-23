@@ -11,7 +11,7 @@ import { emailSuggestion } from '@/lib/email';
 import { UFS, fetchCities } from '@/lib/ibge';
 import { maskCep, maskDate, maskPhone, maskRg } from '@/lib/masks';
 import { cleanName } from '@/lib/names';
-import { type Field, OUTRO, type Values } from '@/lib/schema';
+import { type Field, OUTRO, type Values, optionsOf } from '@/lib/schema';
 import { ChoiceFieldset, ChoiceOption } from './Choices';
 
 export interface FieldProps {
@@ -361,8 +361,8 @@ export function FieldView(props: FieldProps) {
           value={value}
           onChange={(v) => {
             // Trocar o estado apaga a cidade escolhida antes (ela é de outro estado).
-            const city = field.id === 'nasc_uf' ? 'nasc_cidade' : field.id === 'end_uf' ? 'end_cidade' : null;
-            props.onPatch({ [field.id]: v, ...(city && v !== value ? { [city]: '' } : {}) });
+            const cleared = v !== value ? Object.fromEntries((field.clears ?? []).map((id) => [id, ''])) : {};
+            props.onPatch({ [field.id]: v, ...cleared });
             onBlur(field.id);
           }}
           placeholder="Digite o estado ou a sigla"
@@ -393,7 +393,7 @@ export function FieldView(props: FieldProps) {
       );
     }
     case 'choice': {
-      const options = [...(field.options ?? []), ...(field.other ? [OUTRO] : [])];
+      const options = [...optionsOf(field, values), ...(field.other ? [OUTRO] : [])];
       const compact = options.every((o) => o.length <= 8);
       return (
         <div className="space-y-3">
@@ -407,7 +407,9 @@ export function FieldView(props: FieldProps) {
                 checked={value === o}
                 invalid={!!error}
                 onChange={() => {
-                  onChange(field.id, o);
+                  // Trocar a modalidade apaga o curso escolhido antes (ele é da outra lista).
+                  const cleared = o !== value ? Object.fromEntries((field.clears ?? []).map((id) => [id, ''])) : {};
+                  props.onPatch({ [field.id]: o, ...cleared });
                   onBlur(field.id);
                 }}
               />

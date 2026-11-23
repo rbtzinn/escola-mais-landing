@@ -8,7 +8,7 @@ import { clearCitiesCache, fetchCities } from './ibge';
 import { ageAt, dateError, maskCep, maskDate, maskPhone, maskRg, parseDate, phoneError } from './masks';
 import { cleanName, nameError } from './names';
 import { toRow } from './row';
-import { buildSteps, isVisible, rendaOptions, type Values } from './schema';
+import { adulto, buildSteps, isStepVisible, isVisible, optionsOf, rendaOptions, type Values } from './schema';
 import { submitMatricula } from './submit';
 import { fieldError, firstInvalidStep, validateStep } from './validate';
 
@@ -192,3 +192,35 @@ describe('planilha, rascunho e envio', () => {
     expect(await submitMatricula('', payload)).toEqual({ status: 'sem_configuracao' });
   });
 });
+
+describe('modalidade, curso e maioridade', () => {
+  it('o curso vem da modalidade escolhida', () => {
+    const curso = step('curso').fields.find((f) => f.id === 'curso')!;
+    expect(optionsOf(curso, { modalidade: 'Integrado' })).toEqual(['Nutrição e Dietética', 'Farmácia']);
+    expect(optionsOf(curso, { modalidade: 'Subsequente' })).toEqual(['Farmácia', 'Enfermagem']);
+    expect(fieldError(curso, { modalidade: 'Subsequente', curso: 'Nutrição e Dietética' }, TODAY)).toBe('Escolha uma opção.');
+  });
+  it('maior de idade: sem responsável e pais só com o nome', () => {
+    const v: Values = { aluno_nascimento: '10/01/2000', mae_situacao: 'Viva', mae_nome: 'Maria Souza' };
+    expect(adulto(v)).toBe(true);
+    expect(isStepVisible(step('responsavel'), v)).toBe(false);
+    expect(validateStep(step('mae'), v, TODAY)).toEqual({});
+    const menor: Values = { ...v, aluno_nascimento: '10/01/2010' };
+    expect(isStepVisible(step('responsavel'), menor)).toBe(true);
+    expect(validateStep(step('mae'), menor, TODAY)).toHaveProperty('mae_cpf');
+  });
+  it('Subsequente: etapa do ensino médio e idade até 70', () => {
+    expect(isStepVisible(step('escola_anterior'), { modalidade: 'Integrado' })).toBe(false);
+    expect(isStepVisible(step('escola_anterior'), { modalidade: 'Subsequente' })).toBe(true);
+    const nasc = step('aluno').fields.find((f) => f.id === 'aluno_nascimento')!;
+    expect(fieldError(nasc, { modalidade: 'Integrado', aluno_nascimento: '10/01/1980' }, TODAY)).toMatch(/46 anos/);
+    expect(fieldError(nasc, { modalidade: 'Subsequente', aluno_nascimento: '10/01/1980' }, TODAY)).toBeNull();
+    expect(isVisible(step('escola_anterior').fields.find((f) => f.id === 'em_cidade')!, { em_uf: 'PE' })).toBe(true);
+  });
+  it('etapa escondida vai vazia para a planilha', () => {
+    const { columns, row } = toRow(steps, { aluno_nascimento: '10/01/2000', resp_quem: 'Mãe', em_escola: 'EREM X', modalidade: 'Integrado' });
+    expect(row[columns.indexOf('Quem é o responsável?')]).toBe('');
+    expect(row[columns.indexOf('Escola onde terminou o ensino médio')]).toBe('');
+  });
+});
+

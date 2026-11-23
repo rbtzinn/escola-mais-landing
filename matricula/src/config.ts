@@ -4,8 +4,14 @@
  */
 export const CONFIG = {
   escola: 'ETE Chico Science',
+  /** Logo da escola (arquivo em public/). */
+  logo: '/logo-ete.webp',
   ano: 2026,
-  cursos: ['Nutrição'],
+  /** Cursos por modalidade. O aluno escolhe a modalidade e depois o curso. */
+  cursos: {
+    Integrado: ['Nutrição e Dietética', 'Farmácia'],
+    Subsequente: ['Farmácia', 'Enfermagem'],
+  } as Record<string, string[]>,
   /** Salário mínimo do ano, usado nas faixas de renda. */
   salarioMinimo: 1518,
   /** URL do app da web do Apps Script (variável de ambiente na Vercel). */

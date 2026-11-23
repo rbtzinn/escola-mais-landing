@@ -2,7 +2,7 @@ import { isValidCpf, onlyDigits } from './cpf';
 import { emailError } from './email';
 import { ageAt, dateError, parseDate, phoneError } from './masks';
 import { nameError } from './names';
-import { type Field, OUTRO, type Step, type Values, isVisible } from './schema';
+import { type Field, OUTRO, type Step, type Values, isRequired, isStepVisible, isVisible, optionsOf, subsequente } from './schema';
 
 export type Errors = Record<string, string>;
 
@@ -11,7 +11,7 @@ const list = (v: Values, id: string) => (Array.isArray(v[id]) ? (v[id] as string
 
 /** Erro de um campo visível, ou null. `today` entra para os testes. */
 export function fieldError(f: Field, v: Values, today = new Date()): string | null {
-  const required = f.required !== false;
+  const required = isRequired(f, v);
   const value = text(v, f.id);
 
   if (f.kind === 'multi') {
@@ -44,7 +44,8 @@ export function fieldError(f: Field, v: Values, today = new Date()): string | nu
       const date = parseDate(value)!;
       if (f.id === 'aluno_nascimento') {
         const age = ageAt(date, today);
-        if (age < 12 || age > 30) return `Confira o ano: por essa data, você teria ${age} anos.`;
+        const [min, max] = subsequente(v) ? [15, 70] : [12, 30];
+        if (age < min || age > max) return `Confira o ano: por essa data, você teria ${age} anos.`;
       }
       if (f.afterField) {
         const before = parseDate(text(v, f.afterField));
@@ -62,6 +63,7 @@ export function fieldError(f: Field, v: Values, today = new Date()): string | nu
       return onlyDigits(value).length === 8 ? null : 'O CEP tem 8 números.';
     case 'choice':
     case 'select':
+      if (f.optionsFrom && !optionsOf(f, v).includes(value)) return 'Escolha uma opção.';
       if (f.other && value === OUTRO && !text(v, `${f.id}_outro`)) return 'Escreva qual em "Outro".';
       return null;
     default:
@@ -88,5 +90,5 @@ export function validateStep(step: Step, v: Values, today = new Date()): Errors 
 
 /** Primeira etapa com erro (para o envio final), ou -1. */
 export function firstInvalidStep(steps: Step[], v: Values, today = new Date()): number {
-  return steps.findIndex((s) => Object.keys(validateStep(s, v, today)).length > 0);
+  return steps.findIndex((s) => isStepVisible(s, v) && Object.keys(validateStep(s, v, today)).length > 0);
 }

@@ -7,7 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { hideCpf } from '@/lib/cpf';
 import { clearDraft, loadDraft, saveDraft } from '@/lib/draft';
 import { toRow } from '@/lib/row';
-import { OUTRO, buildSteps, isVisible, type Field, type Values } from '@/lib/schema';
+import { OUTRO, buildSteps, isStepVisible, isVisible, type Field, type Values } from '@/lib/schema';
 import { submitMatricula, type SubmitResult } from '@/lib/submit';
 import { firstInvalidStep, validateStep } from '@/lib/validate';
 
@@ -71,7 +71,11 @@ export default function App() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
-  const current = STEPS[step];
+  // Etapas que valem agora (o responsável some para maiores de idade; o ensino médio só no Subsequente).
+  const visible = STEPS.map((_, i) => i).filter((i) => isStepVisible(STEPS[i], values));
+  const pos = Math.max(0, visible.findIndex((i) => i >= step));
+  const current = STEPS[visible[pos]];
+  const last = visible[visible.length - 1];
   const errors = useMemo(() => validateStep(current, values), [current, values]);
   const shown = Object.fromEntries(
     Object.entries(errors).filter(([id]) => showAll || touched.has(id)),
@@ -114,8 +118,8 @@ export default function App() {
       setPhase('review');
       return;
     }
-    if (step === STEPS.length - 1) setPhase('review');
-    else goTo(step + 1);
+    if (visible[pos] === last) setPhase('review');
+    else goTo(visible[pos + 1]);
   };
 
   const submit = async () => {
@@ -149,7 +153,7 @@ export default function App() {
     goTo(0);
   };
 
-  const progress = phase === 'form' ? step / STEPS.length : 1;
+  const progress = phase === 'form' ? pos / visible.length : 1;
 
   return (
     <div className="min-h-screen">
@@ -161,9 +165,18 @@ export default function App() {
           </p>
           <ThemeToggle />
         </div>
-        <div className="mx-auto max-w-5xl px-5 pt-2 pb-6 sm:px-8 sm:pb-8">
-          <p className="font-display text-xl font-bold text-cream/85">{CONFIG.escola}</p>
-          <h1 className="font-pixel text-6xl leading-[0.85] uppercase sm:text-7xl">Matrícula {CONFIG.ano}</h1>
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 pt-2 pb-6 sm:gap-6 sm:px-8 sm:pb-8">
+          <img
+            src={CONFIG.logo}
+            alt={`Logo da ${CONFIG.escola}`}
+            width={600}
+            height={367}
+            className="h-20 w-auto shrink-0 rounded-2xl shadow-lg shadow-black/30 sm:h-28"
+          />
+          <div className="min-w-0">
+            <p className="font-display text-xl font-bold text-cream/85">{CONFIG.escola}</p>
+            <h1 className="font-pixel text-5xl leading-[0.85] uppercase sm:text-7xl">Matrícula {CONFIG.ano}</h1>
+          </div>
         </div>
         <div
           role="progressbar"
@@ -180,9 +193,10 @@ export default function App() {
       <div className="mx-auto grid max-w-5xl gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:py-12">
         <nav aria-label="Etapas" className="hidden lg:block">
           <ol className="sticky top-6 space-y-1">
-            {STEPS.map((s, i) => {
-              const done = phase !== 'form' || i < step;
-              const here = phase === 'form' && i === step;
+            {visible.map((i) => {
+              const s = STEPS[i];
+              const done = phase !== 'form' || i < visible[pos];
+              const here = phase === 'form' && i === visible[pos];
               return (
                 <li key={s.id}>
                   <button
@@ -201,7 +215,7 @@ export default function App() {
                         here ? 'bg-on-primary text-primary' : done ? 'bg-ok text-cream' : 'border border-fg/30',
                       )}
                     >
-                      {done && !here ? <Icon name="check" size={12} strokeWidth={3} /> : i + 1}
+                      {done && !here ? <Icon name="check" size={12} strokeWidth={3} /> : visible.indexOf(i) + 1}
                     </span>
                     {s.short}
                   </button>
@@ -223,7 +237,7 @@ export default function App() {
             >
               <div>
                 <p className="text-sm font-semibold text-fg-muted">
-                  Etapa {step + 1} de {STEPS.length}
+                  Etapa {pos + 1} de {visible.length}
                 </p>
                 <h2 ref={headingRef} tabIndex={-1} className="font-display text-4xl leading-tight font-extrabold outline-none">
                   {current.title}
@@ -255,10 +269,10 @@ export default function App() {
               )}
 
               <div className="sticky bottom-0 -mx-5 flex gap-3 border-t border-fg/10 bg-bg/95 px-5 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
-                {step > 0 && (
+                {pos > 0 && (
                   <button
                     type="button"
-                    onClick={() => goTo(step - 1)}
+                    onClick={() => goTo(visible[pos - 1])}
                     className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-fg/25 px-5 font-semibold hover:border-fg"
                   >
                     <Icon name="back" size={20} />
@@ -269,7 +283,7 @@ export default function App() {
                   type="submit"
                   className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-on-primary hover:brightness-110 sm:flex-none"
                 >
-                  {returnToReview ? 'Voltar para a revisão' : step === STEPS.length - 1 ? 'Revisar' : 'Continuar'}
+                  {returnToReview ? 'Voltar para a revisão' : visible[pos] === last ? 'Revisar' : 'Continuar'}
                   <Icon name="arrow" size={20} />
                 </button>
               </div>
@@ -284,8 +298,8 @@ export default function App() {
                 </h2>
                 <p className="mt-2 text-fg-muted">Depois de enviar, só a secretaria consegue mudar os dados.</p>
               </div>
-              {STEPS.slice(1).map((s) => {
-                const i = STEPS.indexOf(s);
+              {visible.slice(1).map((i) => {
+                const s = STEPS[i];
                 const items = s.fields.filter((f) => isVisible(f, values)).map((f) => [f, display(f, values)] as const);
                 return (
                   <section key={s.id} className="rounded-2xl border-2 border-fg/15 bg-surface p-4 sm:p-5">
@@ -350,7 +364,7 @@ export default function App() {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() => goTo(STEPS.length - 1)}
+                  onClick={() => goTo(last)}
                   className="inline-flex min-h-12 items-center gap-2 rounded-xl border-2 border-fg/25 px-5 font-semibold hover:border-fg"
                 >
                   <Icon name="back" size={20} />
