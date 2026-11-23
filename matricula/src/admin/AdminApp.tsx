@@ -13,6 +13,7 @@ import {
 } from '@/lib/adminApi';
 import { stats, toRecords, type Rec } from '@/lib/adminData';
 import { buildSteps } from '@/lib/schema';
+import { warmUp } from '@/lib/submit';
 import { Approved } from './Approved';
 import { Exceptions } from './Exceptions';
 import { Login } from './Login';
@@ -72,6 +73,11 @@ export default function AdminApp() {
     [applyPanel],
   );
 
+  // Sem sessão guardada, o login vem primeiro: acorda o script enquanto a pessoa digita a senha.
+  useEffect(() => {
+    if (!loadSession()) warmUp(CONFIG.appsScriptUrl);
+  }, []);
+
   useEffect(() => {
     if (!session) return;
     let alive = true;
@@ -88,10 +94,15 @@ export default function AdminApp() {
       if (!session) return { status: 'sessao_expirada' };
       const r = await api(action, body, session.sessao);
       if (r.status === 'sessao_expirada') logout(replyMessage(r));
-      else if (r.status === 'ok') await load(session);
+      else if (r.status === 'ok') {
+        // O script devolve o painel já atualizado na própria resposta (uma viagem só). Se vier
+        // sem ele (script antigo), pede de novo como antes.
+        if (r.painel && typeof r.painel === 'object') applyPanel(r.painel as ApiReply);
+        else await load(session);
+      }
       return r;
     },
-    [session, load, logout],
+    [session, load, logout, applyPanel],
   );
 
   const recs = useMemo(() => (data ? toRecords(data.cabecalho, data.linhas) : []), [data]);
@@ -235,7 +246,7 @@ export default function AdminApp() {
 
       {openRec && data && (
         <StudentSheet
-          key={`${openRec.protocolo}|${openRec.status}|${openRec.observacao}`}
+          key={openRec.protocolo}
           rec={openRec}
           header={data.cabecalho}
           steps={STEPS}

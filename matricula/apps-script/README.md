@@ -46,6 +46,17 @@ Passo a passo para quem tem acesso à **conta Google institucional da escola** (
 - Grava uma linha por aluno, com data e hora, protocolo (`MAT-2026-0001`) e CPF só com números. Tudo é gravado como texto, para não perder zeros à esquerda.
 - Se o formulário ganhar perguntas novas, as colunas novas entram no fim, sem bagunçar as antigas.
 
+## Velocidade
+
+O Apps Script sempre tem uma espera mínima por pedido (em geral cerca de 1 segundo), mas o script evita o resto:
+
+- **Uma viagem por ação do painel:** a resposta de status, período, exceção, aprovados e usuários já traz o painel atualizado.
+- **Lê só o que precisa:** a conferência de CPF lê duas colunas (CPF e Status), não a matrícula inteira; o resumo lê três colunas e não refaz a formatação.
+- **Conferência sem fila:** a conferência do começo do formulário só lê, então não espera as gravações dos outros alunos.
+- **Aquecimento:** o formulário e a tela de login do painel mandam um `ping` ao abrir, para o script já estar acordado.
+
+Para ver quanto cada pedido levou, abra o editor do Apps Script e entre em **Execuções**.
+
 ## Mudou o script?
 
-Depois de editar o `Code.js`, cole de novo no editor, rode `setup` de novo (ele não apaga nada; cria o que faltar e pode pedir uma nova autorização) e use **Implantar > Gerenciar implantações > Editar (lápis) > Versão: Nova versão**. Assim a URL continua a mesma.
+Depois de editar o `Code.js`, cole de novo no editor, rode `setup` de novo (ele não apaga nada; cria o que faltar, refaz a formatação do resumo e pode pedir uma nova autorização) e use **Implantar > Gerenciar implantações > Editar (lápis) > Versão: Nova versão**. Assim a URL continua a mesma.
