@@ -1,0 +1,192 @@
+import { describe, expect, it, vi } from 'vitest';
+import { CONFIG } from '@/config';
+import { fetchCep, searchStreet } from './cep';
+import { hideCpf, isValidCpf, maskCpf } from './cpf';
+import { clearDraft, loadDraft, saveDraft } from './draft';
+import { emailError, emailSuggestion } from './email';
+import { clearCitiesCache, fetchCities } from './ibge';
+import { ageAt, dateError, maskCep, maskDate, maskPhone, maskRg, parseDate, phoneError } from './masks';
+import { cleanName, nameError } from './names';
+import { toRow } from './row';
+import { buildSteps, isVisible, rendaOptions, type Values } from './schema';
+import { submitMatricula } from './submit';
+import { fieldError, firstInvalidStep, validateStep } from './validate';
+
+const TODAY = new Date(2026, 10, 23);
+const steps = buildSteps(CONFIG);
+const step = (id: string) => steps.find((s) => s.id === id)!;
+const json = (body: unknown, ok = true, status = 200) =>
+  Promise.resolve({ ok, status, json: () => Promise.resolve(body) } as Response);
+
+describe('CPF', () => {
+  it('confere os dígitos verificadores', () => {
+    for (const ok of ['529.982.247-25', '52998224725', '111.444.777-35']) expect(isValidCpf(ok)).toBe(true);
+    for (const bad of ['529.982.247-24', '111.111.111-11', '123', '', '000.000.000-00'])
+      expect(isValidCpf(bad)).toBe(false);
+  });
+  it('põe a máscara enquanto digita e esconde no protocolo', () => {
+    expect(maskCpf('529')).toBe('529');
+    expect(maskCpf('5299')).toBe('529.9');
+    expect(maskCpf('5299822472599')).toBe('529.982.247-25');
+    expect(hideCpf('52998224725')).toBe('***.982.247-**');
+  });
+});
+
+describe('máscaras', () => {
+  it('celular, fixo e DDD', () => {
+    expect(maskPhone('81999990001')).toBe('(81) 9 9999-0001');
+    expect(maskPhone('8133330001')).toBe('(81) 3333-0001');
+    expect(phoneError('(81) 9 9999-0001', 'celular')).toBeNull();
+    expect(phoneError('(81) 3333-0001', 'celular')).toMatch(/9 dígitos/);
+    expect(phoneError('(81) 3333-0001')).toBeNull();
+    expect(phoneError('(20) 9 9999-0001')).toMatch(/DDD não existe/);
+    expect(phoneError('(81) 9999')).toMatch(/completo/);
+  });
+  it('CEP, data e RG', () => {
+    expect(maskCep('50010000')).toBe('50010-000');
+    expect(maskDate('15032010')).toBe('15/03/2010');
+    expect(parseDate('31/02/2010')).toBeNull();
+    expect(dateError('31/02/2010', TODAY)).toMatch(/não existe/);
+    expect(dateError('01/01/2030', TODAY)).toMatch(/futuro/);
+    expect(dateError('15/03/2010', TODAY)).toBeNull();
+    expect(ageAt(new Date(2010, 2, 15), TODAY)).toBe(16);
+    expect(maskRg('12.345.678-x')).toBe('12345678X');
+  });
+});
+
+describe('nomes e e-mail', () => {
+  it('arruma o nome e pede nome completo', () => {
+    expect(cleanName('  maria   DA silva  ')).toBe('Maria da Silva');
+    expect(cleanName("joão d'ávila-santos")).toBe("João D'Ávila-Santos");
+    expect(nameError('Maria')).toMatch(/sobrenome/);
+    expect(nameError('Maria 2 Silva')).toMatch(/letras/);
+    expect(nameError('Maria da Silva')).toBeNull();
+  });
+  it('sugere o domínio certo', () => {
+    expect(emailError('ana@gmail')).toMatch(/incompleto/);
+    expect(emailSuggestion('ana@gmial.com')).toBe('ana@gmail.com');
+    expect(emailSuggestion('ana@hotmal.com')).toBe('ana@hotmail.com');
+    expect(emailSuggestion('ana@gmail.com')).toBeNull();
+    expect(emailSuggestion('ana@escola.pe.gov.br')).toBeNull();
+  });
+});
+
+describe('CEP e IBGE', () => {
+  it('ViaCEP preenche; CEP inexistente; reserva da BrasilAPI', async () => {
+    const f = vi.spyOn(globalThis, 'fetch');
+    f.mockImplementationOnce(() =>
+      json({ cep: '50050-050', logradouro: 'Rua do Hospício', bairro: 'Boa Vista', localidade: 'Recife', uf: 'PE' }),
+    );
+    expect(await fetchCep('50050-050')).toEqual({
+      status: 'ok',
+      endereco: { cep: '50050-050', rua: 'Rua do Hospício', bairro: 'Boa Vista', cidade: 'Recife', uf: 'PE' },
+    });
+    f.mockImplementationOnce(() => json({ erro: 'true' }));
+    expect(await fetchCep('00000000')).toEqual({ status: 'nao-encontrado' });
+    f.mockImplementationOnce(() => Promise.reject(new Error('rede'))).mockImplementationOnce(() =>
+      json({ cep: '50050050', street: 'Rua X', neighborhood: 'B', city: 'Recife', state: 'PE' }),
+    );
+    expect((await fetchCep('50050050')).status).toBe('ok');
+    f.mockImplementationOnce(() => Promise.reject(new Error('rede'))).mockImplementationOnce(() =>
+      Promise.reject(new Error('rede')),
+    );
+    expect(await fetchCep('50050050')).toEqual({ status: 'falha' });
+    f.mockRestore();
+  });
+  it('busca pela rua e cidades por estado (PE já vem no site)', async () => {
+    const f = vi.spyOn(globalThis, 'fetch');
+    expect(await searchStreet('PE', 'Recife', 'Ru')).toEqual([]);
+    f.mockImplementationOnce(() =>
+      json([{ cep: '50050-050', logradouro: 'Rua do Hospício', bairro: 'Boa Vista', localidade: 'Recife', uf: 'PE' }]),
+    );
+    expect(await searchStreet('PE', 'Recife', 'Rua do Hosp')).toHaveLength(1);
+    expect(f.mock.calls[0][0]).toBe('https://viacep.com.br/ws/PE/Recife/Rua%20do%20Hosp/json/');
+
+    const pe = await fetchCities('PE');
+    expect(pe).toHaveLength(185);
+    expect(pe).toContain('Jaboatão dos Guararapes');
+
+    clearCitiesCache();
+    f.mockImplementationOnce(() => json([{ nome: 'Natal' }, { nome: 'Mossoró' }]));
+    expect(await fetchCities('RN')).toEqual(['Mossoró', 'Natal']);
+    expect(await fetchCities('RN')).toEqual(['Mossoró', 'Natal']); // cache
+    f.mockImplementationOnce(() => Promise.reject(new Error('rede')));
+    expect(await fetchCities('PB')).toBeNull();
+    f.mockRestore();
+  });
+});
+
+describe('etapas e validação', () => {
+  it('mãe falecida esconde os dados dela; responsável "Outra pessoa" pede os dados', () => {
+    const nome = step('mae').fields.find((f) => f.id === 'mae_nome')!;
+    expect(isVisible(nome, { mae_situacao: 'Falecida' })).toBe(false);
+    expect(isVisible(nome, { mae_situacao: 'Viva' })).toBe(true);
+    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual([]);
+    expect(Object.keys(validateStep(step('responsavel'), { resp_quem: 'Mãe' }, TODAY))).toEqual([]);
+    expect(validateStep(step('responsavel'), { resp_quem: 'Outra pessoa' }, TODAY)).toHaveProperty('resp_nome');
+  });
+  it('erros de CPF, data e "Outro"', () => {
+    const docs = step('documentos');
+    const cpf = docs.fields.find((f) => f.id === 'aluno_cpf')!;
+    expect(fieldError(cpf, { aluno_cpf: '529.982.247-24' }, TODAY)).toMatch(/não existe/);
+    const maeCpf = step('mae').fields.find((f) => f.id === 'mae_cpf')!;
+    expect(fieldError(maeCpf, { mae_situacao: 'Viva', aluno_cpf: '52998224725', mae_cpf: '529.982.247-25' }, TODAY)).toMatch(/outra pessoa/);
+    const exp = docs.fields.find((f) => f.id === 'aluno_rg_data')!;
+    expect(fieldError(exp, { aluno_nascimento: '15/03/2010', aluno_rg_data: '01/01/2009' }, TODAY)).toMatch(/antes do seu nascimento/);
+    const nasc = step('aluno').fields.find((f) => f.id === 'aluno_nascimento')!;
+    expect(fieldError(nasc, { aluno_nascimento: '15/03/2024' }, TODAY)).toMatch(/2 anos/);
+    const orgao = docs.fields.find((f) => f.id === 'aluno_rg_orgao')!;
+    expect(fieldError(orgao, { aluno_rg_orgao: 'Outro' }, TODAY)).toMatch(/Outro/);
+    expect(fieldError(orgao, { aluno_rg_orgao: 'Outro', aluno_rg_orgao_outro: 'SSP-BA' }, TODAY)).toBeNull();
+    expect(firstInvalidStep(steps, {}, TODAY)).toBe(0);
+  });
+  it('faixas de renda pelo salário do ano', () => {
+    const r = rendaOptions(1518);
+    expect(r[0]).toMatch(/Menos de 1 salário/);
+    expect(r[1].replace(/\s/g, ' ')).toBe('1 salário (R$ 1.518)');
+    expect(r).toHaveLength(12);
+  });
+});
+
+describe('planilha, rascunho e envio', () => {
+  it('a linha segue as colunas e esvazia campos escondidos', () => {
+    const v: Values = {
+      consentimento: 'sim',
+      aluno_nome: 'Ana Souza',
+      aluno_rg_orgao: 'Outro',
+      aluno_rg_orgao_outro: 'SSP-BA',
+      mae_situacao: 'Falecida',
+      mae_nome: 'Não deveria ir',
+      mora_com: ['Mãe', 'Outro'],
+      mora_com_outro: 'Madrinha',
+      'interesses:Teatro': 'Quero aprender',
+    };
+    const { columns, row } = toRow(steps, v);
+    const at = (c: string) => row[columns.indexOf(c)];
+    expect(columns.length).toBe(row.length);
+    expect(at('Consentimento LGPD')).toBe('Sim');
+    expect(at('Seu nome completo')).toBe('Ana Souza');
+    expect(at('Órgão expedidor do RG')).toBe('Outro: SSP-BA');
+    expect(at('Nome completo da mãe')).toBe('');
+    expect(at('Com quem você mora?')).toBe('Mãe; Outro: Madrinha');
+    expect(at('Interesse: Teatro')).toBe('Quero aprender');
+    expect(new Set(columns).size).toBe(columns.length);
+  });
+  it('rascunho salva, volta e some', () => {
+    saveDraft({ values: { aluno_nome: 'Ana' }, step: 3 });
+    expect(loadDraft()).toEqual({ values: { aluno_nome: 'Ana' }, step: 3 });
+    clearDraft();
+    expect(loadDraft()).toBeNull();
+  });
+  it('envio: ok, CPF repetido, erro e sem configuração', async () => {
+    const payload = { token: 't', cpf: '529.982.247-25', columns: ['a'], row: ['b'] };
+    const ok = vi.fn(() => json({ status: 'ok', protocolo: 'MAT-1' }));
+    expect(await submitMatricula('https://x', payload, ok as unknown as typeof fetch)).toEqual({ status: 'ok', protocolo: 'MAT-1' });
+    expect(JSON.parse((ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string).cpf).toBe('52998224725');
+    const dup = vi.fn(() => json({ status: 'cpf_duplicado' }));
+    expect(await submitMatricula('https://x', payload, dup as unknown as typeof fetch)).toEqual({ status: 'cpf_duplicado' });
+    const down = vi.fn(() => Promise.reject(new Error('rede')));
+    expect((await submitMatricula('https://x', payload, down as unknown as typeof fetch)).status).toBe('erro');
+    expect(await submitMatricula('', payload)).toEqual({ status: 'sem_configuracao' });
+  });
+});

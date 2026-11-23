@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Skill de design de terceiros (impeccable) e seus artefatos.
     '.claude/**',
     '.impeccable/**',
+    // Formulário de matrícula: projeto próprio, com lint próprio.
+    'matricula/**',
   ]),
 ]);
 
