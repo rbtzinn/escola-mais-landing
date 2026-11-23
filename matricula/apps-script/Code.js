@@ -13,6 +13,42 @@
  * As funções puras (sem SpreadsheetApp) ficam no topo e são testadas no projeto com Vitest.
  */
 
+/* ---------- Comece por aqui: escolha `setup` ao lado de Executar ---------- */
+
+/** Rode uma vez: cria as abas "Matrículas" e "Resumo por curso", já formatadas. */
+function setup() {
+  var made = ensureSheets_();
+  var sheet = made.sheet;
+  if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, FIXED_COLUMNS.length).setValues([FIXED_COLUMNS]);
+  styleHeader_(sheet, Math.max(sheet.getLastColumn(), FIXED_COLUMNS.length));
+
+  var summary = made.summary;
+  summary.clear();
+  summary.getRange('A1:C1').setValues([['Modalidade', 'Curso', 'Matrículas']]);
+  // Acha as colunas "Modalidade" e "Curso" pelo nome, então funciona mesmo se a ordem mudar.
+  // Apps Script grava fórmulas na sintaxe em inglês (vírgulas), qualquer que seja o idioma.
+  var col = function (name) {
+    return "INDEX('" + SHEET_NAME + "'!A2:ZZ,0,MATCH(\"" + name + "\",'" + SHEET_NAME + "'!A1:ZZ1,0))";
+  };
+  summary
+    .getRange('A2')
+    .setFormula(
+      '=IFERROR(QUERY({' + col('Modalidade') + ',' + col('Curso') +
+        "},\"select Col1, Col2, count(Col2) where Col2 is not null group by Col1, Col2 label count(Col2) ''\",0),\"Sem matrículas ainda\")",
+    );
+  summary.getRange('E1').setValue('Total');
+  summary.getRange('E2').setFormula("=COUNTA('" + SHEET_NAME + "'!B2:B)");
+  summary.getRange('A1:E1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
+  summary.getRange('E2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
+  summary.setColumnWidth(1, 140);
+  summary.setColumnWidth(2, 200);
+  summary.setColumnWidth(3, 120);
+  summary.setFrozenRows(1);
+  Logger.log('Pronto: abas "' + SHEET_NAME + '" e "' + SUMMARY_NAME + '" criadas na planilha "' + made.sheet.getParent().getName() + '".');
+}
+
+/* ---------- Configuração ---------- */
+
 var SHEET_NAME = 'Matrículas';
 var SUMMARY_NAME = 'Resumo por curso';
 var FIXED_COLUMNS = ['Enviado em', 'Protocolo', 'CPF do aluno'];
@@ -156,37 +192,6 @@ function doPost(e) {
   } catch (err) {
     return json({ status: 'erro', message: 'Falha ao gravar na planilha.' });
   }
-}
-
-/** Rode uma vez: cria as abas "Matrículas" e "Resumo por curso", já formatadas. */
-function setup() {
-  var made = ensureSheets_();
-  var sheet = made.sheet;
-  if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, FIXED_COLUMNS.length).setValues([FIXED_COLUMNS]);
-  styleHeader_(sheet, Math.max(sheet.getLastColumn(), FIXED_COLUMNS.length));
-
-  var summary = made.summary;
-  summary.clear();
-  summary.getRange('A1:C1').setValues([['Modalidade', 'Curso', 'Matrículas']]);
-  // Acha as colunas "Modalidade" e "Curso" pelo nome, então funciona mesmo se a ordem mudar.
-  // Apps Script grava fórmulas na sintaxe em inglês (vírgulas), qualquer que seja o idioma.
-  var col = function (name) {
-    return "INDEX('" + SHEET_NAME + "'!A2:ZZ,0,MATCH(\"" + name + "\",'" + SHEET_NAME + "'!A1:ZZ1,0))";
-  };
-  summary
-    .getRange('A2')
-    .setFormula(
-      '=IFERROR(QUERY({' + col('Modalidade') + ',' + col('Curso') +
-        "},\"select Col1, Col2, count(Col2) where Col2 is not null group by Col1, Col2 label count(Col2) ''\",0),\"Sem matrículas ainda\")",
-    );
-  summary.getRange('E1').setValue('Total');
-  summary.getRange('E2').setFormula("=COUNTA('" + SHEET_NAME + "'!B2:B)");
-  summary.getRange('A1:E1').setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
-  summary.getRange('E2').setFontSize(18).setFontWeight('bold').setFontColor(PINK);
-  summary.setColumnWidth(1, 140);
-  summary.setColumnWidth(2, 200);
-  summary.setColumnWidth(3, 120);
-  summary.setFrozenRows(1);
 }
 
 /** A planilha: a do SHEET_ID (script aberto pelo script.new) ou aquela onde o script foi colado. */
