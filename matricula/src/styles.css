@@ -1,0 +1,246 @@
+@import 'tailwindcss';
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow/700.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/barlow-condensed/800.css';
+@import '@fontsource/jersey-15/400.css';
+
+/* Tokens copiados do Escola+ (src/app/globals.css da landing): mesmo visual, projeto separado. */
+:root {
+  --pink: #fc3b7f;
+  --blue: #0032a8;
+  --cream: #fef1cf;
+  --ink: #141a3c;
+  --green: #0ba95a;
+  --yellow: #f8c925;
+
+  --bg: #fef1cf;
+  --surface: #fff8e7;
+  --surface-muted: #f7e6bd;
+  --border: #e2cc97;
+  --text: #141a3c;
+  --text-muted: #4b5070;
+  --primary: #0032a8;
+  --on-primary: #fef1cf;
+  --secondary: #c81e5c;
+  --accent: #f8c925;
+  --on-accent: #141a3c;
+  --danger: #b3261e;
+  /* Verde do semáforo ("está tudo bem"), legível sobre o creme. */
+  --ok: #0a7a43;
+  /* Faixa de marca-texto atrás de uma palavra. */
+  --marker: rgb(252 59 127 / 0.32);
+  /* Verde da marca WhatsApp, com texto escuro (contraste AA). */
+  --whatsapp: #25d366;
+  --on-whatsapp: #052e16;
+  --ring: #c81e5c;
+  /* Traço de tinta das réguas e contornos da landing (creme no escuro). */
+  --line: #141a3c;
+  --shadow: 0 1px 0 rgb(20 26 60 / 0.06), 0 16px 32px -20px rgb(20 26 60 / 0.4);
+  --paper-pink: url('/plates/chao-rosa.png');
+  --paper-blue: url('/plates/chao-azul.png');
+  --paper-cream: url('/plates/chao-creme.png');
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #0a1236;
+  --surface: #111b48;
+  --surface-muted: #18245a;
+  --border: #2b3b7a;
+  --text: #fef1cf;
+  --text-muted: #c9c6e0;
+  --primary: #ff6fa0;
+  --on-primary: #1a0a22;
+  --secondary: #ff8fb6;
+  --danger: #ff8a80;
+  --ok: #5ad696;
+  --marker: rgb(252 59 127 / 0.4);
+  --ring: #ff8fb6;
+  --line: #fef1cf;
+  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 16px 32px -20px rgb(0 0 0 / 0.75);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-fg: var(--text);
+  --color-fg-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --color-whatsapp: var(--whatsapp);
+  --color-on-whatsapp: var(--on-whatsapp);
+  --color-line: var(--line);
+  --color-pink: var(--pink);
+  --color-blue: var(--blue);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-pixel: 'Jersey 15', 'Barlow Condensed', monospace;
+  --font-mono: ui-monospace, ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --shadow-card: var(--shadow);
+}
+
+/* Cantos arredondados de crachá e botão de papel. */
+@theme {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 22px;
+}
+
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role='button'],
+  [role='option'],
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.font-display {
+  font-variant-numeric: lining-nums;
+}
+
+/* Partes do navegador também vestem a paleta. */
+::selection {
+  background: var(--pink);
+  color: var(--cream);
+}
+html {
+  accent-color: var(--primary);
+  caret-color: var(--primary);
+  scrollbar-color: var(--primary) var(--surface-muted);
+}
+
+/* Papel serigrafado: textura recortada da imagem aprovada, repetida. */
+.paper-pink {
+  background-color: var(--pink);
+  background-image: var(--paper-pink);
+}
+.paper-blue {
+  background-color: var(--blue);
+  background-image: var(--paper-blue);
+}
+.paper-cream {
+  background-color: var(--cream);
+  background-image: var(--paper-cream);
+}
+[data-theme='dark'] .paper-cream {
+  background-color: var(--bg);
+  background-image: none;
+}
+
+/* Toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast-enter {
+  animation: toast-in 250ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 180ms ease-out;
+}
+
+/* Painel lateral (fichas): sobe de baixo no celular, entra pela direita no computador. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes sheet-right {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.sheet-enter {
+  animation: sheet-up 220ms ease-out;
+}
+@media (min-width: 640px) {
+  .sheet-enter-side {
+    animation: sheet-right 220ms ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-enter,
+  .sheet-enter-side {
+    animation: none;
+  }
+  [data-js] .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .toast-enter,
+  .fade-in {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
