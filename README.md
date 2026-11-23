@@ -187,6 +187,10 @@ Em `src/components/ui/`, feitos sem biblioteca externa:
 
 **Regra do projeto:** não usar `<select>`, `alert()`, `confirm()` nem `<dialog>` nativos. Use os componentes acima.
 
+## Formulário de matrícula (`/matricula`)
+
+Projeto separado (Vite + React) com o formulário de matrícula da ETE Chico Science, que grava numa planilha Google Sheets por Apps Script. Tem CPF validado, máscaras, CEP, cidades do IBGE e perguntas que se adaptam. Veja [`matricula/README.md`](./matricula/README.md); a landing ignora essa pasta no lint, nos tipos e no build.
+
 ## Cores e tema
 
 Visual **papel serigrafado**: rosa `#fc3b7f`, creme `#fef1cf` e azul royal `#0032a8`, com tinta azul-escura `#141a3c` no texto, título em fonte pixel e adesivos em traço creme. Foi desenhado com a skill [impeccable](https://impeccable.style) (`.claude/skills/impeccable`) a partir de uma imagem aprovada (`.impeccable/mocks/comp-2-celular.jpg`); o registro do produto fica em `PRODUCT.md` e o do visual em `DESIGN.md`.
