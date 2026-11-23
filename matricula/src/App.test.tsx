@@ -42,12 +42,12 @@ describe('formulário de matrícula', () => {
     expect(screen.getByText('Marque para continuar.')).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox'));
     await continuar(user);
-    expect(screen.getByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Confirme quem é você' })).toBeInTheDocument();
   });
 
   it('CPF inválido não passa; com máscara e válido, passa', async () => {
     const user = userEvent.setup();
-    saveDraft({ values: fullValues(), step: at('documentos') });
+    saveDraft({ values: fullValues(), step: at('identificacao') });
     render(<App />);
     const cpf = screen.getByLabelText('Seu CPF');
     await user.clear(cpf);
@@ -59,7 +59,40 @@ describe('formulário de matrícula', () => {
     await user.clear(cpf);
     await user.type(cpf, '52998224725');
     await continuar(user);
-    expect(screen.getByRole('heading', { name: 'Onde você nasceu' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
+  });
+
+  it('fora da lista de aprovados não passa da identificação, com mensagem genérica', async () => {
+    const user = userEvent.setup();
+    saveDraft({ values: fullValues(), step: at('identificacao') });
+    const check = vi.spyOn(submitModule, 'checkAprovado').mockResolvedValue({ status: 'nao_encontrado' });
+    render(<App />);
+    await continuar(user);
+    expect(await screen.findByText(/Não encontramos seus dados na lista de aprovados/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Confirme quem é você' })).toBeInTheDocument();
+    expect(check).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ nascimento: '15/03/2010' }));
+    // Mudar o CPF apaga o aviso.
+    await user.type(screen.getByLabelText('Seu CPF'), '1');
+    expect(screen.queryByText(/Não encontramos/)).not.toBeInTheDocument();
+  });
+
+  it('aprovado com curso na lista: curso já escolhido e único; não confere de novo', async () => {
+    const user = userEvent.setup();
+    saveDraft({ values: { ...fullValues(), modalidade: '', curso: '' }, step: at('identificacao') });
+    const check = vi
+      .spyOn(submitModule, 'checkAprovado')
+      .mockResolvedValue({ status: 'ok', modalidade: 'subsequente', curso: 'ENFERMAGEM' });
+    render(<App />);
+    await continuar(user);
+    expect(await screen.findByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Integrado')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Subsequente')).toBeChecked();
+    expect(screen.getByLabelText('Enfermagem')).toBeChecked();
+    expect(screen.queryByLabelText('Farmácia')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Voltar/ }));
+    await continuar(user);
+    expect(await screen.findByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
+    expect(check).toHaveBeenCalledTimes(1);
   });
 
   it('o CEP preenche o endereço', async () => {
@@ -109,7 +142,7 @@ describe('formulário de matrícula', () => {
     render(<App />);
     await continuar(user);
     expect(screen.getByRole('heading', { name: 'Confira antes de enviar' })).toBeInTheDocument();
-    const docs = screen.getByRole('heading', { name: 'Seus documentos' }).closest('section')!;
+    const docs = screen.getByRole('heading', { name: 'Confirme quem é você' }).closest('section')!;
     expect(within(docs).getByText('529.982.247-25')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Enviar matrícula/ }));
     expect(await screen.findByText(/Esse CPF já foi matriculado/)).toBeInTheDocument();

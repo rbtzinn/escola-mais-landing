@@ -1,6 +1,6 @@
 # Matrícula · Escola+
 
-Formulário de matrícula da **ETE Chico Science**, feito para substituir o Google Forms e **diminuir os erros na origem**. É um projeto separado da landing do Escola+, com o mesmo visual (rosa, creme e azul), e grava numa planilha Google Sheets da escola por Apps Script.
+Formulário de matrícula da **ETE Chico Science**, feito para substituir o Google Forms e **diminuir os erros na origem**. É um projeto separado da landing do Escola+, com o mesmo visual (rosa, creme e azul), e grava numa planilha Google Sheets da escola por Apps Script. Em `/admin` fica o **painel** da direção e da coordenação (status das matrículas, período, exceções, aprovados e usuários); veja o [passo a passo da planilha](./apps-script/README.md#painel-admin).
 
 ## O que evita erro
 
@@ -66,6 +66,8 @@ Crie um **projeto novo** na Vercel a partir deste mesmo repositório, com **Root
   - `validate`: erros por etapa;
   - `row`: linha da planilha;
   - `draft`: rascunho no aparelho;
-  - `submit`: envio.
+  - `submit`: envio e conferência na lista de aprovados;
+  - `adminApi`, `adminData`: sessão, chamadas e números do painel.
+- `src/admin/`: o painel `/admin` (carregado à parte; quem só se matricula não baixa).
 - `src/components/`: `FieldView` (desenha cada tipo de campo), `Choices` (opções em botões) e `ui/` (lista e busca acessíveis, copiadas do Escola+).
 - `apps-script/Code.js`: o script da planilha (cole no editor do Google).

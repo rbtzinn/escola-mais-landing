@@ -8,8 +8,8 @@ import { clearCitiesCache, fetchCities } from './ibge';
 import { ageAt, dateError, maskCep, maskDate, maskPhone, maskRg, parseDate, phoneError } from './masks';
 import { cleanName, nameError } from './names';
 import { toRow } from './row';
-import { adulto, buildSteps, isStepVisible, isVisible, optionsOf, rendaOptions, type Values } from './schema';
-import { submitMatricula } from './submit';
+import { adulto, buildSteps, isStepVisible, isVisible, matchOption, optionsOf, rendaOptions, type Values } from './schema';
+import { blockedMessage, checkAprovado, submitMatricula } from './submit';
 import { fieldError, firstInvalidStep, validateStep } from './validate';
 
 const TODAY = new Date(2026, 10, 23);
@@ -127,13 +127,13 @@ describe('etapas e validação', () => {
   });
   it('erros de CPF, data e "Outro"', () => {
     const docs = step('documentos');
-    const cpf = docs.fields.find((f) => f.id === 'aluno_cpf')!;
+    const cpf = step('identificacao').fields.find((f) => f.id === 'aluno_cpf')!;
     expect(fieldError(cpf, { aluno_cpf: '529.982.247-24' }, TODAY)).toMatch(/não existe/);
     const maeCpf = step('mae').fields.find((f) => f.id === 'mae_cpf')!;
     expect(fieldError(maeCpf, { mae_situacao: 'Viva', aluno_cpf: '52998224725', mae_cpf: '529.982.247-25' }, TODAY)).toMatch(/outra pessoa/);
     const exp = docs.fields.find((f) => f.id === 'aluno_rg_data')!;
     expect(fieldError(exp, { aluno_nascimento: '15/03/2010', aluno_rg_data: '01/01/2009' }, TODAY)).toMatch(/antes do seu nascimento/);
-    const nasc = step('aluno').fields.find((f) => f.id === 'aluno_nascimento')!;
+    const nasc = step('identificacao').fields.find((f) => f.id === 'aluno_nascimento')!;
     expect(fieldError(nasc, { aluno_nascimento: '15/03/2024' }, TODAY)).toMatch(/2 anos/);
     const orgao = docs.fields.find((f) => f.id === 'aluno_rg_orgao')!;
     expect(fieldError(orgao, { aluno_rg_orgao: 'Outro' }, TODAY)).toMatch(/Outro/);
@@ -190,6 +190,24 @@ describe('planilha, rascunho e envio', () => {
     const down = vi.fn(() => Promise.reject(new Error('rede')));
     expect((await submitMatricula('https://x', payload, down as unknown as typeof fetch)).status).toBe('erro');
     expect(await submitMatricula('', payload)).toEqual({ status: 'sem_configuracao' });
+    const curso = vi.fn(() => json({ status: 'curso_diferente' }));
+    expect(await submitMatricula('https://x', payload, curso as unknown as typeof fetch)).toEqual({ status: 'curso_diferente' });
+  });
+  it('conferência na lista de aprovados e mensagens', async () => {
+    const input = { token: 't', cpf: '529.982.247-25', nascimento: '15/03/2010' };
+    const ok = vi.fn(() => json({ status: 'ok', modalidade: 'Integrado', curso: '' }));
+    expect(await checkAprovado('https://x', input, ok as unknown as typeof fetch)).toEqual({ status: 'ok', modalidade: 'Integrado', curso: '' });
+    const body = JSON.parse((ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body).toMatchObject({ action: 'check', cpf: '52998224725', nascimento: '15/03/2010' });
+    const fora = vi.fn(() => json({ status: 'fora_do_periodo', inicio: '01/02/2027', fim: '10/02/2027' }));
+    const r = await checkAprovado('https://x', input, fora as unknown as typeof fetch);
+    expect(r.status !== 'ok' && blockedMessage(r)).toBe('As matrículas estão fechadas. O período é de 01/02/2027 a 10/02/2027.');
+    const nao = vi.fn(() => json({ status: 'nao_encontrado' }));
+    const r2 = await checkAprovado('https://x', input, nao as unknown as typeof fetch);
+    expect(r2.status !== 'ok' && blockedMessage(r2)).toMatch(/lista de aprovados/);
+    expect(await checkAprovado('', input)).toEqual({ status: 'sem_configuracao' });
+    expect(matchOption(' farmacia ', ['Nutrição e Dietética', 'Farmácia'])).toBe('Farmácia');
+    expect(matchOption('', ['Farmácia'])).toBe('');
   });
 });
 
@@ -212,7 +230,7 @@ describe('modalidade, curso e maioridade', () => {
   it('Subsequente: etapa do ensino médio e idade até 70', () => {
     expect(isStepVisible(step('escola_anterior'), { modalidade: 'Integrado' })).toBe(false);
     expect(isStepVisible(step('escola_anterior'), { modalidade: 'Subsequente' })).toBe(true);
-    const nasc = step('aluno').fields.find((f) => f.id === 'aluno_nascimento')!;
+    const nasc = step('identificacao').fields.find((f) => f.id === 'aluno_nascimento')!;
     expect(fieldError(nasc, { modalidade: 'Integrado', aluno_nascimento: '10/01/1980' }, TODAY)).toMatch(/46 anos/);
     expect(fieldError(nasc, { modalidade: 'Subsequente', aluno_nascimento: '10/01/1980' }, TODAY)).toBeNull();
     expect(isVisible(step('escola_anterior').fields.find((f) => f.id === 'em_cidade')!, { em_uf: 'PE' })).toBe(true);

@@ -21,6 +21,7 @@ export default tseslint.config(
         LockService: 'readonly',
         ContentService: 'readonly',
         PropertiesService: 'readonly',
+        Logger: 'readonly',
         Utilities: 'readonly',
         module: 'writable',
       },
