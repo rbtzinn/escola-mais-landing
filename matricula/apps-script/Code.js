@@ -8,12 +8,14 @@
  *      - FORM_TOKEN: o mesmo valor de VITE_FORM_TOKEN na Vercel;
  *      - SHEET_ID: o link (ou o ID) da planilha. Só é preciso se abriu pelo script.new.
  *   3. Rode `setup` (cria as abas e a formatação; rode de novo sempre que trocar este código).
- *   4. Cole os aprovados na aba "Aprovados" (CPF e data de nascimento; modalidade e curso
- *      opcionais) e, se quiser, o período na aba "Config".
+ *   4. Se tiver, cole os aprovados na aba "Aprovados" (CPF e data de nascimento; modalidade e
+ *      curso opcionais) e, se quiser, o período na aba "Config".
  *   5. Implantar > Nova implantação > App da Web: executar como "Eu"; acesso "Qualquer pessoa".
  *
- * Travas: só quem está na lista de aprovados (CPF + nascimento) se matricula, dentro do
- * período, sem repetir CPF; muitas tentativas erradas ou envios em rajada são recusados.
+ * Travas: só dentro do período (uma exceção libera um aluno fora dele); envios em rajada são
+ * recusados. A lista de aprovados não bloqueia: serve de checklist na coluna "Lista de
+ * aprovados" (Sim, Não, Sim com curso diferente ou Sem lista). Se o mesmo CPF enviar de novo,
+ * vale o último envio e os anteriores viram "Cancelado".
  * Toda matrícula entra como "Matriculado"; a coordenação pode marcar "Pendente" (com motivo)
  * ou "Cancelado" pelo painel (/admin) ou direto na planilha.
  *
@@ -57,7 +59,7 @@ function setup() {
   Logger.log(
     aprovados
       ? 'Lista de aprovados: ' + aprovados + ' aluno(s).'
-      : 'ATENÇÃO: a aba "' + APPROVED_NAME + '" está vazia. Cole CPF e data de nascimento dos aprovados; sem isso ninguém consegue se matricular.',
+      : 'A aba "' + APPROVED_NAME + '" está vazia: as matrículas entram com "Sem lista" na coluna "' + LIST_COLUMN + '".',
   );
   Logger.log(
     props_().getProperty('ADMIN_SENHA')
@@ -81,13 +83,14 @@ var APPROVED_NAME = 'Aprovados';
 var CONFIG_NAME = 'Config';
 var EXCEPTIONS_NAME = 'Exceções';
 var USERS_NAME = 'Usuários';
-var EXCEPTION_COLUMNS = ['CPF', 'Data de nascimento', 'Nome', 'Fora do período', 'Fora da lista', 'Reenvio', 'Válida até', 'Criada por', 'Criada em', 'Usada em'];
+var EXCEPTION_COLUMNS = ['CPF', 'Data de nascimento', 'Nome', 'Fora do período', 'Válida até', 'Criada por', 'Criada em', 'Usada em'];
 var USER_COLUMNS = ['Nome', 'Login', 'Papel', 'Salt', 'Hash', 'Ativo', 'Criado em'];
 var ROLES = ['direcao', 'coordenacao'];
 var SESSION_HOURS = 8;
 var HASH_ROUNDS = 1000;
 var MAX_LOGIN_FAILS = 5; // por login, a cada 15 minutos
-var FIXED_COLUMNS = ['Enviado em', 'Protocolo', 'Status', 'Observação', 'Alterado por', 'Alterado em', 'CPF do aluno'];
+var LIST_COLUMN = 'Lista de aprovados';
+var FIXED_COLUMNS = ['Enviado em', 'Protocolo', 'Status', 'Observação', 'Alterado por', 'Alterado em', 'CPF do aluno', LIST_COLUMN];
 var APPROVED_COLUMNS = ['CPF', 'Data de nascimento', 'Nome', 'Modalidade', 'Curso'];
 var STATUS = ['Matriculado', 'Pendente', 'Cancelado'];
 var TZ = 'America/Recife';
@@ -96,8 +99,6 @@ var MAX_CELL = 1000;
 
 /** Limites contra quem tenta lotar a planilha ou adivinhar dados. */
 var MAX_REQUESTS_PER_MINUTE = 60; // todos os alunos juntos
-var MAX_FAILS_PER_CPF = 5; // CPF + nascimento errados, por hora
-var FAIL_WINDOW_SECONDS = 3600;
 
 var BLUE = '#0032a8';
 var CREAM = '#fef1cf';
@@ -163,7 +164,7 @@ function mergeHeader(current, columns) {
 }
 
 /** Linha na ordem do cabeçalho da planilha (que pode ter colunas em outra ordem). */
-function buildRow(header, data, protocolo, enviadoEm) {
+function buildRow(header, data, protocolo, enviadoEm, lista) {
   var byName = {};
   for (var i = 0; i < data.columns.length; i++) byName[data.columns[i]] = data.row[i];
   return header.map(function (col) {
@@ -171,6 +172,7 @@ function buildRow(header, data, protocolo, enviadoEm) {
     if (col === 'Protocolo') return protocolo;
     if (col === 'Status') return 'Matriculado';
     if (col === 'CPF do aluno') return onlyDigits(data.cpf);
+    if (col === LIST_COLUMN) return lista || '';
     return safeCell(byName[col] != null ? byName[col] : '');
   });
 }
@@ -325,6 +327,17 @@ function courseMatches(approved, modalidade, curso) {
   return true;
 }
 
+/**
+ * O checklist da coluna "Lista de aprovados": a lista não bloqueia ninguém, só avisa a
+ * coordenação. "Sem lista" quando a aba Aprovados está vazia.
+ */
+function approvalCheck(list, cpf, nascimento, modalidade, curso) {
+  if (!list || !list.length) return 'Sem lista';
+  var a = findApproved(list, cpf, nascimento);
+  if (!a) return 'Não';
+  return courseMatches(a, modalidade, curso) ? 'Sim' : 'Sim, curso diferente';
+}
+
 /** Soma 1 num contador do cache e devolve o novo valor. */
 function bump(cache, key, seconds) {
   var n = Number(cache.get(key) || 0) + 1;
@@ -337,14 +350,6 @@ function tooManyRequests(cache, nowMs) {
   return bump(cache, 'req:' + Math.floor(nowMs / 60000), 120) > MAX_REQUESTS_PER_MINUTE;
 }
 
-/** Esse CPF já errou demais na última hora? */
-function tooManyFails(cache, cpf) {
-  return Number(cache.get('fail:' + normCpf(cpf)) || 0) >= MAX_FAILS_PER_CPF;
-}
-
-function registerFail(cache, cpf) {
-  bump(cache, 'fail:' + normCpf(cpf), FAIL_WINDOW_SECONDS);
-}
 
 /* ---------- Exceções, usuários e sessão (funções puras) ---------- */
 
@@ -371,8 +376,6 @@ function readExceptions(header, rows, toKey) {
         nasc: key(r[col('Data de nascimento')]),
         nome: String(r[col('Nome')] || '').trim(),
         periodo: yes(r[col('Fora do período')]),
-        lista: yes(r[col('Fora da lista')]),
-        reenvio: yes(r[col('Reenvio')]),
         validade: key(r[col('Válida até')]),
         criadaPor: String(r[col('Criada por')] || '').trim(),
         criadaEm: String(r[col('Criada em')] || '').trim(),
@@ -543,56 +546,58 @@ function stamp_() {
 }
 
 /**
- * Travas comuns aos dois pedidos: limite, período, lista e CPF já matriculado.
- * Uma exceção criada no painel pode liberar o período, a lista e/ou o reenvio.
+ * Travas comuns aos dois pedidos: limite de pedidos e período. Uma exceção criada no painel
+ * libera o período para um aluno. A lista de aprovados não trava: vira o checklist da planilha.
  */
 function gate_(made, cpf, nascimento) {
   var cache = CacheService.getScriptCache();
-  if (tooManyRequests(cache, Date.now()) || tooManyFails(cache, cpf)) return { result: { status: 'muitas_tentativas' } };
+  if (tooManyRequests(cache, Date.now())) return { result: { status: 'muitas_tentativas' } };
 
   var today = todayKey_();
   var exc = findException(readExceptionsSheet_(made.exceptions), cpf, nascimento, today);
+  if (exc && !exc.periodo) exc = null;
 
   var period = readPeriod_(made.config);
-  if (!(exc && exc.periodo) && periodStatus(today, period.start, period.end) !== 'aberto')
+  if (!exc && periodStatus(today, period.start, period.end) !== 'aberto')
     return { result: { status: 'fora_do_periodo', inicio: formatKey(period.start), fim: formatKey(period.end) } };
-
-  var approved = findApproved(readApprovedSheet_(made.approved), cpf, nascimento);
-  if (!approved && exc && exc.lista) approved = { cpf: normCpf(cpf), nasc: dateKey(nascimento), modalidade: '', curso: '' };
-  if (!approved) {
-    registerFail(cache, cpf);
-    return { result: { status: 'nao_encontrado' } };
-  }
-  if (!(exc && exc.reenvio) && findActiveCpf_(made.sheet, cpf)) return { result: { status: 'cpf_duplicado' } };
-  return { approved: approved, exception: exc };
+  return { exception: exc };
 }
 
 function check_(data) {
   var made = ensureSheets_();
   var g = gate_(made, data.cpf, data.nascimento);
   if (g.result) return g.result;
-  return { status: 'ok', modalidade: g.approved.modalidade, curso: g.approved.curso };
+  return { status: 'ok' };
 }
 
 function save_(data) {
   var made = ensureSheets_();
   var sheet = made.sheet;
-  var g = gate_(made, data.cpf, columnValue(data, 'Data de nascimento'));
+  var nascimento = columnValue(data, 'Data de nascimento');
+  var g = gate_(made, data.cpf, nascimento);
   if (g.result) return g.result;
-  if (!courseMatches(g.approved, columnValue(data, 'Modalidade'), columnValue(data, 'Curso')))
-    return { status: 'curso_diferente' };
+  var lista = approvalCheck(
+    readApprovedSheet_(made.approved),
+    data.cpf,
+    nascimento,
+    columnValue(data, 'Modalidade'),
+    columnValue(data, 'Curso'),
+  );
 
   var header = ensureHeader_(sheet, data.columns);
   var dataRows = Math.max(sheet.getLastRow() - 1, 0);
   var protocolo = makeProtocol(new Date().getFullYear(), dataRows + 1);
-  var row = buildRow(header, data, protocolo, stamp_());
+  var row = buildRow(header, data, protocolo, stamp_(), lista);
   sheet.getRange(dataRows + 2, 1, 1, row.length).setNumberFormat('@').setValues([row]);
+  // Mesmo CPF enviou de novo: vale o último envio e os anteriores viram Cancelado.
+  cancelPrevious_(sheet, header, data.cpf, dataRows + 2, protocolo);
 
   if (g.exception) {
-    // Reenvio: as matrículas anteriores desse CPF viram Cancelado. A exceção vale uma vez só.
-    if (g.exception.reenvio) cancelPrevious_(sheet, header, data.cpf, dataRows + 2, protocolo);
-    var usedCol = EXCEPTION_COLUMNS.indexOf('Usada em') + 1;
-    made.exceptions.getRange(g.exception.linha, usedCol).setNumberFormat('@').setValue(stamp_() + ' · ' + protocolo);
+    // A exceção vale uma vez só.
+    var excHeader = made.exceptions.getRange(1, 1, 1, Math.max(made.exceptions.getLastColumn(), 1)).getValues()[0];
+    var usedCol = excHeader.indexOf('Usada em') + 1;
+    if (usedCol > 0)
+      made.exceptions.getRange(g.exception.linha, usedCol).setNumberFormat('@').setValue(stamp_() + ' · ' + protocolo);
   }
   writeSummary_(made.summary, sheet);
   return { status: 'ok', protocolo: protocolo };
@@ -625,7 +630,7 @@ function cancelPrevious_(sheet, header, cpf, newRow, protocolo) {
     setCells_(sheet, header, line, {
       Status: 'Cancelado',
       'Observação': 'Substituída por ' + protocolo,
-      'Alterado por': 'Sistema (reenvio)',
+      'Alterado por': 'Sistema (novo envio)',
       'Alterado em': stamp_(),
     });
   });
@@ -765,8 +770,6 @@ function painel_(made, session) {
         nasc: formatKey(e.nasc),
         nome: e.nome,
         periodo: e.periodo,
-        lista: e.lista,
-        reenvio: e.reenvio,
         validade: formatKey(e.validade),
         criadaPor: e.criadaPor,
         criadaEm: e.criadaEm,
@@ -886,12 +889,21 @@ function addException_(made, session, data) {
   if (!isValidCpf(cpf)) return { status: 'erro', message: 'CPF inválido.' };
   if (!nasc) return { status: 'erro', message: 'Data de nascimento inválida.' };
   if (!validade || validade < todayKey_()) return { status: 'erro', message: 'O prazo tem que ser hoje ou depois.' };
-  if (!data.periodo && !data.lista && !data.reenvio) return { status: 'erro', message: 'Escolha o que a exceção libera.' };
   var sheet = made.exceptions;
-  var yes = function (v) {
-    return v ? YES : '';
+  // Escreve pelo nome da coluna: planilhas antigas ainda têm "Fora da lista" e "Reenvio".
+  var header = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  var values = {
+    CPF: cpf,
+    'Data de nascimento': formatKey(nasc),
+    Nome: safeCell(String(data.nome || '').trim().slice(0, 120)),
+    'Fora do período': YES,
+    'Válida até': formatKey(validade),
+    'Criada por': session.nome,
+    'Criada em': stamp_(),
   };
-  var row = [cpf, formatKey(nasc), safeCell(String(data.nome || '').trim().slice(0, 120)), yes(data.periodo), yes(data.lista), yes(data.reenvio), formatKey(validade), session.nome, stamp_(), ''];
+  var row = header.map(function (h) {
+    return values[h] != null ? values[h] : '';
+  });
   sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setNumberFormat('@').setValues([row]);
   return { status: 'ok' };
 }
@@ -1062,8 +1074,8 @@ function setupApproved_(sheet) {
   sheet
     .getRange(1, 1)
     .setNote(
-      'Cole aqui os aprovados. Só CPF e Data de nascimento (dd/mm/aaaa) são obrigatórios. ' +
-        'Se Modalidade e Curso estiverem preenchidos, o aluno só consegue escolher esse curso.',
+      'Cole aqui os aprovados (opcional). Só CPF e Data de nascimento (dd/mm/aaaa) são obrigatórios. ' +
+        'A lista não bloqueia ninguém: cada matrícula ganha "Sim", "Não" ou "Sim, curso diferente" na coluna "Lista de aprovados".',
     );
 }
 
@@ -1216,15 +1228,23 @@ function styleHeader_(sheet, width) {
     .setSecondRowColor(CREAM_DARK);
 
   // Status: lista para escolher e cor (amarelo pendente, cinza cancelado).
-  var is = sheet.getRange(1, 1, 1, width).getValues()[0].indexOf('Status');
+  // Lista de aprovados: amarelo quando não está na lista ou o curso é outro.
+  var head = sheet.getRange(1, 1, 1, width).getValues()[0];
+  var rules = [];
+  var is = head.indexOf('Status');
   if (is >= 0) {
     var col = sheet.getRange(2, is + 1, sheet.getMaxRows() - 1, 1);
     col.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(STATUS, true).build());
-    sheet.setConditionalFormatRules([
-      SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pendente').setBackground(YELLOW).setRanges([col]).build(),
-      SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Cancelado').setBackground(GRAY).setRanges([col]).build(),
-    ]);
+    rules.push(SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pendente').setBackground(YELLOW).setRanges([col]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Cancelado').setBackground(GRAY).setRanges([col]).build());
   }
+  var il = head.indexOf(LIST_COLUMN);
+  if (il >= 0) {
+    var lcol = sheet.getRange(2, il + 1, sheet.getMaxRows() - 1, 1);
+    rules.push(SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Não').setBackground(YELLOW).setRanges([lcol]).build());
+    rules.push(SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Sim, curso diferente').setBackground(YELLOW).setRanges([lcol]).build());
+  }
+  sheet.setConditionalFormatRules(rules);
 
   var filter = sheet.getFilter();
   if (filter) filter.remove();
@@ -1252,9 +1272,8 @@ if (typeof module !== 'undefined') {
     findApproved: findApproved,
     columnValue: columnValue,
     courseMatches: courseMatches,
+    approvalCheck: approvalCheck,
     tooManyRequests: tooManyRequests,
-    tooManyFails: tooManyFails,
-    registerFail: registerFail,
     readExceptions: readExceptions,
     findException: findException,
     validLogin: validLogin,

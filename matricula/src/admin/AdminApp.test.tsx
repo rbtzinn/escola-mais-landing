@@ -152,7 +152,6 @@ describe('painel administrativo', () => {
     await user.click(screen.getByRole('button', { name: 'Exceções' }));
     await user.type(screen.getByLabelText('CPF do aluno'), '52998224725');
     await user.type(screen.getByLabelText('Data de nascimento'), '15032010');
-    await user.click(screen.getByLabelText('Reenviar'));
     await user.click(screen.getByRole('button', { name: 'Criar exceção' }));
     expect(api).toHaveBeenCalledWith(
       'excecao_add',
@@ -160,8 +159,6 @@ describe('painel administrativo', () => {
         cpf: '529.982.247-25',
         nascimento: '15/03/2010',
         periodo: true,
-        lista: false,
-        reenvio: true,
       }),
       's',
     );

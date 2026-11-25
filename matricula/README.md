@@ -66,7 +66,7 @@ Crie um **projeto novo** na Vercel a partir deste mesmo repositório, com **Root
   - `validate`: erros por etapa;
   - `row`: linha da planilha;
   - `draft`: rascunho no aparelho;
-  - `submit`: envio e conferência na lista de aprovados;
+  - `submit`: envio e conferência do período;
   - `adminApi`, `adminData`: sessão, chamadas e números do painel.
 - `src/admin/`: o painel `/admin` (carregado à parte; quem só se matricula não baixa).
 - `src/components/`: `FieldView` (desenha cada tipo de campo), `Choices` (opções em botões) e `ui/` (lista e busca acessíveis, copiadas do Escola+).

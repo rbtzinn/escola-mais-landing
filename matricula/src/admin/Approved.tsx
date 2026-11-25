@@ -46,6 +46,11 @@ export function Approved({ list, run }: { list: NonNullable<PanelData['aprovados
           primeira linha tiver os títulos (CPF, Nascimento…), a ordem das colunas pode ser qualquer
           uma. CPF que já está na lista é atualizado.
         </p>
+        <p className="mb-3 text-fg-muted">
+          A lista é opcional e não bloqueia ninguém: cada matrícula ganha <strong>Sim</strong>,{' '}
+          <strong>Não</strong> ou <strong>Sim, curso diferente</strong> na coluna “Lista de
+          aprovados” da planilha.
+        </p>
         <FieldLabel id="colar">Lista</FieldLabel>
         <textarea
           id="colar"
@@ -83,8 +88,8 @@ export function Approved({ list, run }: { list: NonNullable<PanelData['aprovados
 
       <Card title={`Aprovados (${list.length})`}>
         {list.length === 0 ? (
-          <p className="rounded-xl border-2 border-danger/40 bg-danger/10 p-3 font-semibold">
-            A lista está vazia: ninguém consegue se matricular.
+          <p className="text-fg-muted">
+            Nenhum aprovado cadastrado: as matrículas entram com “Sem lista”.
           </p>
         ) : (
           <>

@@ -66,19 +66,10 @@ export interface Step {
 export const OUTRO = 'Outro';
 
 /**
- * Respostas guardadas pela conferência na lista de aprovados (não viram coluna da planilha):
- * a chave "cpf|nascimento" já conferida e o curso da aprovação, quando a lista diz.
+ * Guardada pela conferência do começo (período da matrícula), não vira coluna da planilha:
+ * a chave "cpf|nascimento" já conferida.
  */
-export const APROVADO_CHAVE = '_aprovado';
-export const APROVADO_MODALIDADE = '_aprovado_modalidade';
-export const APROVADO_CURSO = '_aprovado_curso';
-
-/** Opção da configuração que corresponde ao texto da lista ("farmacia" → "Farmácia"), ou "". */
-export function matchOption(text: string, options: string[]): string {
-  const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
-  const t = norm(text);
-  return t ? (options.find((o) => norm(o) === t) ?? '') : '';
-}
+export const CONFERIDO_CHAVE = '_conferido';
 
 const str = (v: Values, id: string) => (typeof v[id] === 'string' ? (v[id] as string) : '');
 
@@ -209,7 +200,7 @@ export function buildSteps(config: Config): Step[] {
       id: 'identificacao',
       title: 'Confirme quem é você',
       short: 'Identidade',
-      description: 'A escola confere seu CPF e sua data de nascimento na lista de aprovados antes de você continuar.',
+      description: 'Com seu CPF e sua data de nascimento, a escola confere se a matrícula está aberta para você.',
       fields: [
         {
           id: 'aluno_cpf',
@@ -230,8 +221,6 @@ export function buildSteps(config: Config): Step[] {
           label: 'Modalidade',
           kind: 'choice',
           options: Object.keys(config.cursos),
-          // Se a lista de aprovados diz a modalidade, só ela aparece.
-          optionsFrom: (v) => (str(v, APROVADO_MODALIDADE) ? [str(v, APROVADO_MODALIDADE)] : Object.keys(config.cursos)),
           clears: ['curso'],
           hint: 'Integrado: junto com o ensino médio. Subsequente: para quem já terminou o ensino médio.',
         },
@@ -239,11 +228,7 @@ export function buildSteps(config: Config): Step[] {
           id: 'curso',
           label: 'Curso',
           kind: 'choice',
-          optionsFrom: (v) => {
-            const cursos = config.cursos[str(v, 'modalidade')] ?? [];
-            const aprovado = str(v, APROVADO_CURSO);
-            return aprovado && cursos.includes(aprovado) ? [aprovado] : cursos;
-          },
+          optionsFrom: (v) => config.cursos[str(v, 'modalidade')] ?? [],
           showIf: (v) => !!str(v, 'modalidade'),
         },
       ],

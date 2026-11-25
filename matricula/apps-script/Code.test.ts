@@ -10,7 +10,7 @@ const gs = fakeModule.exports as {
   validatePayload: (d: unknown) => string | null;
   safeCell: (s: string) => string;
   mergeHeader: (current: string[], columns: string[]) => string[];
-  buildRow: (h: string[], d: { cpf: string; columns: string[]; row: string[] }, p: string, at: string) => string[];
+  buildRow: (h: string[], d: { cpf: string; columns: string[]; row: string[] }, p: string, at: string, lista?: string) => string[];
   findCpfRow: (col: string[], cpf: string) => number;
   makeProtocol: (y: number, n: number) => string;
   extractSheetId: (s: string | null) => string;
@@ -24,9 +24,8 @@ const gs = fakeModule.exports as {
   findApproved: (list: Approved[], cpf: string, nasc: string) => Approved | null;
   columnValue: (d: { columns: string[]; row: string[] }, name: string) => string;
   courseMatches: (a: Approved, modalidade: string, curso: string) => boolean;
+  approvalCheck: (list: Approved[], cpf: string, nasc: string, modalidade: string, curso: string) => string;
   tooManyRequests: (cache: FakeCache, now: number) => boolean;
-  tooManyFails: (cache: FakeCache, cpf: string) => boolean;
-  registerFail: (cache: FakeCache, cpf: string) => void;
   readExceptions: (h: string[], rows: unknown[][]) => Exc[];
   findException: (list: Exc[], cpf: string, nasc: string, today: string) => Exc | null;
   validLogin: (s: string) => boolean;
@@ -40,7 +39,7 @@ const gs = fakeModule.exports as {
   FIXED_COLUMNS: string[];
   STATUS: string[];
 };
-type Exc = { linha: number; cpf: string; nasc: string; periodo: boolean; lista: boolean; reenvio: boolean; validade: string; usadaEm: string };
+type Exc = { linha: number; cpf: string; nasc: string; periodo: boolean; validade: string; usadaEm: string };
 type Hmac = (msg: string, secret: string) => string;
 // Assinatura falsa, só para o teste: depende da mensagem e do segredo.
 const fakeHmac: Hmac = (msg, secret) => `${secret}:${[...msg].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 1_000_003, 7)}`;
@@ -72,14 +71,15 @@ describe('Apps Script (funções puras)', () => {
     // Planilha com colunas em outra ordem e uma coluna nova no formulário.
     const h2 = gs.mergeHeader([...gs.FIXED_COLUMNS, 'Seu nome completo', 'Curso'], [...data.columns, 'Nova']);
     expect(h2.slice(-3)).toEqual(['Seu nome completo', 'Curso', 'Nova']);
-    const row = gs.buildRow(h2, data, 'MAT-2026-0001', '23/11/2026 10:00');
-    expect(row).toEqual(['23/11/2026 10:00', 'MAT-2026-0001', 'Matriculado', '', '', '', '52998224725', 'Ana Souza', 'Nutrição', '']);
+    const row = gs.buildRow(h2, data, 'MAT-2026-0001', '23/11/2026 10:00', 'Sim');
+    expect(row).toEqual(['23/11/2026 10:00', 'MAT-2026-0001', 'Matriculado', '', '', '', '52998224725', 'Sim', 'Ana Souza', 'Nutrição', '']);
     // Planilha antiga, sem as colunas novas: elas entram no fim.
     expect(gs.mergeHeader(['Enviado em', 'Protocolo', 'CPF do aluno', 'Curso'], ['Curso']).slice(4)).toEqual([
       'Status',
       'Observação',
       'Alterado por',
       'Alterado em',
+      'Lista de aprovados',
     ]);
   });
   it('acha CPF repetido e numera o protocolo', () => {
@@ -133,6 +133,15 @@ describe('Apps Script (funções puras)', () => {
     expect(gs.columnValue({ columns: ['Curso'], row: [' Farmácia '] }, 'Curso')).toBe('Farmácia');
     expect(gs.columnValue({ columns: [], row: [] }, 'Curso')).toBe('');
   });
+  it('checklist da lista de aprovados: não bloqueia, só marca', () => {
+    const list = [{ cpf: '52998224725', nasc: '20100315', nome: '', modalidade: 'Integrado', curso: 'Farmácia' }];
+    expect(gs.approvalCheck([], '52998224725', '15/03/2010', 'Integrado', 'Farmácia')).toBe('Sem lista');
+    expect(gs.approvalCheck(list, '529.982.247-25', '15/03/2010', 'integrado', 'farmacia')).toBe('Sim');
+    expect(gs.approvalCheck(list, '52998224725', '15/03/2010', 'Integrado', 'Nutrição e Dietética')).toBe(
+      'Sim, curso diferente',
+    );
+    expect(gs.approvalCheck(list, '52998224725', '16/03/2010', 'Integrado', 'Farmácia')).toBe('Não');
+  });
   it('datas e período da matrícula', () => {
     expect(gs.dateKey('31/02/2010')).toBe('');
     expect(gs.dateKey('2010-03-15')).toBe('20100315');
@@ -143,17 +152,13 @@ describe('Apps Script (funções puras)', () => {
     expect(gs.periodStatus('20270211', '20270201', '20270210')).toBe('depois');
     expect(gs.periodStatus('20270211', '', '')).toBe('aberto');
   });
-  it('limita rajadas e tentativas erradas', () => {
+  it('limita rajadas', () => {
     const cache = fakeCache();
     const now = 1_800_000_000_000;
     let blocked = 0;
     for (let i = 0; i < 61; i++) if (gs.tooManyRequests(cache, now)) blocked++;
     expect(blocked).toBe(1);
     expect(gs.tooManyRequests(cache, now + 60_000)).toBe(false);
-    for (let i = 0; i < 4; i++) gs.registerFail(cache, '529.982.247-25');
-    expect(gs.tooManyFails(cache, '52998224725')).toBe(false);
-    gs.registerFail(cache, '52998224725');
-    expect(gs.tooManyFails(cache, '52998224725')).toBe(true);
   });
 
   it('exceção: vale uma vez, no prazo, para o CPF e o nascimento certos', () => {
@@ -163,7 +168,7 @@ describe('Apps Script (funções puras)', () => {
       ['11144477735', '01/01/2010', 'Bia', '', 'Sim', '', '20/11/2026', 'Direção', 'x', ''],
       ['39053344705', '01/01/2010', 'Caio', '', 'Sim', '', '30/11/2026', 'Direção', 'x', '23/11/2026 · MAT-2026-0003'],
     ]);
-    expect(list[0]).toMatchObject({ linha: 2, periodo: true, lista: false, reenvio: true, validade: '20261125' });
+    expect(list[0]).toMatchObject({ linha: 2, periodo: true, validade: '20261125' });
     expect(gs.findException(list, '529.982.247-25', '15/03/2010', '20261123')?.nasc).toBe('20100315');
     expect(gs.findException(list, '529.982.247-25', '15/03/2010', '20261125')).not.toBeNull();
     expect(gs.findException(list, '529.982.247-25', '15/03/2010', '20261126')).toBeNull();

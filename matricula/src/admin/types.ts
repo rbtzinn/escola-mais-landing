@@ -6,8 +6,6 @@ export interface Exception {
   nasc: string;
   nome: string;
   periodo: boolean;
-  lista: boolean;
-  reenvio: boolean;
   validade: string;
   criadaPor: string;
   criadaEm: string;

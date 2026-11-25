@@ -80,10 +80,10 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     expect(env.sheet('Matrículas').stats.cellsRead).toBeLessThan(HEADER.length + 2 * 30 + 1);
   });
 
-  it('conferência recusa quem não está na lista, com resposta genérica', () => {
+  it('conferência deixa passar quem não está na lista; token errado é recusado', () => {
     const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
     expect(env.doPost({ action: 'check', token: 't', cpf: CPF, nascimento: '16/03/2010' })).toEqual(
-      { status: 'nao_encontrado' },
+      { status: 'ok' },
     );
     expect(
       env.doPost({ action: 'check', token: 'errado', cpf: CPF, nascimento: '15/03/2010' }),
@@ -107,8 +107,31 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     // 3 já existentes: Matriculado, Pendente, Cancelado; mais a nova (Matriculado) = 3 ativas, 1 pendente.
     expect(resumo.grid[1].slice(0, 4)).toEqual(['Integrado', 'Farmácia', 3, 1]);
     expect(resumo.grid[1].slice(5)).toEqual([3, 1]); // Total e Pendentes
-    // CPF repetido é barrado.
-    expect(env.doPost(envelope())).toEqual({ status: 'cpf_duplicado' });
+    const head = sheet.grid[0] as string[];
+    expect(sheet.grid[4][head.indexOf('Lista de aprovados')]).toBe('Sim');
+  });
+
+  it('fora da lista também matricula, marcado como "Não"; sem lista fica "Sem lista"', () => {
+    const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
+    const outro = '111.444.777-35';
+    expect(env.doPost(envelope({ cpf: outro }))).toMatchObject({ status: 'ok' });
+    const sheet = env.sheet('Matrículas');
+    const head = sheet.grid[0] as string[];
+    expect(sheet.grid[4][head.indexOf('Lista de aprovados')]).toBe('Não');
+    const vazio = loadScript({ matriculas: existing(3) });
+    vazio.doPost(envelope());
+    const s2 = vazio.sheet('Matrículas');
+    expect(s2.grid[4][(s2.grid[0] as string[]).indexOf('Lista de aprovados')]).toBe('Sem lista');
+  });
+
+  it('mesmo CPF de novo: vale o último envio e o anterior vira Cancelado', () => {
+    const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
+    expect(env.doPost(envelope())).toMatchObject({ protocolo: 'MAT-2026-0004' });
+    expect(env.doPost(envelope())).toMatchObject({ protocolo: 'MAT-2026-0005' });
+    const sheet = env.sheet('Matrículas');
+    expect(sheet.grid[4][2]).toBe('Cancelado');
+    expect(sheet.grid[4][3]).toBe('Substituída por MAT-2026-0005');
+    expect(sheet.grid[5][2]).toBe('Matriculado');
   });
 
   it('ação do painel devolve o painel já atualizado (uma viagem só)', () => {
@@ -203,8 +226,6 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
       nascimento: '01/01/2010',
       validade: '31/12/2099',
       periodo: true,
-      lista: false,
-      reenvio: false,
       nome: 'Caio',
     }) as {
       painel: { excecoes: { cpf: string }[] };

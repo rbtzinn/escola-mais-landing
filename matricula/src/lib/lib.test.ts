@@ -22,12 +22,11 @@ import {
   buildSteps,
   isStepVisible,
   isVisible,
-  matchOption,
   optionsOf,
   rendaOptions,
   type Values,
 } from './schema';
-import { blockedMessage, checkAprovado, submitMatricula, warmUp } from './submit';
+import { blockedMessage, checkInicio, submitMatricula, warmUp } from './submit';
 import { fieldError, firstInvalidStep, validateStep } from './validate';
 
 const TODAY = new Date(2026, 10, 23);
@@ -241,19 +240,15 @@ describe('planilha, rascunho e envio', () => {
     expect(
       JSON.parse((ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string).cpf,
     ).toBe('52998224725');
-    const dup = vi.fn(() => json({ status: 'cpf_duplicado' }));
-    expect(await submitMatricula('https://x', payload, dup as unknown as typeof fetch)).toEqual({
-      status: 'cpf_duplicado',
+    const many = vi.fn(() => json({ status: 'muitas_tentativas' }));
+    expect(await submitMatricula('https://x', payload, many as unknown as typeof fetch)).toEqual({
+      status: 'muitas_tentativas',
     });
     const down = vi.fn(() => Promise.reject(new Error('rede')));
     expect(
       (await submitMatricula('https://x', payload, down as unknown as typeof fetch)).status,
     ).toBe('erro');
     expect(await submitMatricula('', payload)).toEqual({ status: 'sem_configuracao' });
-    const curso = vi.fn(() => json({ status: 'curso_diferente' }));
-    expect(await submitMatricula('https://x', payload, curso as unknown as typeof fetch)).toEqual({
-      status: 'curso_diferente',
-    });
   });
   it('aquecimento: manda só um ping, sem dados, e ignora falhas', async () => {
     const ok = vi.fn(() => json({ status: 'ok' }));
@@ -268,13 +263,11 @@ describe('planilha, rascunho e envio', () => {
     warmUp('', none as unknown as typeof fetch);
     expect(none).not.toHaveBeenCalled();
   });
-  it('conferência na lista de aprovados e mensagens', async () => {
+  it('conferência do começo (período) e mensagens', async () => {
     const input = { token: 't', cpf: '529.982.247-25', nascimento: '15/03/2010' };
-    const ok = vi.fn(() => json({ status: 'ok', modalidade: 'Integrado', curso: '' }));
-    expect(await checkAprovado('https://x', input, ok as unknown as typeof fetch)).toEqual({
+    const ok = vi.fn(() => json({ status: 'ok' }));
+    expect(await checkInicio('https://x', input, ok as unknown as typeof fetch)).toEqual({
       status: 'ok',
-      modalidade: 'Integrado',
-      curso: '',
     });
     const body = JSON.parse(
       (ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
@@ -283,16 +276,11 @@ describe('planilha, rascunho e envio', () => {
     const fora = vi.fn(() =>
       json({ status: 'fora_do_periodo', inicio: '01/02/2027', fim: '10/02/2027' }),
     );
-    const r = await checkAprovado('https://x', input, fora as unknown as typeof fetch);
+    const r = await checkInicio('https://x', input, fora as unknown as typeof fetch);
     expect(r.status !== 'ok' && blockedMessage(r)).toBe(
       'As matrículas estão fechadas. O período é de 01/02/2027 a 10/02/2027.',
     );
-    const nao = vi.fn(() => json({ status: 'nao_encontrado' }));
-    const r2 = await checkAprovado('https://x', input, nao as unknown as typeof fetch);
-    expect(r2.status !== 'ok' && blockedMessage(r2)).toMatch(/lista de aprovados/);
-    expect(await checkAprovado('', input)).toEqual({ status: 'sem_configuracao' });
-    expect(matchOption(' farmacia ', ['Nutrição e Dietética', 'Farmácia'])).toBe('Farmácia');
-    expect(matchOption('', ['Farmácia'])).toBe('');
+    expect(await checkInicio('', input)).toEqual({ status: 'sem_configuracao' });
   });
 });
 

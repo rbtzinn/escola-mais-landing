@@ -8,20 +8,17 @@ import { hideCpf, onlyDigits } from '@/lib/cpf';
 import { clearDraft, loadDraft, saveDraft } from '@/lib/draft';
 import { toRow } from '@/lib/row';
 import {
-  APROVADO_CHAVE,
-  APROVADO_CURSO,
-  APROVADO_MODALIDADE,
+  CONFERIDO_CHAVE,
   OUTRO,
   buildSteps,
   isStepVisible,
   isVisible,
-  matchOption,
   type Field,
   type Values,
 } from '@/lib/schema';
 import {
   blockedMessage,
-  checkAprovado,
+  checkInicio,
   submitMatricula,
   warmUp,
   type SubmitResult,
@@ -32,11 +29,9 @@ type Phase = 'form' | 'review' | 'done';
 type Sending = 'idle' | 'sending' | Exclude<SubmitResult, { status: 'ok' }>;
 
 const STEPS = buildSteps(CONFIG);
-const MODALIDADES = Object.keys(CONFIG.cursos);
-const TODOS_CURSOS = [...new Set(Object.values(CONFIG.cursos).flat())];
 const IDENT_FIELDS = ['aluno_cpf', 'aluno_nascimento'];
 
-/** Chave do que foi conferido na lista de aprovados: muda se o aluno trocar CPF ou nascimento. */
+/** Chave do que já foi conferido no começo: muda se o aluno trocar CPF ou nascimento. */
 const identKey = (v: Values) =>
   `${onlyDigits(String(v.aluno_cpf ?? ''))}|${String(v.aluno_nascimento ?? '').trim()}`;
 
@@ -121,7 +116,7 @@ export default function App() {
     if (phase !== 'done') saveDraft({ values, step });
   }, [values, step, phase]);
 
-  // Recusa da lista de aprovados: rola até o aviso (no celular ele fica abaixo da dobra).
+  // Recusa na conferência do começo (ex.: fora do período): rola até o aviso (no celular ele fica abaixo da dobra).
   useEffect(() => {
     if (checkMsg) checkRef.current?.scrollIntoView?.({ block: 'center' });
   }, [checkMsg]);
@@ -151,15 +146,15 @@ export default function App() {
   };
 
   /**
-   * Confere CPF e nascimento na lista de aprovados (uma vez por combinação). Se a lista diz a
-   * modalidade e o curso, eles ficam escolhidos e são as únicas opções na etapa do curso.
+   * Confere, uma vez por combinação de CPF e nascimento, se a matrícula está aberta (período ou
+   * exceção). A lista de aprovados não bloqueia ninguém: a coordenação vê o checklist na planilha.
    */
   const verify = async (): Promise<boolean> => {
     const key = identKey(values);
-    if (values[APROVADO_CHAVE] === key) return true;
+    if (values[CONFERIDO_CHAVE] === key) return true;
     setChecking(true);
     setCheckMsg('');
-    const r = await checkAprovado(CONFIG.appsScriptUrl, {
+    const r = await checkInicio(CONFIG.appsScriptUrl, {
       token: CONFIG.token,
       cpf: String(values.aluno_cpf ?? ''),
       nascimento: String(values.aluno_nascimento ?? ''),
@@ -170,18 +165,7 @@ export default function App() {
       setCheckMsg(blockedMessage(r));
       return false;
     }
-    const mod = matchOption(r.modalidade, MODALIDADES);
-    const curso = matchOption(r.curso, mod ? CONFIG.cursos[mod] : TODOS_CURSOS);
-    setValues((v) => {
-      const patch: Values = {
-        [APROVADO_CHAVE]: key,
-        [APROVADO_MODALIDADE]: mod,
-        [APROVADO_CURSO]: curso,
-      };
-      if (mod && v.modalidade !== mod) Object.assign(patch, { modalidade: mod, curso: '' });
-      if (mod && curso) patch.curso = curso;
-      return { ...v, ...patch };
-    });
+    setValues((v) => ({ ...v, [CONFERIDO_CHAVE]: key }));
     return true;
   };
 

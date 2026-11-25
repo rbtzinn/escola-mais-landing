@@ -2,18 +2,15 @@ import { onlyDigits } from './cpf';
 
 /** Recusas da planilha que valem tanto na conferência do começo quanto no envio. */
 export type Blocked =
-  | { status: 'cpf_duplicado' }
-  | { status: 'nao_encontrado' }
   | { status: 'fora_do_periodo'; inicio: string; fim: string }
   | { status: 'muitas_tentativas' }
   | { status: 'sem_configuracao' }
   | { status: 'erro'; message: string };
 
-export type SubmitResult =
-  { status: 'ok'; protocolo: string } | { status: 'curso_diferente' } | Blocked;
+export type SubmitResult = { status: 'ok'; protocolo: string } | Blocked;
 
-/** Aprovado na lista: a planilha devolve a modalidade e o curso dele (vazios se a lista não diz). */
-export type CheckResult = { status: 'ok'; modalidade: string; curso: string } | Blocked;
+/** A matrícula está aberta para esse aluno (no período ou com exceção). */
+export type CheckResult = { status: 'ok' } | Blocked;
 
 export interface Payload {
   token: string;
@@ -26,8 +23,6 @@ export type Reply = {
   status?: string;
   protocolo?: string;
   message?: string;
-  modalidade?: string;
-  curso?: string;
   inicio?: string;
   fim?: string;
 };
@@ -56,8 +51,6 @@ export async function post<T = Reply>(
 function blocked(data: Reply | null): Blocked {
   if (!data) return { status: 'erro', message: 'Sem conexão com a planilha.' };
   switch (data.status) {
-    case 'cpf_duplicado':
-    case 'nao_encontrado':
     case 'muitas_tentativas':
       return { status: data.status };
     case 'fora_do_periodo':
@@ -77,16 +70,18 @@ export function warmUp(url: string, fetcher: typeof fetch = fetch): void {
   void post(url, { action: 'ping' }, fetcher);
 }
 
-/** Confere CPF e nascimento na lista de aprovados, antes do aluno preencher o resto. */
-export async function checkAprovado(
+/**
+ * Confere, antes do aluno preencher o resto, se a matrícula está aberta para esse CPF e
+ * nascimento (período ou exceção). A lista de aprovados não bloqueia: vira checklist na planilha.
+ */
+export async function checkInicio(
   url: string,
   input: { token: string; cpf: string; nascimento: string },
   fetcher: typeof fetch = fetch,
 ): Promise<CheckResult> {
   if (!url) return { status: 'sem_configuracao' };
   const data = await post(url, { ...input, action: 'check', cpf: onlyDigits(input.cpf) }, fetcher);
-  if (data?.status === 'ok')
-    return { status: 'ok', modalidade: data.modalidade ?? '', curso: data.curso ?? '' };
+  if (data?.status === 'ok') return { status: 'ok' };
   return blocked(data);
 }
 
@@ -99,17 +94,12 @@ export async function submitMatricula(
   if (!url) return { status: 'sem_configuracao' };
   const data = await post(url, { ...payload, cpf: onlyDigits(payload.cpf) }, fetcher);
   if (data?.status === 'ok' && data.protocolo) return { status: 'ok', protocolo: data.protocolo };
-  if (data?.status === 'curso_diferente') return { status: 'curso_diferente' };
   return blocked(data);
 }
 
-/** Mensagem para o aluno. Não diz se o CPF existe na lista (quem quer adivinhar não aprende nada). */
-export function blockedMessage(r: Blocked | { status: 'curso_diferente' }): string {
+/** Mensagem para o aluno. */
+export function blockedMessage(r: Blocked): string {
   switch (r.status) {
-    case 'cpf_duplicado':
-      return 'Esse CPF já foi matriculado. Procure a secretaria da escola.';
-    case 'nao_encontrado':
-      return 'Não encontramos seus dados na lista de aprovados. Confira o CPF e a data de nascimento ou procure a secretaria.';
     case 'fora_do_periodo':
       return r.inicio && r.fim
         ? `As matrículas estão fechadas. O período é de ${r.inicio} a ${r.fim}.`
@@ -118,8 +108,6 @@ export function blockedMessage(r: Blocked | { status: 'curso_diferente' }): stri
           : 'As matrículas estão encerradas. Procure a secretaria.';
     case 'muitas_tentativas':
       return 'Muitas tentativas agora. Espere alguns minutos e tente de novo.';
-    case 'curso_diferente':
-      return 'O curso escolhido não é o da sua aprovação. Volte na etapa do curso ou procure a secretaria.';
     case 'sem_configuracao':
       return 'Demonstração: a planilha da escola ainda não foi ligada a este formulário.';
     case 'erro':
