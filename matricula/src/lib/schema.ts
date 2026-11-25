@@ -146,9 +146,11 @@ function family(
   extra: Field[] = [],
   /** Os dados além do nome são obrigatórios? (mãe e pai: só para menores de idade). */
   req: (v: Values) => boolean = () => true,
+  /** Quando pedir o nome (mãe e pai: também se falecidos, porque vai para o diploma). */
+  showName: (v: Values) => boolean = show,
 ): Field[] {
   return [
-    { id: `${prefix}_nome`, label: `Nome completo ${who}`, kind: 'name', showIf: show, autoComplete: 'off' },
+    { id: `${prefix}_nome`, label: `Nome completo ${who}`, kind: 'name', showIf: showName, autoComplete: 'off' },
     ...extra,
     {
       id: `${prefix}_cpf`,
@@ -177,6 +179,8 @@ function family(
 
 const maeViva = (v: Values) => str(v, 'mae_situacao') === 'Viva';
 const paiVivo = (v: Values) => str(v, 'pai_situacao') === 'Vivo';
+const maeConsta = (v: Values) => maeViva(v) || str(v, 'mae_situacao') === 'Falecida';
+const paiConsta = (v: Values) => paiVivo(v) || str(v, 'pai_situacao') === 'Falecido';
 const outraPessoa = (v: Values) => str(v, 'resp_quem') === 'Outra pessoa';
 const brasil = (v: Values) => str(v, 'nasc_pais') === 'Brasil';
 
@@ -381,7 +385,7 @@ export function buildSteps(config: Config): Step[] {
       short: 'Mãe',
       fields: [
         { id: 'mae_situacao', label: 'Sua mãe', kind: 'choice', options: ['Viva', 'Falecida', 'Não consta na certidão'] },
-        ...family('mae', 'da mãe', maeViva, [], menor),
+        ...family('mae', 'da mãe', maeViva, [], menor, maeConsta),
       ],
     },
     {
@@ -390,7 +394,7 @@ export function buildSteps(config: Config): Step[] {
       short: 'Pai',
       fields: [
         { id: 'pai_situacao', label: 'Seu pai', kind: 'choice', options: ['Vivo', 'Falecido', 'Não consta na certidão'] },
-        ...family('pai', 'do pai', paiVivo, [], menor),
+        ...family('pai', 'do pai', paiVivo, [], menor, paiConsta),
       ],
     },
     {

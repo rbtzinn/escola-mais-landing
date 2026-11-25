@@ -107,14 +107,16 @@ describe('formulário de matrícula', () => {
     expect(screen.getByLabelText('Bairro')).toHaveValue('Boa Vista');
   });
 
-  it('mãe falecida esconde os dados dela; o estado filtra as cidades', async () => {
+  it('mãe falecida pede só o nome', async () => {
     const user = userEvent.setup();
     saveDraft({ values: { ...fullValues(), mae_situacao: '' }, step: at('mae') });
     render(<App />);
     await user.click(screen.getByLabelText('Viva'));
     expect(screen.getByLabelText('Nome completo da mãe')).toBeInTheDocument();
+    expect(screen.getByLabelText('CPF da mãe')).toBeInTheDocument();
     await user.click(screen.getByLabelText('Falecida'));
-    expect(screen.queryByLabelText('Nome completo da mãe')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nome completo da mãe')).toBeInTheDocument();
+    expect(screen.queryByLabelText('CPF da mãe')).not.toBeInTheDocument();
   });
 
   it('cidades vêm do estado escolhido (PE já vem no site)', async () => {

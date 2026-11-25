@@ -40,6 +40,7 @@ export function fullValues(): Values {
     emerg_parentesco: 'mãe',
     emerg_telefone: '(81) 9 9999-0002',
     mae_situacao: 'Falecida',
+    mae_nome: 'Maria Souza Lima',
     pai_situacao: 'Não consta na certidão',
     resp_quem: 'Outra pessoa',
     resp_nome: 'Maria Souza',

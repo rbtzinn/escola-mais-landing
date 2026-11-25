@@ -155,11 +155,14 @@ describe('CEP e IBGE', () => {
 });
 
 describe('etapas e validação', () => {
-  it('mãe falecida esconde os dados dela; responsável "Outra pessoa" pede os dados', () => {
+  it('mãe falecida: só o nome (vai para o diploma); responsável "Outra pessoa" pede os dados', () => {
     const nome = step('mae').fields.find((f) => f.id === 'mae_nome')!;
-    expect(isVisible(nome, { mae_situacao: 'Falecida' })).toBe(false);
+    const cpf = step('mae').fields.find((f) => f.id === 'mae_cpf')!;
+    expect(isVisible(nome, { mae_situacao: 'Falecida' })).toBe(true);
+    expect(isVisible(cpf, { mae_situacao: 'Falecida' })).toBe(false);
     expect(isVisible(nome, { mae_situacao: 'Viva' })).toBe(true);
-    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual([]);
+    expect(isVisible(nome, { mae_situacao: 'Não consta na certidão' })).toBe(false);
+    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual(['mae_nome']);
     expect(Object.keys(validateStep(step('responsavel'), { resp_quem: 'Mãe' }, TODAY))).toEqual([]);
     expect(validateStep(step('responsavel'), { resp_quem: 'Outra pessoa' }, TODAY)).toHaveProperty(
       'resp_nome',
@@ -205,7 +208,7 @@ describe('planilha, rascunho e envio', () => {
       aluno_nome: 'Ana Souza',
       aluno_rg_orgao: 'Outro',
       aluno_rg_orgao_outro: 'SSP-BA',
-      mae_situacao: 'Falecida',
+      mae_situacao: 'Não consta na certidão',
       mae_nome: 'Não deveria ir',
       mora_com: ['Mãe', 'Outro'],
       mora_com_outro: 'Madrinha',
