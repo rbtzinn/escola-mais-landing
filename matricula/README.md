@@ -28,7 +28,9 @@ Em [`src/config.ts`](./src/config.ts):
 
 ## Integrado e Subsequente
 
-O aluno escolhe a modalidade e só vê os cursos dela. No **Subsequente**, para quem já terminou o ensino médio:
+O aluno escolhe a modalidade e só vê os cursos dela. No **Integrado** aparece a etapa "Seu ensino fundamental" (escola, cidade, estado e ano de conclusão), que vai para o diploma.
+
+No **Subsequente**, para quem já terminou o ensino médio:
 
 - a idade aceita vai até 70 anos;
 - aparece a etapa "Seu ensino médio": escola, pública ou particular, cidade e ano de conclusão.

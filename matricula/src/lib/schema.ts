@@ -75,6 +75,8 @@ const str = (v: Values, id: string) => (typeof v[id] === 'string' ? (v[id] as st
 
 /** Modalidade Subsequente (quem já terminou o ensino médio; pode ser adulto). */
 export const subsequente = (v: Values) => str(v, 'modalidade') === 'Subsequente';
+/** Modalidade Integrado (ensino médio junto com o técnico). */
+export const integrado = (v: Values) => str(v, 'modalidade') === 'Integrado';
 
 /** Idade pela data de nascimento digitada (null enquanto a data está incompleta ou inválida). */
 export function ageOf(v: Values, today = new Date()): number | null {
@@ -299,6 +301,24 @@ export function buildSteps(config: Config): Step[] {
           label: 'Ano em que terminou',
           kind: 'select',
           options: Array.from({ length: 56 }, (_, i) => String(config.ano - i)),
+        },
+      ],
+    },
+    {
+      id: 'fundamental',
+      title: 'Seu ensino fundamental',
+      short: 'Fundamental',
+      description: 'Esses dados vão para o seu diploma: escreva o nome da escola como está no histórico.',
+      showIf: integrado,
+      fields: [
+        { id: 'ef_escola', label: 'Escola onde terminou o ensino fundamental', kind: 'text', placeholder: 'Ex.: Escola Municipal Maria da Silva' },
+        { id: 'ef_uf', label: 'Estado da escola do fundamental', kind: 'uf', clears: ['ef_cidade'] },
+        { id: 'ef_cidade', label: 'Cidade da escola do fundamental', kind: 'city', ufField: 'ef_uf', showIf: (v) => !!str(v, 'ef_uf') },
+        {
+          id: 'ef_ano',
+          label: 'Ano em que terminou o ensino fundamental',
+          kind: 'select',
+          options: Array.from({ length: 15 }, (_, i) => String(config.ano - i)),
         },
       ],
     },

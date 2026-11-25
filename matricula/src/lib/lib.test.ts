@@ -326,6 +326,21 @@ describe('modalidade, curso e maioridade', () => {
       ),
     ).toBe(true);
   });
+  it('Integrado: etapa do ensino fundamental (vai para o diploma)', () => {
+    expect(isStepVisible(step('fundamental'), { modalidade: 'Integrado' })).toBe(true);
+    expect(isStepVisible(step('fundamental'), { modalidade: 'Subsequente' })).toBe(false);
+    expect(validateStep(step('fundamental'), { modalidade: 'Integrado' }, TODAY)).toHaveProperty('ef_escola');
+    const { columns, row } = toRow(steps, {
+      modalidade: 'Integrado',
+      ef_escola: 'Colégio 2001',
+      ef_uf: 'PE',
+      ef_cidade: 'Olinda',
+      ef_ano: '2025',
+    });
+    expect(row[columns.indexOf('Escola onde terminou o ensino fundamental')]).toBe('Colégio 2001');
+    expect(row[columns.indexOf('Cidade da escola do fundamental')]).toBe('Olinda');
+    expect(columns).toContain('Estado da escola'); // a do ensino médio continua com o mesmo nome
+  });
   it('etapa escondida vai vazia para a planilha', () => {
     const { columns, row } = toRow(steps, {
       aluno_nascimento: '10/01/2000',
