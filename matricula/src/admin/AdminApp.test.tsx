@@ -164,7 +164,22 @@ describe('painel administrativo', () => {
     );
   });
 
-  it('sessão vencida volta para o login', async () => {
+  it('aba Diploma salva a configuração com o curso aberto marcado como conferido', async () => {
+    const user = userEvent.setup();
+    await entrar(user);
+    await user.click(screen.getByRole('button', { name: 'Diploma' }));
+    await user.type(screen.getByLabelText('Data de conclusão'), '31122028');
+    expect(screen.getByText('No diploma: 31 de dezembro de 2028.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Salvar configuração do diploma' }));
+    const call = api.mock.calls.find((c: unknown[]) => c[0] === 'diploma_config')!;
+    const config = (call[1] as { config: { conclusao: string; cursos: Record<string, { revisado: boolean; blocos: { itens: unknown[] }[] }> } }).config;
+    expect(config.conclusao).toBe('31/12/2028');
+    const first = Object.values(config.cursos)[0];
+    expect(first.revisado).toBe(true);
+    expect(first.blocos[0].itens.length).toBe(12);
+  });
+
+    it('sessão vencida volta para o login', async () => {
     const user = userEvent.setup();
     await entrar(user);
     api.mockResolvedValue({ status: 'sessao_expirada' });

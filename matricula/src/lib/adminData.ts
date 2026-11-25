@@ -212,7 +212,8 @@ export function ficha(steps: Step[], header: string[], row: string[]): FichaSect
     if (!sections.has(title)) sections.set(title, { title, items: [] });
     sections.get(title)!.items.push({ label, value });
   };
-  const SKIP = new Set(['Status', 'Observação', 'Alterado por', 'Alterado em']);
+  // Status e diploma têm seções próprias na ficha.
+  const SKIP = new Set(['Status', 'Observação', 'Alterado por', 'Alterado em', 'Código SISTEC', 'Registro escolar', 'Folha', 'Livro']);
   header.forEach((col, i) => {
     const value = String(row[i] ?? '').trim();
     if (!col || !value || SKIP.has(col)) return;

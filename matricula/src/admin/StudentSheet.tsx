@@ -5,7 +5,9 @@ import { FieldLabel, fieldClasses } from '@/components/ui/Field';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { replyMessage } from '@/lib/adminApi';
 import { STATUS, ficha, type Rec } from '@/lib/adminData';
+import type { DiplomaConfig } from '@/lib/diplomaConfig';
 import type { Step } from '@/lib/schema';
+import { DiplomaSection } from './DiplomaSection';
 import type { Run } from './types';
 import { Button, Notice, StatusBadge } from './ui';
 
@@ -16,12 +18,16 @@ export function StudentSheet({
   steps,
   run,
   onClose,
+  diploma,
+  registrosUsados,
 }: {
   rec: Rec;
   header: string[];
   steps: Step[];
   run: Run;
   onClose: () => void;
+  diploma: DiplomaConfig;
+  registrosUsados: string[];
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref, true, onClose);
@@ -139,6 +145,15 @@ export function StudentSheet({
               {busy ? 'Salvando…' : 'Salvar status'}
             </Button>
           </section>
+
+          <DiplomaSection
+            rec={rec}
+            header={header}
+            steps={steps}
+            cfg={diploma}
+            registrosUsados={registrosUsados}
+            run={run}
+          />
 
           {sections.map((s) => (
             <section key={s.title}>

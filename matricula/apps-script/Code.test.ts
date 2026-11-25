@@ -35,6 +35,7 @@ const gs = fakeModule.exports as {
   verifyToken: (token: string, secret: string, hmac: Hmac, now: number) => { login: string; papel: string; exp: number } | null;
   canDo: (papel: string, action: string) => boolean;
   statusError: (status: string, obs: string) => string | null;
+  diplomaError: (data: Record<string, string>, registros: string[]) => string | null;
   checkApprovedLines: (l: unknown[]) => { ok: { cpf: string; nasc: string }[]; bad: { linha: number; motivo: string }[] };
   FIXED_COLUMNS: string[];
   STATUS: string[];
@@ -72,7 +73,7 @@ describe('Apps Script (funções puras)', () => {
     const h2 = gs.mergeHeader([...gs.FIXED_COLUMNS, 'Seu nome completo', 'Curso'], [...data.columns, 'Nova']);
     expect(h2.slice(-3)).toEqual(['Seu nome completo', 'Curso', 'Nova']);
     const row = gs.buildRow(h2, data, 'MAT-2026-0001', '23/11/2026 10:00', 'Sim');
-    expect(row).toEqual(['23/11/2026 10:00', 'MAT-2026-0001', 'Matriculado', '', '', '', '52998224725', 'Sim', 'Ana Souza', 'Nutrição', '']);
+    expect(row).toEqual(['23/11/2026 10:00', 'MAT-2026-0001', 'Matriculado', '', '', '', '52998224725', 'Sim', '', '', '', '', 'Ana Souza', 'Nutrição', '']);
     // Planilha antiga, sem as colunas novas: elas entram no fim.
     expect(gs.mergeHeader(['Enviado em', 'Protocolo', 'CPF do aluno', 'Curso'], ['Curso']).slice(4)).toEqual([
       'Status',
@@ -80,6 +81,10 @@ describe('Apps Script (funções puras)', () => {
       'Alterado por',
       'Alterado em',
       'Lista de aprovados',
+      'Código SISTEC',
+      'Registro escolar',
+      'Folha',
+      'Livro',
     ]);
   });
   it('acha CPF repetido e numera o protocolo', () => {
@@ -203,6 +208,10 @@ describe('Apps Script (funções puras)', () => {
     expect(gs.validLogin('Maria Silva')).toBe(false);
     expect(gs.statusError('Pendente', '')).toMatch(/motivo/);
     expect(gs.statusError('Pendente', 'falta comprovante')).toBeNull();
+    expect(gs.diplomaError({ registro: '155' }, ['154'])).toBeNull();
+    expect(gs.diplomaError({ registro: '0155' }, ['155'])).toMatch(/já é de outro/);
+    expect(gs.diplomaError({ registro: '15a' }, [])).toMatch(/número/);
+    expect(gs.diplomaError({ registro: '' }, ['155'])).toBeNull();
     expect(gs.statusError('Confirmada', '')).toBe('Status inválido.');
     expect(gs.STATUS).toEqual(['Matriculado', 'Pendente', 'Cancelado']);
     const r = gs.checkApprovedLines([

@@ -21,6 +21,8 @@ export interface PanelData {
   aprovados?: { cpf: string; nasc: string; nome: string; modalidade: string; curso: string }[];
   excecoes?: Exception[];
   usuarios?: { nome: string; login: string; papel: Role; ativo: boolean }[];
+  /** Configuração do diploma salva (null: ainda não salva; vale o padrão do modelo). */
+  diploma?: unknown;
 }
 
 /** Executa uma ação no Apps Script; com sucesso, o painel recarrega os dados. */

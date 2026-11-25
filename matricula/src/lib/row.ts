@@ -8,15 +8,18 @@ export function toRow(
   steps: Step[],
   v: Values,
   fixed: Record<string, string> = {},
-): { columns: string[]; row: string[]; stepIds: string[] } {
+): { columns: string[]; row: string[]; stepIds: string[]; fieldIds: string[] } {
   const columns: string[] = Object.keys(fixed);
   const row: string[] = Object.values(fixed);
   const stepIds: string[] = columns.map(() => '');
+  /** Id do campo de cada coluna ('' nas fixas e nas grades). */
+  const fieldIds: string[] = columns.map(() => '');
   let stepId = '';
-  const push = (col: string, val: string) => {
+  const push = (col: string, val: string, id = '') => {
     columns.push(col);
     row.push(val);
     stepIds.push(stepId);
+    fieldIds.push(id);
   };
   const text = (id: string) => (typeof v[id] === 'string' ? (v[id] as string).trim() : '');
   // Rótulos repetidos em etapas diferentes ("Estado", "Cidade", "Qual?") ganham o nome da etapa.
@@ -28,7 +31,7 @@ export function toRow(
     for (const f of step.fields) {
       const visible = isStepVisible(step, v) && isVisible(f, v);
       if (f.kind === 'consent') {
-        push('Consentimento LGPD', text(f.id) === 'sim' ? 'Sim' : '');
+        push('Consentimento LGPD', text(f.id) === 'sim' ? 'Sim' : '', f.id);
         continue;
       }
       if (f.kind === 'grid') {
@@ -45,10 +48,10 @@ export function toRow(
           if (f.other && val === OUTRO) val = `Outro: ${text(`${f.id}_outro`)}`;
         }
       }
-      push((count.get(f.label) ?? 0) > 1 ? `${f.label} (${step.short})` : f.label, val);
+      push((count.get(f.label) ?? 0) > 1 ? `${f.label} (${step.short})` : f.label, val, f.id);
     }
   }
-  return { columns, row, stepIds };
+  return { columns, row, stepIds, fieldIds };
 }
 
 const shortLabel = (label: string) => (label.length > 30 ? 'Interesse' : label);

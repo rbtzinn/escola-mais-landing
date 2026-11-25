@@ -19,6 +19,9 @@
  * Toda matrícula entra como "Matriculado"; a coordenação pode marcar "Pendente" (com motivo)
  * ou "Cancelado" pelo painel (/admin) ou direto na planilha.
  *
+ * Diploma: a secretaria preenche SISTEC, registro, folha e livro na ficha do aluno (painel) e a
+ * direção configura o resto na aba "Diploma" do painel (fica guardado na aba "Diploma").
+ *
  * Painel: crie a propriedade ADMIN_SENHA. O 1º acesso em /admin é com o login "admin" e essa
  * senha; depois a direção cria os usuários no próprio painel.
  *
@@ -48,6 +51,7 @@ function setup() {
   setupConfig_(made.config);
   setupExceptions_(made.exceptions);
   setupUsers_(made.users);
+  setupDiploma_(made.diploma);
   secret_();
   writeSummary_(made.summary, sheet);
   styleSummary_(made.summary);
@@ -83,6 +87,9 @@ var APPROVED_NAME = 'Aprovados';
 var CONFIG_NAME = 'Config';
 var EXCEPTIONS_NAME = 'Exceções';
 var USERS_NAME = 'Usuários';
+var DIPLOMA_NAME = 'Diploma';
+var DIPLOMA_COLUMNS = ['Código SISTEC', 'Registro escolar', 'Folha', 'Livro'];
+var MAX_DIPLOMA_JSON = 45000; // uma célula guarda até 50 mil caracteres
 var EXCEPTION_COLUMNS = ['CPF', 'Data de nascimento', 'Nome', 'Fora do período', 'Válida até', 'Criada por', 'Criada em', 'Usada em'];
 var USER_COLUMNS = ['Nome', 'Login', 'Papel', 'Salt', 'Hash', 'Ativo', 'Criado em'];
 var ROLES = ['direcao', 'coordenacao'];
@@ -90,7 +97,7 @@ var SESSION_HOURS = 8;
 var HASH_ROUNDS = 1000;
 var MAX_LOGIN_FAILS = 5; // por login, a cada 15 minutos
 var LIST_COLUMN = 'Lista de aprovados';
-var FIXED_COLUMNS = ['Enviado em', 'Protocolo', 'Status', 'Observação', 'Alterado por', 'Alterado em', 'CPF do aluno', LIST_COLUMN];
+var FIXED_COLUMNS = ['Enviado em', 'Protocolo', 'Status', 'Observação', 'Alterado por', 'Alterado em', 'CPF do aluno', LIST_COLUMN].concat(DIPLOMA_COLUMNS);
 var APPROVED_COLUMNS = ['CPF', 'Data de nascimento', 'Nome', 'Modalidade', 'Curso'];
 var STATUS = ['Matriculado', 'Pendente', 'Cancelado'];
 var TZ = 'America/Recife';
@@ -437,11 +444,13 @@ function verifyToken(token, secret, hmacFn, nowMs) {
   return { login: parts[0], papel: parts[1], exp: exp };
 }
 
-/** O que cada papel pode fazer no painel. A coordenação só vê e muda status. */
-var COORD_ACTIONS = ['painel', 'status'];
+/** O que cada papel pode fazer no painel. A coordenação vê, muda status e preenche o diploma. */
+var COORD_ACTIONS = ['painel', 'status', 'diploma_aluno'];
 var ADMIN_ACTIONS = [
   'painel',
   'status',
+  'diploma_aluno',
+  'diploma_config',
   'periodo',
   'aprovados_add',
   'aprovados_remover',
@@ -462,6 +471,22 @@ function statusError(status, observacao) {
   if (STATUS.indexOf(status) < 0) return 'Status inválido.';
   if (status === 'Pendente' && !String(observacao || '').trim()) return 'Escreva o motivo da pendência.';
   if (String(observacao || '').length > 500) return 'Motivo muito longo.';
+  return null;
+}
+
+/**
+ * Dados do diploma de um aluno: SISTEC, registro (número), folha e livro. Erro ou null.
+ * `registros` são os registros já usados por outras matrículas, para não repetir.
+ */
+function diplomaError(data, registros) {
+  var sistec = String(data.sistec || '').trim();
+  var registro = String(data.registro || '').trim();
+  var folha = String(data.folha || '').trim();
+  var livro = String(data.livro || '').trim();
+  if (sistec.length > 60 || folha.length > 10 || livro.length > 10) return 'Texto longo demais.';
+  if (registro && !/^\d{1,7}$/.test(registro)) return 'O registro escolar tem que ser um número.';
+  if (registro && registros.indexOf(String(Number(registro))) >= 0)
+    return 'O registro ' + registro + ' já é de outro aluno.';
   return null;
 }
 
@@ -701,6 +726,10 @@ function runAction_(made, session, data) {
   switch (data.action) {
     case 'status':
       return setStatus_(made, session, data);
+    case 'diploma_aluno':
+      return setDiplomaStudent_(made, session, data);
+    case 'diploma_config':
+      return setDiplomaConfig_(made, data);
     case 'periodo':
       return setPeriod_(made, data);
     case 'aprovados_add':
@@ -758,6 +787,7 @@ function painel_(made, session) {
     cabecalho: values[0],
     linhas: values.slice(1),
     periodo: { inicio: formatKey(period.start), fim: formatKey(period.end) },
+    diploma: readDiplomaConfig_(made.diploma),
   };
   if (session.papel === 'direcao') {
     out.aprovados = readApprovedSheet_(made.approved).map(function (a, i) {
@@ -812,6 +842,56 @@ function setStatus_(made, session, data) {
     return { status: 'ok' };
   }
   return { status: 'erro', message: 'Matrícula não encontrada.' };
+}
+
+/** SISTEC, registro, folha e livro de uma matrícula (ficha do aluno no painel). */
+function setDiplomaStudent_(made, session, data) {
+  var sheet = made.sheet;
+  var header = ensureHeader_(sheet, []);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { status: 'erro', message: 'Matrícula não encontrada.' };
+  var n = lastRow - 1;
+  var protocols = sheet.getRange(2, header.indexOf('Protocolo') + 1, n, 1).getDisplayValues();
+  var regs = sheet.getRange(2, header.indexOf('Registro escolar') + 1, n, 1).getDisplayValues();
+  var line = -1;
+  var others = [];
+  for (var i = 0; i < n; i++) {
+    if (String(protocols[i][0]).trim() === String(data.protocolo)) line = i + 2;
+    else if (String(regs[i][0]).trim()) others.push(String(Number(onlyDigits(regs[i][0]))));
+  }
+  if (line < 0) return { status: 'erro', message: 'Matrícula não encontrada.' };
+  var err = diplomaError(data, others);
+  if (err) return { status: 'erro', message: err };
+  setCells_(sheet, header, line, {
+    'Código SISTEC': String(data.sistec || '').trim(),
+    'Registro escolar': String(data.registro || '').trim(),
+    Folha: String(data.folha || '').trim(),
+    Livro: String(data.livro || '').trim(),
+    'Alterado por': session.nome,
+    'Alterado em': stamp_(),
+  });
+  return { status: 'ok' };
+}
+
+/** Configuração do diploma (JSON numa célula da aba Diploma). */
+function readDiplomaConfig_(sheet) {
+  if (sheet.getLastRow() < 2) return null;
+  var raw = String(sheet.getRange(2, 1).getValue() || '');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return null;
+  }
+}
+
+function setDiplomaConfig_(made, data) {
+  if (!data.config || typeof data.config !== 'object') return { status: 'erro', message: 'Configuração vazia.' };
+  var raw = JSON.stringify(data.config);
+  if (raw.length > MAX_DIPLOMA_JSON) return { status: 'erro', message: 'Configuração grande demais.' };
+  setupDiploma_(made.diploma);
+  made.diploma.getRange(2, 1).setNumberFormat('@').setValue(raw);
+  return { status: 'ok' };
 }
 
 function setPeriod_(made, data) {
@@ -1056,9 +1136,10 @@ function ensureSheets_() {
   var config = get(CONFIG_NAME);
   var exceptions = get(EXCEPTIONS_NAME);
   var users = get(USERS_NAME);
+  var diploma = get(DIPLOMA_NAME);
   if (users.getLastRow() === 0) users.getRange(1, 1, 1, USER_COLUMNS.length).setValues([USER_COLUMNS]);
   if (exceptions.getLastRow() === 0) exceptions.getRange(1, 1, 1, EXCEPTION_COLUMNS.length).setValues([EXCEPTION_COLUMNS]);
-  made_ = { sheet: sheet, summary: summary, approved: approved, config: config, exceptions: exceptions, users: users };
+  made_ = { sheet: sheet, summary: summary, approved: approved, config: config, exceptions: exceptions, users: users, diploma: diploma };
   return made_;
 }
 
@@ -1106,6 +1187,15 @@ function setupUsers_(sheet) {
   protection.setDescription('Usuários do painel: mexa pelo painel /admin.');
   protection.removeEditors(protection.getEditors());
   if (protection.canDomainEdit()) protection.setDomainEdit(false);
+}
+
+/** Aba "Diploma": a configuração do diploma, salva pelo painel (não edite à mão). */
+function setupDiploma_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1).setValue('Configuração do diploma: edite pelo painel /admin, aba Diploma.');
+    sheet.getRange(1, 1).setBackground(BLUE).setFontColor(CREAM).setFontWeight('bold');
+    sheet.setColumnWidth(1, 600);
+  }
 }
 
 /** Aba "Config": período da matrícula. Em branco, não limita. */
@@ -1283,6 +1373,7 @@ if (typeof module !== 'undefined') {
     verifyToken: verifyToken,
     canDo: canDo,
     statusError: statusError,
+    diplomaError: diplomaError,
     checkApprovedLines: checkApprovedLines,
     STATUS: STATUS,
     FIXED_COLUMNS: FIXED_COLUMNS,

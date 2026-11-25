@@ -42,6 +42,16 @@ Para **maiores de 18 anos**, em qualquer modalidade:
 
 A aba "Resumo por curso" da planilha conta por modalidade e curso.
 
+## Diploma
+
+O painel gera o diploma em Word (.docx) a partir do modelo da escola (`public/diploma-modelo.docx`), sem a coordenação digitar os dados do aluno:
+
+- **Do formulário:** nome, filiação (o nome da mãe e do pai é pedido mesmo se falecidos), naturalidade, nacionalidade, nascimento, RG e órgão, CPF, curso e a escola anterior (ensino fundamental no Integrado, ensino médio no Subsequente).
+- **Na ficha do aluno (painel):** código SISTEC, registro escolar, folha e livro. O registro vem sugerido (próximo número livre) e a folha é calculada (3 registros por folha); dá para corrigir. Registro repetido é recusado.
+- **Na aba Diploma (direção):** data de conclusão, cidade, cabeçalho da escola, secretária e diretor, numeração do livro e o verso de cada curso (4 blocos de disciplinas com C.H., total e perfil profissional). Farmácia Integrado vem do modelo; os outros cursos começam como rascunho para conferir. Contas que não fecham geram aviso.
+
+O modelo foi gerado de `Diploma_FAR_integrado_2023-2025.docx` por `scripts/diploma_modelo.py` (troca a mala direta por marcadores `{{chave}}` e tira os objetos OLE de 7 MB). Se a escola trocar o modelo, rode o script de novo.
+
 ## Rodar
 
 ```bash
@@ -69,7 +79,8 @@ Crie um **projeto novo** na Vercel a partir deste mesmo repositório, com **Root
   - `row`: linha da planilha;
   - `draft`: rascunho no aparelho;
   - `submit`: envio e conferência do período;
-  - `adminApi`, `adminData`: sessão, chamadas e números do painel.
+  - `adminApi`, `adminData`: sessão, chamadas e números do painel;
+  - `diploma`, `diplomaConfig`: dados, numeração e preenchimento do diploma.
 - `src/admin/`: o painel `/admin` (carregado à parte; quem só se matricula não baixa).
 - `src/components/`: `FieldView` (desenha cada tipo de campo), `Choices` (opções em botões) e `ui/` (lista e busca acessíveis, copiadas do Escola+).
 - `apps-script/Code.js`: o script da planilha (cole no editor do Google).

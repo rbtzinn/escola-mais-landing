@@ -134,6 +134,39 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     expect(sheet.grid[5][2]).toBe('Matriculado');
   });
 
+  it('diploma: ficha grava SISTEC, registro, folha e livro; registro repetido é recusado; config fica na aba', () => {
+    const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
+    const sessao = login(env);
+    const ok = env.doPost({
+      action: 'diploma_aluno',
+      sessao,
+      protocolo: 'MAT-2026-0001',
+      sistec: '49279/1',
+      registro: '155',
+      folha: '52',
+      livro: '01',
+    }) as { status: string; painel: { cabecalho: string[]; linhas: string[][] } };
+    expect(ok.status).toBe('ok');
+    const h = ok.painel.cabecalho;
+    const row = ok.painel.linhas.find((l) => l[1] === 'MAT-2026-0001')!;
+    expect([row[h.indexOf('Código SISTEC')], row[h.indexOf('Registro escolar')], row[h.indexOf('Folha')]]).toEqual([
+      '49279/1',
+      '155',
+      '52',
+    ]);
+    expect(
+      env.doPost({ action: 'diploma_aluno', sessao, protocolo: 'MAT-2026-0002', registro: '155' }),
+    ).toMatchObject({ status: 'erro', message: 'O registro 155 já é de outro aluno.' });
+    // O mesmo aluno pode salvar de novo o próprio registro.
+    expect(
+      env.doPost({ action: 'diploma_aluno', sessao, protocolo: 'MAT-2026-0001', registro: '155' }),
+    ).toMatchObject({ status: 'ok' });
+    const cfg = env.doPost({ action: 'diploma_config', sessao, config: { conclusao: '31/12/2028' } }) as {
+      painel: { diploma: { conclusao: string } };
+    };
+    expect(cfg.painel.diploma.conclusao).toBe('31/12/2028');
+  });
+
   it('ação do painel devolve o painel já atualizado (uma viagem só)', () => {
     const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
     const sessao = login(env);
