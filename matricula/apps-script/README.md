@@ -31,7 +31,7 @@ Passo a passo para quem tem acesso à **conta Google institucional da escola** (
 - **Período:** as datas de início e fim (vão para a aba **Config**).
 - **Exceções:** libera um aluno específico (CPF + nascimento) a se matricular **fora do período**, **uma vez só, até o prazo**.
 - **Aprovados:** cole a lista direto da planilha da seleção; o painel mostra o que está certo e o que foi recusado antes de salvar.
-- **Diploma:** na ficha do aluno, SISTEC, registro, folha e livro (colunas novas na aba Matrículas) e o botão que baixa o .docx; na aba Diploma do painel (direção), a configuração, guardada na aba **Diploma** da planilha (não edite à mão).
+- **Diploma:** na ficha do aluno, SISTEC, registro, folha, livro, data de conclusão (se for diferente da do curso) e semestres e frequências (Enfermagem), em colunas novas da aba Matrículas e o botão que baixa o .docx; na aba Diploma do painel (direção), a configuração, guardada na aba **Diploma** da planilha (não edite à mão).
 - **Usuários:** criar, trocar senha e desativar. As senhas ficam embaralhadas na aba **Usuários** (escondida e protegida): ninguém consegue ler.
 - Login vale por 8 horas. Depois de 5 senhas erradas, o login fica bloqueado por 15 minutos.
 

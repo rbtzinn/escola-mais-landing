@@ -12,6 +12,7 @@ import {
   type Session,
 } from '@/lib/adminApi';
 import { stats, toRecords, type Rec } from '@/lib/adminData';
+import { downloadDiploma, fillFromSaved } from '@/lib/diploma';
 import { withDefaults } from '@/lib/diplomaConfig';
 import { buildSteps } from '@/lib/schema';
 import { warmUp } from '@/lib/submit';
@@ -233,7 +234,21 @@ export default function AdminApp() {
               <Overview stats={st} recs={recs} onOpen={(r) => setOpen(r.protocolo)} />
             )}
             {current === 'alunos' && (
-              <Students recs={recs} header={data.cabecalho} onOpen={(r) => setOpen(r.protocolo)} />
+              <Students
+                recs={recs}
+                header={data.cabecalho}
+                onOpen={(r) => setOpen(r.protocolo)}
+                onDiploma={async (r) => {
+                  const fill = fillFromSaved(STEPS, data.cabecalho, r.row, r.cpf, diploma);
+                  // Falta algo (ex.: SISTEC)? A ficha abre mostrando o quê.
+                  if (fill.missing.length) return setOpen(r.protocolo);
+                  try {
+                    await downloadDiploma(fill, fill.values.nome || r.nome);
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'Não foi possível gerar o diploma.');
+                  }
+                }}
+              />
             )}
             {current === 'periodo' && (
               <Period

@@ -6,11 +6,14 @@ import { TextField } from '@/components/ui/TextField';
 import { replyMessage } from '@/lib/adminApi';
 import { longDate } from '@/lib/diploma';
 import {
+  MODELOS,
   courseWarnings,
+  fitBlocks,
   itemsToText,
   textToItems,
   type DiplomaConfig,
   type DiplomaCourse,
+  type ModeloId,
   type Signer,
 } from '@/lib/diplomaConfig';
 import { maskDate, parseDate } from '@/lib/masks';
@@ -104,10 +107,16 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
     };
   };
   const warnings = curso ? courseWarnings(parsed(cursoKey)) : [];
-  const conclusaoErr = cfg.conclusao && !parseDate(cfg.conclusao) ? 'Data inválida.' : undefined;
+  const conclusaoErr = curso?.conclusao && !parseDate(curso.conclusao) ? 'Data inválida.' : undefined;
+  const modelo = curso ? MODELOS[curso.modelo] : undefined;
 
   const save = async () => {
-    if (conclusaoErr) return;
+    const badDate = keys.find((k) => cfg.cursos[k].conclusao && !parseDate(cfg.cursos[k].conclusao));
+    if (badDate) {
+      setCursoKey(badDate);
+      setMsg({ tone: 'error', text: `Data de conclusão inválida em ${badDate}.` });
+      return;
+    }
     // O curso aberto na tela conta como conferido ao salvar.
     const cursos = Object.fromEntries(
       keys.map((k) => [k, { ...parsed(k), revisado: cfg.cursos[k].revisado || k === cursoKey }]),
@@ -166,18 +175,8 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
       }}
       className="space-y-6"
     >
-      <Card title="Conclusão e registro">
+      <Card title="Local e livro de registro">
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
-            id="dip-conclusao"
-            label="Data de conclusão"
-            value={cfg.conclusao}
-            onChange={(v) => set('conclusao', maskDate(v))}
-            inputMode="numeric"
-            placeholder="dd/mm/aaaa"
-            error={conclusaoErr}
-            hint={cfg.conclusao && !conclusaoErr ? `No diploma: ${longDate(cfg.conclusao)}.` : 'Vale para todos os diplomas.'}
-          />
           <TextField
             id="dip-cidade"
             label="Cidade (local e data)"
@@ -269,8 +268,8 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
             />
             {!curso.revisado && (
               <p className="rounded-xl border-2 border-accent/60 bg-accent/15 px-4 py-3 text-sm font-semibold">
-                Este curso ainda é um rascunho feito a partir do modelo de Farmácia. Confira e preencha
-                as disciplinas técnicas e o perfil; ao salvar, ele passa a valer.
+                A escola ainda não mandou o modelo deste curso: ele começou como rascunho. Confira e
+                preencha as disciplinas e o perfil; ao salvar, ele passa a valer.
               </p>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -283,12 +282,36 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
               />
               <TextField id="dip-eixo" label="Eixo tecnológico" value={curso.eixo} onChange={(v) => setCurso({ eixo: v })} />
             </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Listbox
+                id="dip-modelo"
+                name="dip-modelo"
+                label="Modelo do diploma"
+                value={curso.modelo}
+                onChange={(v) => setCurso(fitBlocks({ ...curso, modelo: v as ModeloId }))}
+                options={(Object.keys(MODELOS) as ModeloId[]).map((id) => ({ value: id, label: MODELOS[id].nome }))}
+              />
+              <TextField
+                id="dip-conclusao"
+                label="Data de conclusão da turma"
+                value={curso.conclusao}
+                onChange={(v) => setCurso({ conclusao: maskDate(v) })}
+                inputMode="numeric"
+                placeholder="dd/mm/aaaa"
+                error={conclusaoErr}
+                hint={
+                  curso.conclusao && !conclusaoErr
+                    ? `No diploma: ${longDate(curso.conclusao)}. Dá para trocar na ficha de um aluno.`
+                    : 'Dá para trocar na ficha de um aluno.'
+                }
+              />
+            </div>
             <TextField
               id="dip-conclusao-texto"
-              label="Concluiu o…"
+              label="Concluiu…"
               value={curso.conclusaoTexto}
               onChange={(v) => setCurso({ conclusaoTexto: v })}
-              hint="Ex.: Ensino Médio Integral, Integrado à Educação Profissional"
+              hint="Ex.: Ensino Médio Integral, Integrado à Educação Profissional (Integrado) ou Educação Profissional Técnico em Farmácia na forma Subsequente"
             />
             <TextField
               id="dip-portaria"
@@ -299,28 +322,32 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
 
             {curso.blocos.map((b, i) => (
               <fieldset key={i} className="space-y-3 rounded-xl border-2 border-fg/10 p-3">
-                <legend className="px-1 font-display text-lg font-extrabold">Bloco {i + 1} do verso</legend>
-                <div className="grid gap-4 sm:grid-cols-[1fr_2fr_8rem]">
-                  <TextField
-                    id={`dip-b${i}-sigla`}
-                    label="Rótulo lateral"
-                    value={b.sigla}
-                    onChange={(v) => setBloco(i, 'sigla', v)}
-                  />
-                  <TextField
-                    id={`dip-b${i}-titulo`}
-                    label="Linha de total"
-                    value={b.titulo}
-                    onChange={(v) => setBloco(i, 'titulo', v)}
-                  />
-                  <TextField
-                    id={`dip-b${i}-total`}
-                    label="Total (C.H.)"
-                    value={b.total}
-                    inputMode="numeric"
-                    onChange={(v) => setBloco(i, 'total', v)}
-                  />
-                </div>
+                <legend className="px-1 font-display text-lg font-extrabold">
+                  {curso.modelo === 'integrado' ? `Bloco ${i + 1} do verso` : `Módulo ${['I', 'II', 'III', 'IV'][i]}`}
+                </legend>
+                {modelo?.totais && (
+                  <div className="grid gap-4 sm:grid-cols-[1fr_2fr_8rem]">
+                    <TextField
+                      id={`dip-b${i}-sigla`}
+                      label="Rótulo lateral"
+                      value={b.sigla}
+                      onChange={(v) => setBloco(i, 'sigla', v)}
+                    />
+                    <TextField
+                      id={`dip-b${i}-titulo`}
+                      label="Linha de total"
+                      value={b.titulo}
+                      onChange={(v) => setBloco(i, 'titulo', v)}
+                    />
+                    <TextField
+                      id={`dip-b${i}-total`}
+                      label="Total (C.H.)"
+                      value={b.total}
+                      inputMode="numeric"
+                      onChange={(v) => setBloco(i, 'total', v)}
+                    />
+                  </div>
+                )}
                 <TextArea
                   id={`dip-b${i}-itens`}
                   label="Disciplinas"
@@ -332,18 +359,33 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
                 />
               </fieldset>
             ))}
-            <TextField
-              id="dip-ch-total"
-              label="Total de carga horária do curso"
-              value={curso.chTotal}
-              inputMode="numeric"
-              onChange={(v) => setCurso({ chTotal: v })}
-            />
+            {modelo?.totais && (
+              <TextField
+                id="dip-ch-total"
+                label="Total de carga horária do curso"
+                value={curso.chTotal}
+                inputMode="numeric"
+                onChange={(v) => setCurso({ chTotal: v })}
+              />
+            )}
+            {modelo && modelo.extras.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {modelo.extras.map((x) => (
+                  <TextField
+                    key={x.key}
+                    id={`dip-extra-${x.key}`}
+                    label={x.label}
+                    value={curso.extras[x.key] ?? ''}
+                    onChange={(v) => setCurso({ extras: { ...curso.extras, [x.key]: v } })}
+                  />
+                ))}
+              </div>
+            )}
             <TextArea
               id="dip-perfil"
               label="Perfil do profissional"
               rows={8}
-              hint='Um item por linha, começando com "- ".'
+              hint="Um item por linha (o marcador de cada item o modelo põe sozinho)."
               value={text.perfil}
               onChange={(v) => setText({ perfil: v })}
             />

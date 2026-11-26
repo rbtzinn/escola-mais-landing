@@ -88,7 +88,7 @@ var CONFIG_NAME = 'Config';
 var EXCEPTIONS_NAME = 'Exceções';
 var USERS_NAME = 'Usuários';
 var DIPLOMA_NAME = 'Diploma';
-var DIPLOMA_COLUMNS = ['Código SISTEC', 'Registro escolar', 'Folha', 'Livro'];
+var DIPLOMA_COLUMNS = ['Código SISTEC', 'Registro escolar', 'Folha', 'Livro', 'Data de conclusão', 'Semestres e frequências'];
 var MAX_DIPLOMA_JSON = 45000; // uma célula guarda até 50 mil caracteres
 var EXCEPTION_COLUMNS = ['CPF', 'Data de nascimento', 'Nome', 'Fora do período', 'Válida até', 'Criada por', 'Criada em', 'Usada em'];
 var USER_COLUMNS = ['Nome', 'Login', 'Papel', 'Salt', 'Hash', 'Ativo', 'Criado em'];
@@ -483,7 +483,10 @@ function diplomaError(data, registros) {
   var registro = String(data.registro || '').trim();
   var folha = String(data.folha || '').trim();
   var livro = String(data.livro || '').trim();
+  var conclusao = String(data.conclusao || '').trim();
   if (sistec.length > 60 || folha.length > 10 || livro.length > 10) return 'Texto longo demais.';
+  if (String(data.modulos || '').length > 300) return 'Texto longo demais.';
+  if (conclusao && !dateKey(conclusao)) return 'Data de conclusão inválida.';
   if (registro && !/^\d{1,7}$/.test(registro)) return 'O registro escolar tem que ser um número.';
   if (registro && registros.indexOf(String(Number(registro))) >= 0)
     return 'O registro ' + registro + ' já é de outro aluno.';
@@ -844,7 +847,7 @@ function setStatus_(made, session, data) {
   return { status: 'erro', message: 'Matrícula não encontrada.' };
 }
 
-/** SISTEC, registro, folha e livro de uma matrícula (ficha do aluno no painel). */
+/** SISTEC, registro, folha, livro, conclusão e frequências de uma matrícula (ficha no painel). */
 function setDiplomaStudent_(made, session, data) {
   var sheet = made.sheet;
   var header = ensureHeader_(sheet, []);
@@ -867,6 +870,8 @@ function setDiplomaStudent_(made, session, data) {
     'Registro escolar': String(data.registro || '').trim(),
     Folha: String(data.folha || '').trim(),
     Livro: String(data.livro || '').trim(),
+    'Data de conclusão': String(data.conclusao || '').trim(),
+    'Semestres e frequências': String(data.modulos || '').trim(),
     'Alterado por': session.nome,
     'Alterado em': stamp_(),
   });

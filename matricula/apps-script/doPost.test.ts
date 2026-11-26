@@ -145,6 +145,8 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
       registro: '155',
       folha: '52',
       livro: '01',
+      conclusao: '09/09/2026',
+      modulos: '2024.1 = 87,50; 2024.2 = 87,33',
     }) as { status: string; painel: { cabecalho: string[]; linhas: string[][] } };
     expect(ok.status).toBe('ok');
     const h = ok.painel.cabecalho;
@@ -154,6 +156,8 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
       '155',
       '52',
     ]);
+    expect(row[h.indexOf('Semestres e frequências')]).toBe('2024.1 = 87,50; 2024.2 = 87,33');
+    expect(row[h.indexOf('Data de conclusão')]).toBe('09/09/2026');
     expect(
       env.doPost({ action: 'diploma_aluno', sessao, protocolo: 'MAT-2026-0002', registro: '155' }),
     ).toMatchObject({ status: 'erro', message: 'O registro 155 já é de outro aluno.' });

@@ -44,13 +44,20 @@ A aba "Resumo por curso" da planilha conta por modalidade e curso.
 
 ## Diploma
 
-O painel gera o diploma em Word (.docx) a partir do modelo da escola (`public/diploma-modelo.docx`), sem a coordenação digitar os dados do aluno:
+O painel gera o diploma em Word (.docx) no modelo do curso do aluno, sem a coordenação digitar os dados dele. Cada curso usa o modelo enviado pela escola (em `public/`):
 
-- **Do formulário:** nome, filiação (o nome da mãe e do pai é pedido mesmo se falecidos), naturalidade, nacionalidade, nascimento, RG e órgão, CPF, curso e a escola anterior (ensino fundamental no Integrado, ensino médio no Subsequente).
-- **Na ficha do aluno (painel):** código SISTEC, registro escolar, folha e livro. O registro vem sugerido (próximo número livre) e a folha é calculada (3 registros por folha); dá para corrigir. Registro repetido é recusado.
-- **Na aba Diploma (direção):** data de conclusão, cidade, cabeçalho da escola, secretária e diretor, numeração do livro e o verso de cada curso (4 blocos de disciplinas com C.H., total e perfil profissional). Farmácia Integrado vem do modelo; os outros cursos começam como rascunho para conferir. Contas que não fecham geram aviso.
+| Curso | Modelo |
+| --- | --- |
+| Farmácia e Nutrição e Dietética (Integrado) | `diploma-integrado.docx` (4 blocos: FGB, IF-AC e dois IF-EPT) |
+| Farmácia (Subsequente) | `diploma-farmacia-subsequente.docx` (3 módulos com total) |
+| Enfermagem (Subsequente) | `diploma-enfermagem-subsequente.docx` (4 módulos com semestre e frequência, quadro de estágio) |
 
-O modelo foi gerado de `Diploma_FAR_integrado_2023-2025.docx` por `scripts/diploma_modelo.py` (troca a mala direta por marcadores `{{chave}}` e tira os objetos OLE de 7 MB). Se a escola trocar o modelo, rode o script de novo.
+- **Do formulário:** nome, filiação (o nome da mãe e do pai é pedido mesmo se falecidos), naturalidade, nacionalidade, nascimento, RG e órgão, CPF, curso e a escola anterior (ensino fundamental no Integrado, ensino médio no Subsequente). Tudo sai no mesmo formato em todos os cursos: nacionalidade BRASILEIRA, órgão como o aluno escreveu (ex.: SDS-PE) e nascimento em dd/mm/aaaa.
+- **Na ficha do aluno (painel), o que só a escola tem:** código SISTEC, registro escolar, folha e livro (o registro vem sugerido e a folha calculada, 3 por folha; registro repetido é recusado), a data de conclusão (vem a do curso; dá para trocar só para aquele aluno) e, em Enfermagem, semestre e % de frequência de cada módulo. "Salvar e baixar diploma" grava e baixa de uma vez.
+- **Um clique na lista:** o botão "Diploma" em cada matrícula baixa direto quando os dados da escola já estão salvos; se faltar algo, abre a ficha mostrando o quê.
+- **Na aba Diploma (direção):** cidade, cabeçalho, secretária e diretor, numeração do livro e, por curso, o modelo, a data de conclusão da turma, o texto da conclusão, a portaria, as disciplinas com C.H., os totais, o perfil e (Enfermagem) o quadro de estágio. Contas que não fecham geram aviso. Curso novo, sem modelo, começa como rascunho.
+
+Os modelos foram gerados dos arquivos da escola por `scripts/diploma_modelo.py` (troca a mala direta por marcadores `{{chave}}` e tira os objetos OLE de ~7 MB). Se a escola trocar um modelo, rode o script de novo (instruções no topo dele).
 
 ## Rodar
 

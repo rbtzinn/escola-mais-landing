@@ -1,12 +1,56 @@
 import { maskCpf, onlyDigits } from './cpf';
-import { courseKeyOf, type DiplomaConfig } from './diplomaConfig';
+import { MODELOS, courseKeyOf, type DiplomaConfig, type DiplomaCourse } from './diplomaConfig';
 import { UFS } from './ibge';
 import { parseDate } from './masks';
 import { toRow } from './row';
 import type { Step } from './schema';
 
 /** Colunas da planilha que a secretaria preenche na ficha do aluno (não vêm do formulário). */
-export const DIPLOMA_COLUMNS = ['Código SISTEC', 'Registro escolar', 'Folha', 'Livro'] as const;
+export const DIPLOMA_COLUMNS = [
+  'Código SISTEC',
+  'Registro escolar',
+  'Folha',
+  'Livro',
+  'Data de conclusão',
+  'Semestres e frequências',
+] as const;
+
+/** Semestre e % de frequência de um módulo (Enfermagem). */
+export interface ModuloFreq {
+  semestre: string;
+  freq: string;
+}
+
+/** "2024.1 = 87,50; 2024.2 = 87,33" (como fica na planilha) ↔ lista por módulo. */
+export function parseModulos(s: string): ModuloFreq[] {
+  return s
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const [semestre = '', freq = ''] = part.split('=').map((x) => x.trim());
+      return { semestre, freq };
+    });
+}
+
+export function formatModulos(list: ModuloFreq[]): string {
+  // Módulo sem nada vira "=" para não mudar a posição dos seguintes.
+  const parts = list.map((m) => `${m.semestre.trim()} = ${m.freq.trim()}`);
+  while (parts.length && parts[parts.length - 1] === ' = ') parts.pop();
+  return parts.join('; ');
+}
+
+/** Próximo semestre ("2024.1" → "2024.2" → "2025.1"), para sugerir no campo. */
+export function nextSemestre(s: string): string {
+  const m = /^(\d{4})\.([12])$/.exec(s.trim());
+  if (!m) return '';
+  return m[2] === '1' ? `${m[1]}.2` : `${Number(m[1]) + 1}.1`;
+}
+
+/** O curso do aluno na configuração do diploma (pela modalidade e pelo curso que ele escolheu). */
+export function courseOf(answers: Record<string, string>, cfg: DiplomaConfig): DiplomaCourse | undefined {
+  return cfg.cursos[courseKeyOf(answers.modalidade ?? '', answers.curso ?? '')];
+}
 
 /** Respostas do aluno por id do campo, lidas da linha da planilha. */
 export function answersFromRow(steps: Step[], header: string[], row: string[]): Record<string, string> {
@@ -72,18 +116,33 @@ export interface DiplomaFill {
   lists: Record<string, string[]>;
   /** O que ficou em branco (o diploma sai mesmo assim, com o espaço vazio). */
   missing: string[];
+  /** Modelo de Word do curso (em public/). */
+  arquivo: string;
+  /** Listas com um parágrafo vazio entre os itens. */
+  spaced: string[];
 }
 
 /** Dados que o modelo precisa: do aluno (planilha), da ficha (SISTEC, registro) e da configuração. */
 export function diplomaFill(
   answers: Record<string, string>,
-  extra: { sistec: string; registro: string; folha: string; livro: string; cpf: string },
+  extra: {
+    sistec: string;
+    registro: string;
+    folha: string;
+    livro: string;
+    cpf: string;
+    /** Data de conclusão deste aluno; em branco, vale a do curso. */
+    conclusao?: string;
+    modulos?: ModuloFreq[];
+  },
   cfg: DiplomaConfig,
 ): DiplomaFill {
   const a = (id: string) => answers[id] ?? '';
-  const curso = cfg.cursos[courseKeyOf(a('modalidade'), a('curso'))];
+  const curso = courseOf(answers, cfg);
+  const modelo = curso ? MODELOS[curso.modelo] : undefined;
   const brasil = a('nasc_pais') !== 'Outro país';
-  const pais = brasil ? 'BRASIL' : upper(a('nasc_pais_outro'));
+  const pais = upper(a('nasc_pais_outro'));
+  const conclusao = (extra.conclusao || curso?.conclusao || '').trim();
   const integrado = a('modalidade') !== 'Subsequente';
   const ant = integrado
     ? { escola: a('ef_escola'), ano: a('ef_ano'), cidade: a('ef_cidade'), uf: a('ef_uf'), hab: 'ENSINO FUNDAMENTAL' }
@@ -106,12 +165,12 @@ export function diplomaFill(
     naturalidade: brasil
       ? [upper(a('nasc_cidade')), upper(ufName(a('nasc_uf')))].filter(Boolean).join('-')
       : pais,
-    nacionalidade: pais,
+    nacionalidade: brasil ? 'BRASILEIRA' : pais,
     nascimento: a('aluno_nascimento'),
     rg: a('aluno_rg'),
     rg_orgao: rgIssuer(a('aluno_rg_orgao'), a('aluno_rg_uf')),
     cpf,
-    conclusao_data: longDate(cfg.conclusao),
+    conclusao_data: longDate(conclusao),
     conclusao_texto: curso?.conclusaoTexto ?? '',
     eixo: curso?.eixo ?? '',
     sec_nome: cfg.secretaria.nome,
@@ -134,13 +193,17 @@ export function diplomaFill(
     livro: extra.livro.trim(),
     cidade: cfg.cidade,
     ch_total: curso?.chTotal ?? '',
+    ...(curso?.extras ?? {}),
   };
   const lists: Record<string, string[]> = { perfil: curso?.perfil ?? [] };
-  (curso?.blocos ?? []).slice(0, 4).forEach((b, i) => {
+  (curso?.blocos ?? []).forEach((b, i) => {
     const n = i + 1;
+    const m = extra.modulos?.[i];
     values[`b${n}_sigla`] = b.sigla;
     values[`b${n}_titulo`] = b.titulo;
     values[`b${n}_total`] = b.total;
+    values[`b${n}_semestre`] = m?.semestre.trim() ?? '';
+    values[`b${n}_freq`] = m?.freq.trim() ?? '';
     lists[`b${n}_nomes`] = b.itens.map((it) => it.nome);
     lists[`b${n}_ch`] = b.itens.map((it) => it.ch);
   });
@@ -160,12 +223,23 @@ export function diplomaFill(
     ['registro', 'registro escolar'],
     ['folha', 'folha'],
     ['livro', 'livro'],
-    ['conclusao_data', 'data de conclusão (aba Diploma)'],
+    ['conclusao_data', 'data de conclusão'],
   ];
   const missing = LABELS.filter(([k]) => !values[k]).map(([, label]) => label);
+  if (modelo?.frequencia)
+    curso!.blocos.forEach((b, i) => {
+      if (!values[`b${i + 1}_semestre`] || !values[`b${i + 1}_freq`])
+        missing.push(`semestre e frequência do módulo ${b.sigla || i + 1}`);
+    });
   if (!curso) missing.push('curso sem verso configurado');
   else if (!curso.revisado) missing.push(`verso de ${curso.titulo} ainda não conferido (aba Diploma)`);
-  return { values, lists, missing };
+  return {
+    values,
+    lists,
+    missing,
+    arquivo: modelo?.arquivo ?? MODELOS.integrado.arquivo,
+    spaced: modelo?.perfilEspacado ? ['perfil'] : [],
+  };
 }
 
 const escapeXml = (s: string) =>
@@ -173,15 +247,23 @@ const escapeXml = (s: string) =>
 
 /**
  * Preenche o document.xml do modelo: {{chave}} vira o valor; o parágrafo com {{#chave}} é
- * repetido uma vez por item da lista (lista vazia: o parágrafo fica, em branco). Na lista
- * "perfil", entre um item e outro vai um parágrafo vazio, como no modelo.
+ * repetido uma vez por item da lista (lista vazia: o parágrafo fica, em branco). Nas listas
+ * de `spaced`, entre um item e outro vai um parágrafo vazio, como no modelo.
  */
-export function fillTemplate(xml: string, values: Record<string, string>, lists: Record<string, string[]>): string {
+export function fillTemplate(
+  xml: string,
+  values: Record<string, string>,
+  lists: Record<string, string[]>,
+  spaced: string[] = [],
+): string {
   // O parágrafo mais de dentro que contém o marcador (nada de outro "<w:p" no meio).
   const out = xml.replace(/<w:p[ >](?:(?!<w:p[ >]).)*?\{\{#(\w+)\}\}.*?<\/w:p>/gs, (para, key: string) => {
     const items = lists[key] ?? [];
     if (!items.length) return para.replace(`{{#${key}}}`, '');
-    const spacer = key === 'perfil' ? para.replace(/<w:r[ >].*?<\/w:r>/gs, '') : '';
+    // Linha em branco: o mesmo parágrafo sem texto e sem marcador de lista (✓).
+    const spacer = spaced.includes(key)
+      ? para.replace(/<w:r[ >].*?<\/w:r>/gs, '').replace(/<w:numPr>.*?<\/w:numPr>/gs, '')
+      : '';
     return items
       .map((it, i) => (i > 0 ? spacer : '') + para.replace(`{{#${key}}}`, escapeXml(it)))
       .join('');
@@ -202,14 +284,14 @@ export async function buildDiplomaDocx(template: Uint8Array, fill: DiplomaFill):
   const doc = files['word/document.xml'];
   if (!doc) throw new Error('Modelo do diploma inválido.');
   // Uint8Array.from: o zip só aceita bytes do mesmo "Uint8Array" (nos testes, o TextEncoder é de outro).
-  const xml = fillTemplate(strFromU8(doc), fill.values, fill.lists);
+  const xml = fillTemplate(strFromU8(doc), fill.values, fill.lists, fill.spaced);
   files['word/document.xml'] = Uint8Array.from(new TextEncoder().encode(xml));
   return zipSync(files, { level: 6 });
 }
 
-/** Baixa o modelo (public/diploma-modelo.docx), preenche e entrega o arquivo para salvar. */
+/** Baixa o modelo do curso (public/diploma-*.docx), preenche e entrega o arquivo para salvar. */
 export async function downloadDiploma(fill: DiplomaFill, nome: string): Promise<void> {
-  const res = await fetch('/diploma-modelo.docx');
+  const res = await fetch(fill.arquivo);
   if (!res.ok) throw new Error('Não foi possível baixar o modelo do diploma.');
   const bytes = await buildDiplomaDocx(new Uint8Array(await res.arrayBuffer()), fill);
   const blob = new Blob([bytes as BlobPart], {
@@ -223,4 +305,32 @@ export async function downloadDiploma(fill: DiplomaFill, nome: string): Promise<
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** O que a escola já salvou na ficha do aluno (colunas DIPLOMA_COLUMNS da planilha). */
+export function savedDiploma(header: string[], row: string[]) {
+  const cell = (name: string) => {
+    const i = header.indexOf(name);
+    return i >= 0 ? String(row[i] ?? '').trim() : '';
+  };
+  return {
+    sistec: cell('Código SISTEC'),
+    registro: cell('Registro escolar'),
+    folha: cell('Folha'),
+    livro: cell('Livro'),
+    conclusao: cell('Data de conclusão'),
+    modulos: cell('Semestres e frequências'),
+  };
+}
+
+/** Diploma só com o que já está salvo (o botão da lista de matrículas). */
+export function fillFromSaved(
+  steps: Step[],
+  header: string[],
+  row: string[],
+  cpf: string,
+  cfg: DiplomaConfig,
+): DiplomaFill {
+  const s = savedDiploma(header, row);
+  return diplomaFill(answersFromRow(steps, header, row), { ...s, cpf, modulos: parseModulos(s.modulos) }, cfg);
 }
