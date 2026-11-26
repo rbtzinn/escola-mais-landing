@@ -111,11 +111,21 @@ export function folhaOf(registro: string | number, porFolha: string): string {
   return n > 0 ? String(Math.ceil(n / per)) : '';
 }
 
+/** Algo que vai sair em branco: de onde vem e, se for da ficha, o id do campo para preencher. */
+export interface Pendencia {
+  label: string;
+  /** escola: campo da ficha; aluno: resposta do formulário; curso: aba Diploma. */
+  origem: 'escola' | 'aluno' | 'curso';
+  campo?: string;
+}
+
 export interface DiplomaFill {
   values: Record<string, string>;
   lists: Record<string, string[]>;
   /** O que ficou em branco (o diploma sai mesmo assim, com o espaço vazio). */
   missing: string[];
+  /** As mesmas pendências, com a origem de cada uma (para o aviso da ficha). */
+  pendencias: Pendencia[];
   /** Modelo de Word do curso (em public/). */
   arquivo: string;
   /** Listas com um parágrafo vazio entre os itens. */
@@ -208,35 +218,51 @@ export function diplomaFill(
     lists[`b${n}_ch`] = b.itens.map((it) => it.ch);
   });
 
-  const LABELS: [string, string][] = [
-    ['nome', 'nome do aluno'],
-    ['filiacao', 'nome da mãe ou do pai'],
-    ['naturalidade', 'cidade de nascimento'],
-    ['nascimento', 'data de nascimento'],
-    ['rg', 'RG'],
-    ['rg_orgao', 'órgão expedidor do RG'],
-    ['cpf', 'CPF'],
-    ['ant_escola', integrado ? 'escola do ensino fundamental' : 'escola do ensino médio'],
-    ['ant_ano', 'ano de conclusão da escola anterior'],
-    ['ant_cidade', 'cidade da escola anterior'],
-    ['sistec', 'código SISTEC'],
-    ['registro', 'registro escolar'],
-    ['folha', 'folha'],
-    ['livro', 'livro'],
-    ['conclusao_data', 'data de conclusão'],
+  const CHECKS: [string, string, Pendencia['origem'], string?][] = [
+    ['nome', 'nome do aluno', 'aluno'],
+    ['filiacao', 'nome da mãe ou do pai', 'aluno'],
+    ['naturalidade', 'cidade de nascimento', 'aluno'],
+    ['nascimento', 'data de nascimento', 'aluno'],
+    ['rg', 'RG', 'aluno'],
+    ['rg_orgao', 'órgão expedidor do RG', 'aluno'],
+    ['cpf', 'CPF', 'aluno'],
+    ['ant_escola', integrado ? 'escola do ensino fundamental' : 'escola do ensino médio', 'aluno'],
+    ['ant_ano', 'ano de conclusão da escola anterior', 'aluno'],
+    ['ant_cidade', 'cidade da escola anterior', 'aluno'],
+    ['sistec', 'código SISTEC', 'escola', 'dip-sistec'],
+    ['registro', 'registro escolar', 'escola', 'dip-registro'],
+    ['folha', 'folha', 'escola', 'dip-folha'],
+    ['livro', 'livro', 'escola', 'dip-livro'],
+    ['conclusao_data', 'data de conclusão', 'escola', 'dip-conclusao'],
   ];
-  const missing = LABELS.filter(([k]) => !values[k]).map(([, label]) => label);
-  if (modelo?.frequencia)
-    curso!.blocos.forEach((b, i) => {
-      if (!values[`b${i + 1}_semestre`] || !values[`b${i + 1}_freq`])
-        missing.push(`semestre e frequência do módulo ${b.sigla || i + 1}`);
-    });
-  if (!curso) missing.push('curso sem verso configurado');
-  else if (!curso.revisado) missing.push(`verso de ${curso.titulo} ainda não conferido (aba Diploma)`);
+  const pendencias: Pendencia[] = CHECKS.filter(([k]) => !values[k]).map(([, label, origem, campo]) => ({
+    label,
+    origem,
+    campo,
+  }));
+  if (modelo?.frequencia) {
+    // Um aviso só para os módulos, apontando para o primeiro campo vazio.
+    const faltam = curso!.blocos
+      .map((b, i) => ({ nome: b.sigla || String(i + 1), i }))
+      .filter(({ i }) => !values[`b${i + 1}_semestre`] || !values[`b${i + 1}_freq`]);
+    if (faltam.length) {
+      const nomes = faltam.map((f) => f.nome);
+      const lista = nomes.length > 1 ? `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}` : nomes[0];
+      const i = faltam[0].i;
+      pendencias.push({
+        label: `semestre e frequência (${nomes.length > 1 ? 'módulos' : 'módulo'} ${lista})`,
+        origem: 'escola',
+        campo: values[`b${i + 1}_semestre`] ? `dip-freq-${i}` : `dip-sem-${i}`,
+      });
+    }
+  }
+  if (!curso) pendencias.push({ label: 'curso sem modelo de diploma configurado', origem: 'curso' });
+  else if (!curso.revisado) pendencias.push({ label: `verso de ${curso.titulo} ainda não conferido`, origem: 'curso' });
   return {
     values,
     lists,
-    missing,
+    missing: pendencias.map((p) => p.label),
+    pendencias,
     arquivo: modelo?.arquivo ?? MODELOS.integrado.arquivo,
     spaced: modelo?.perfilEspacado ? ['perfil'] : [],
   };

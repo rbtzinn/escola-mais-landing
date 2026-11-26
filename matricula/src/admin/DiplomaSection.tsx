@@ -98,6 +98,15 @@ export function DiplomaSection({
     },
     cfg,
   );
+  const escola = fill.pendencias.filter((p) => p.origem === 'escola');
+  const aluno = fill.pendencias.filter((p) => p.origem === 'aluno');
+  const doCurso = fill.pendencias.filter((p) => p.origem === 'curso');
+  /** Leva ao campo vazio da ficha. */
+  const goTo = (id?: string) => {
+    const el = id ? document.getElementById(id) : null;
+    el?.scrollIntoView?.({ block: 'center' });
+    el?.focus({ preventScroll: true });
+  };
   const setMod = (i: number, patch: Partial<ModuloFreq>) =>
     setMods((list) => list.map((m, j) => (j === i ? { ...m, ...patch } : m)));
 
@@ -162,6 +171,7 @@ export function DiplomaSection({
             value={sistec}
             onChange={setSistec}
             placeholder="Ex.: 49279/109068309CM"
+            hint="De cada aluno: o SISTEC gera quando a secretaria registra a conclusão."
           />
         </div>
         <div className="col-span-2 sm:col-span-1">
@@ -251,10 +261,41 @@ export function DiplomaSection({
         </fieldset>
       )}
 
-      {fill.missing.length > 0 && (
-        <div className="rounded-xl border-2 border-accent/60 bg-accent/15 px-4 py-3 text-sm">
+      {fill.pendencias.length > 0 && (
+        <div className="space-y-2 rounded-xl border-2 border-accent/60 bg-accent/15 px-4 py-3 text-sm">
           <p className="font-semibold">Vai sair em branco no diploma:</p>
-          <p>{fill.missing.join(' · ')}.</p>
+          {escola.length > 0 && (
+            <div>
+              <p>Preencha aqui na ficha (clique para ir ao campo):</p>
+              <ul className="mt-1 flex flex-wrap gap-2">
+                {escola.map((p) => (
+                  <li key={p.label}>
+                    <button
+                      type="button"
+                      onClick={() => goTo(p.campo)}
+                      className="min-h-9 rounded-lg border-2 border-fg/25 bg-surface px-3 font-semibold hover:border-fg"
+                    >
+                      {p.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {aluno.length > 0 && (
+            <p>
+              <span className="font-semibold">Veio em branco no formulário do aluno:</span>{' '}
+              {aluno.map((p) => p.label).join(' · ')}. Dá para completar na planilha, na linha
+              desta matrícula.
+            </p>
+          )}
+          {doCurso.length > 0 && (
+            <p>
+              <span className="font-semibold">Na aba Diploma:</span>{' '}
+              {doCurso.map((p) => p.label).join(' · ')}.
+            </p>
+          )}
+          <p className="text-fg-muted">O diploma pode ser baixado mesmo assim, com o espaço em branco.</p>
         </div>
       )}
       <Notice tone={msg?.tone}>{msg?.text}</Notice>
