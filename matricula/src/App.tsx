@@ -86,6 +86,8 @@ export default function App() {
   const [showAll, setShowAll] = useState(false);
   const [returnToReview, setReturnToReview] = useState(false);
   const [sending, setSending] = useState<Sending>('idle');
+  /** Nova tentativa em andamento (fila da planilha cheia ou internet caiu), para ninguém fechar a página. */
+  const [retry, setRetry] = useState<{ attempt: number; total: number } | null>(null);
   const [protocolo, setProtocolo] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -195,12 +197,13 @@ export default function App() {
     }
     setSending('sending');
     const { columns, row } = toRow(STEPS, values, { 'Ano de ingresso': String(CONFIG.ano) });
-    const r = await submitMatricula(CONFIG.appsScriptUrl, {
-      token: CONFIG.token,
-      cpf: String(values.aluno_cpf ?? ''),
-      columns,
-      row,
-    });
+    const r = await submitMatricula(
+      CONFIG.appsScriptUrl,
+      { token: CONFIG.token, cpf: String(values.aluno_cpf ?? ''), columns, row },
+      fetch,
+      { onRetry: (attempt, total) => setRetry({ attempt, total }) },
+    );
+    setRetry(null);
     if (r.status === 'ok') {
       setProtocolo(r.protocolo);
       clearDraft();
@@ -458,6 +461,12 @@ export default function App() {
               })}
 
               <div role="status" aria-live="polite">
+                {sending === 'sending' && retry && (
+                  <p className="rounded-2xl border-2 border-fg/20 bg-fg/5 p-4 font-semibold">
+                    Muita gente enviando agora. Tentando de novo ({retry.attempt} de {retry.total}
+                    )… Não feche esta página.
+                  </p>
+                )}
                 {sending !== 'idle' && sending !== 'sending' && (
                   <div className="rounded-2xl border-2 border-danger/50 bg-danger/10 p-4">
                     {sending.status !== 'erro' && sending.status !== 'sem_configuracao' && (
@@ -506,8 +515,11 @@ export default function App() {
                 >
                   <Icon name={sending === 'sending' ? 'refresh' : 'send'} size={20} />
                   {sending === 'sending'
-                    ? 'Enviando…'
-                    : sending !== 'idle' && sending.status === 'erro'
+                    ? retry
+                      ? `Tentando de novo (${retry.attempt} de ${retry.total})…`
+                      : 'Enviando…'
+                    : sending !== 'idle' &&
+                        (sending.status === 'erro' || sending.status === 'ocupado')
                       ? 'Tentar de novo'
                       : 'Enviar matrícula'}
                 </button>

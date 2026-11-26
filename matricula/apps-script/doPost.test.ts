@@ -70,6 +70,13 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     expect(env.sheet('Matrículas').stats.calls).toBe(0);
   });
 
+  it('fila cheia: responde "ocupado" sem gravar, para o formulário tentar de novo', () => {
+    const env = loadScript({ matriculas: existing(3), props: { FORM_TOKEN: 't' }, busy: true });
+    expect(env.doPost(envelope())).toEqual({ status: 'ocupado' });
+    expect(env.stats.locks).toBe(1);
+    expect(env.sheet('Matrículas').getLastRow()).toBe(4);
+  });
+
   it('conferência do CPF não entra na fila e lê só as colunas que precisa', () => {
     const env = loadScript({ matriculas: existing(30), aprovados: APROVADOS });
     const r = env.doPost({ action: 'check', token: 't', cpf: CPF, nascimento: '15/03/2010' });
@@ -151,11 +158,11 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     expect(ok.status).toBe('ok');
     const h = ok.painel.cabecalho;
     const row = ok.painel.linhas.find((l) => l[1] === 'MAT-2026-0001')!;
-    expect([row[h.indexOf('Código SISTEC')], row[h.indexOf('Registro escolar')], row[h.indexOf('Folha')]]).toEqual([
-      '49279/1',
-      '155',
-      '52',
-    ]);
+    expect([
+      row[h.indexOf('Código SISTEC')],
+      row[h.indexOf('Registro escolar')],
+      row[h.indexOf('Folha')],
+    ]).toEqual(['49279/1', '155', '52']);
     expect(row[h.indexOf('Semestres e frequências')]).toBe('2024.1 = 87,50; 2024.2 = 87,33');
     expect(row[h.indexOf('Data de conclusão')]).toBe('09/09/2026');
     expect(
@@ -165,7 +172,11 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     expect(
       env.doPost({ action: 'diploma_aluno', sessao, protocolo: 'MAT-2026-0001', registro: '155' }),
     ).toMatchObject({ status: 'ok' });
-    const cfg = env.doPost({ action: 'diploma_config', sessao, config: { conclusao: '31/12/2028' } }) as {
+    const cfg = env.doPost({
+      action: 'diploma_config',
+      sessao,
+      config: { conclusao: '31/12/2028' },
+    }) as {
       painel: { diploma: { conclusao: string } };
     };
     expect(cfg.painel.diploma.conclusao).toBe('31/12/2028');

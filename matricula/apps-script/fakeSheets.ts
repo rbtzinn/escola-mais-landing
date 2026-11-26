@@ -148,6 +148,8 @@ export interface Seed {
   props?: Record<string, string>;
   /** Outro arquivo do script (para comparar versões). Padrão: o Code.js atual. */
   codeFile?: string;
+  /** Fila cheia: a trava não sai dentro do tempo (muita gente gravando junto). */
+  busy?: boolean;
 }
 
 /** Carrega o Code.js do zero (como o Google faz a cada pedido) com os serviços falsos. */
@@ -198,7 +200,13 @@ export function loadScript(seed: Seed = {}): Env {
       }),
     },
     LockService: {
-      getScriptLock: () => ({ waitLock: () => void stats.locks++, releaseLock: () => {} }),
+      getScriptLock: () => ({
+        tryLock: () => {
+          stats.locks++;
+          return !seed.busy;
+        },
+        releaseLock: () => {},
+      }),
     },
     PropertiesService: {
       getScriptProperties: () => ({

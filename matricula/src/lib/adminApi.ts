@@ -59,6 +59,8 @@ export function replyMessage(r: ApiReply): string {
       return 'Login ou senha errados.';
     case 'muitas_tentativas':
       return 'Muitas tentativas. Espere 15 minutos e tente de novo.';
+    case 'ocupado':
+      return 'A planilha está ocupada com outros envios. Tente de novo em instantes.';
     case 'sem_permissao':
       return 'Seu usuário não pode fazer isso.';
     case 'sessao_expirada':
