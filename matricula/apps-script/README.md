@@ -40,6 +40,7 @@ Passo a passo para quem tem acesso à **conta Google institucional da escola** (
 - **Lista de aprovados como checklist:** ninguém é barrado por não estar na lista. Cada matrícula ganha a coluna **Lista de aprovados**: **Sim**, **Não** (amarelo), **Sim, curso diferente** (amarelo: o curso escolhido não bate com o da lista) ou **Sem lista** (aba Aprovados vazia).
 - **Período:** no começo do formulário (CPF e nascimento) e no envio, fora das datas da aba **Config**, recusa e mostra o período. Uma exceção libera um aluno.
 - **Limites:** mais de 60 pedidos por minuto no total são recusados por um tempo.
+- **Fila de gravação:** as matrículas são gravadas uma por vez. Se a fila não andar em 20 segundos (muita gente enviando junto), o script responde **ocupado** e o formulário tenta de novo sozinho até 3 vezes (espera 2 s e depois 5 s), mostrando "Tentando de novo (2 de 3)…". Reenviar é seguro: vale o último envio do mesmo CPF.
 - **Status:** toda matrícula entra como **Matriculado**; **Pendente** fica amarelo e **Cancelado** fica cinza (sai do resumo e libera o CPF). Dá para mudar pelo painel ou direto na planilha; o **Resumo por curso** se atualiza sozinho.
 - Confere de novo o CPF e o formato do envio (quem chama o script direto não passa pelo formulário).
 - **CPF repetido:** vale o último envio. As matrículas anteriores do mesmo CPF viram **Cancelado** ("Substituída por MAT-…").

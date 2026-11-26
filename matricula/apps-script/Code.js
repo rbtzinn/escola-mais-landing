@@ -555,9 +555,13 @@ function doPost(e) {
   }
 }
 
+/**
+ * Grava um pedido por vez. Se a fila não andar em 20 s (muita gente enviando junto), responde
+ * "ocupado" em vez de erro: o formulário sabe que pode tentar de novo sozinho, sem risco.
+ */
 function withLock_(fn) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  if (!lock.tryLock(20000)) return { status: 'ocupado' };
   try {
     return fn();
   } finally {

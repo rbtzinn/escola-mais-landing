@@ -162,7 +162,9 @@ describe('etapas e validação', () => {
     expect(isVisible(cpf, { mae_situacao: 'Falecida' })).toBe(false);
     expect(isVisible(nome, { mae_situacao: 'Viva' })).toBe(true);
     expect(isVisible(nome, { mae_situacao: 'Não consta na certidão' })).toBe(false);
-    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual(['mae_nome']);
+    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual([
+      'mae_nome',
+    ]);
     expect(Object.keys(validateStep(step('responsavel'), { resp_quem: 'Mãe' }, TODAY))).toEqual([]);
     expect(validateStep(step('responsavel'), { resp_quem: 'Outra pessoa' }, TODAY)).toHaveProperty(
       'resp_nome',
@@ -248,10 +250,42 @@ describe('planilha, rascunho e envio', () => {
       status: 'muitas_tentativas',
     });
     const down = vi.fn(() => Promise.reject(new Error('rede')));
+    const noWait = { wait: async () => {} };
     expect(
-      (await submitMatricula('https://x', payload, down as unknown as typeof fetch)).status,
+      (await submitMatricula('https://x', payload, down as unknown as typeof fetch, noWait)).status,
     ).toBe('erro');
+    expect(down).toHaveBeenCalledTimes(3);
     expect(await submitMatricula('', payload)).toEqual({ status: 'sem_configuracao' });
+  });
+  it('envio: fila cheia tenta de novo, avisa a tela e desiste depois de 3', async () => {
+    const payload = { token: 't', cpf: '529.982.247-25', columns: ['a'], row: ['b'] };
+    const waits: number[] = [];
+    const retries: string[] = [];
+    const opts = {
+      wait: async (ms: number) => void waits.push(ms),
+      onRetry: (a: number, t: number) => void retries.push(`${a}/${t}`),
+    };
+    const busyThenOk = vi
+      .fn()
+      .mockImplementationOnce(() => json({ status: 'ocupado' }))
+      .mockImplementationOnce(() => Promise.reject(new Error('rede')))
+      .mockImplementationOnce(() => json({ status: 'ok', protocolo: 'MAT-2' }));
+    expect(
+      await submitMatricula('https://x', payload, busyThenOk as unknown as typeof fetch, opts),
+    ).toEqual({ status: 'ok', protocolo: 'MAT-2' });
+    expect(waits).toEqual([2000, 5000]);
+    expect(retries).toEqual(['2/3', '3/3']);
+
+    const busy = vi.fn(() => json({ status: 'ocupado' }));
+    const r = await submitMatricula('https://x', payload, busy as unknown as typeof fetch, opts);
+    expect(r).toEqual({ status: 'ocupado' });
+    expect(busy).toHaveBeenCalledTimes(3);
+    expect(blockedMessage(r as { status: 'ocupado' })).toMatch(/Muita gente/);
+
+    // Recusa de verdade (fora do período, erro de validação) não insiste.
+    const closed = vi.fn(() => json({ status: 'fora_do_periodo', inicio: '', fim: '' }));
+    await submitMatricula('https://x', payload, closed as unknown as typeof fetch, opts);
+    expect(closed).toHaveBeenCalledTimes(1);
   });
   it('aquecimento: manda só um ping, sem dados, e ignora falhas', async () => {
     const ok = vi.fn(() => json({ status: 'ok' }));
@@ -332,7 +366,9 @@ describe('modalidade, curso e maioridade', () => {
   it('Integrado: etapa do ensino fundamental (vai para o diploma)', () => {
     expect(isStepVisible(step('fundamental'), { modalidade: 'Integrado' })).toBe(true);
     expect(isStepVisible(step('fundamental'), { modalidade: 'Subsequente' })).toBe(false);
-    expect(validateStep(step('fundamental'), { modalidade: 'Integrado' }, TODAY)).toHaveProperty('ef_escola');
+    expect(validateStep(step('fundamental'), { modalidade: 'Integrado' }, TODAY)).toHaveProperty(
+      'ef_escola',
+    );
     const { columns, row } = toRow(steps, {
       modalidade: 'Integrado',
       ef_escola: 'Colégio 2001',

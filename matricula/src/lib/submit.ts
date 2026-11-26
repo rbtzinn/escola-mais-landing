@@ -4,6 +4,7 @@ import { onlyDigits } from './cpf';
 export type Blocked =
   | { status: 'fora_do_periodo'; inicio: string; fim: string }
   | { status: 'muitas_tentativas' }
+  | { status: 'ocupado' }
   | { status: 'sem_configuracao' }
   | { status: 'erro'; message: string };
 
@@ -52,6 +53,7 @@ function blocked(data: Reply | null): Blocked {
   if (!data) return { status: 'erro', message: 'Sem conexão com a planilha.' };
   switch (data.status) {
     case 'muitas_tentativas':
+    case 'ocupado':
       return { status: data.status };
     case 'fora_do_periodo':
       return { status: 'fora_do_periodo', inicio: data.inicio ?? '', fim: data.fim ?? '' };
@@ -85,15 +87,47 @@ export async function checkInicio(
   return blocked(data);
 }
 
-/** Envia a matrícula. A planilha confere tudo de novo antes de gravar. */
+export interface RetryOptions {
+  /** Total de tentativas, contando a primeira. */
+  tries?: number;
+  /** Espera antes de cada nova tentativa (ms): a 2ª espera o 1º valor, a 3ª o 2º... */
+  delays?: number[];
+  /** Avisa a tela antes de cada nova tentativa (2 de 3, 3 de 3). */
+  onRetry?: (attempt: number, total: number) => void;
+  /** Troca a espera de verdade (nos testes). */
+  wait?: (ms: number) => Promise<void>;
+}
+
+export const SUBMIT_TRIES = 3;
+const SUBMIT_DELAYS = [2000, 5000];
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Envia a matrícula. A planilha confere tudo de novo antes de gravar.
+ * Se a fila da planilha estiver cheia ("ocupado") ou a internet cair, tenta de novo sozinho.
+ * Reenviar é seguro: o mesmo CPF de novo vale o último envio e o anterior vira Cancelado.
+ */
 export async function submitMatricula(
   url: string,
   payload: Payload,
   fetcher: typeof fetch = fetch,
+  opts: RetryOptions = {},
 ): Promise<SubmitResult> {
   if (!url) return { status: 'sem_configuracao' };
-  const data = await post(url, { ...payload, cpf: onlyDigits(payload.cpf) }, fetcher);
-  if (data?.status === 'ok' && data.protocolo) return { status: 'ok', protocolo: data.protocolo };
+  const tries = Math.max(1, opts.tries ?? SUBMIT_TRIES);
+  const delays = opts.delays ?? SUBMIT_DELAYS;
+  const wait = opts.wait ?? sleep;
+  const body = { ...payload, cpf: onlyDigits(payload.cpf) };
+  let data: Reply | null = null;
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    if (attempt > 1) {
+      opts.onRetry?.(attempt, tries);
+      await wait(delays[Math.min(attempt - 2, delays.length - 1)] ?? 0);
+    }
+    data = await post(url, body, fetcher);
+    if (data?.status === 'ok' && data.protocolo) return { status: 'ok', protocolo: data.protocolo };
+    if (data && data.status !== 'ocupado') break;
+  }
   return blocked(data);
 }
 
@@ -108,6 +142,8 @@ export function blockedMessage(r: Blocked): string {
           : 'As matrículas estão encerradas. Procure a secretaria.';
     case 'muitas_tentativas':
       return 'Muitas tentativas agora. Espere alguns minutos e tente de novo.';
+    case 'ocupado':
+      return 'Muita gente enviando a matrícula agora. Espere um minuto e tente de novo.';
     case 'sem_configuracao':
       return 'Demonstração: a planilha da escola ainda não foi ligada a este formulário.';
     case 'erro':
