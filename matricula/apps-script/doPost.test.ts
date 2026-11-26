@@ -134,6 +134,20 @@ describe('Apps Script de ponta a ponta (planilha falsa)', () => {
     expect(sheet.grid[5][2]).toBe('Matriculado');
   });
 
+  it('comprovante: a direção salva os próximos passos e o envio devolve o texto e a hora', () => {
+    const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
+    const sessao = login(env);
+    const r = env.doPost({ action: 'comprovante', sessao, texto: 'Leve o RG até 10/02.' }) as {
+      status: string;
+      painel: { proximos: string };
+    };
+    expect(r.status).toBe('ok');
+    expect(r.painel.proximos).toBe('Leve o RG até 10/02.');
+    const envio = env.doPost(envelope()) as { status: string; enviadoEm: string; proximos: string };
+    expect(envio).toMatchObject({ status: 'ok', proximos: 'Leve o RG até 10/02.' });
+    expect(envio.enviadoEm).toMatch(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/);
+  });
+
   it('diploma: ficha grava SISTEC, registro, folha e livro; registro repetido é recusado; config fica na aba', () => {
     const env = loadScript({ matriculas: existing(3), aprovados: APROVADOS });
     const sessao = login(env);

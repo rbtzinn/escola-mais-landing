@@ -7,6 +7,12 @@ export const CONFIG = {
   /** Logo da escola (arquivo em public/). */
   logo: '/logo-ete.webp',
   ano: 2026,
+  /** Cabeçalho do comprovante de matrícula (o mesmo do diploma). */
+  cabecalho: [
+    'ESCOLA TÉCNICA ESTADUAL CHICO SCIENCE',
+    'Avenida Brasil, s/n, Loteamento Rio Doce I/II Etapa, Lote C-2 – Rio Doce – Olinda/PE – CEP 53.150-470',
+    'CNPJ 10.572.071/0616-85 · INEP 26.190.737 · Cadastro Escolar E-108102',
+  ],
   /** Cursos por modalidade. O aluno escolhe a modalidade e depois o curso. */
   cursos: {
     Integrado: ['Nutrição e Dietética', 'Farmácia'],

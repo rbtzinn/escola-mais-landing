@@ -8,6 +8,7 @@ import { STATUS, ficha, type Rec } from '@/lib/adminData';
 import type { DiplomaConfig } from '@/lib/diplomaConfig';
 import type { Step } from '@/lib/schema';
 import { DiplomaSection } from './DiplomaSection';
+import { ReceiptButton } from './ReceiptButton';
 import type { Run } from './types';
 import { Button, Notice, StatusBadge } from './ui';
 
@@ -20,6 +21,7 @@ export function StudentSheet({
   onClose,
   diploma,
   registrosUsados,
+  proximos = '',
 }: {
   rec: Rec;
   header: string[];
@@ -28,6 +30,8 @@ export function StudentSheet({
   onClose: () => void;
   diploma: DiplomaConfig;
   registrosUsados: string[];
+  /** Próximos passos do comprovante (aba Período). */
+  proximos?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref, true, onClose);
@@ -163,6 +167,8 @@ export function StudentSheet({
               {busy ? 'Salvando…' : 'Salvar status'}
             </Button>
           </section>
+
+          <ReceiptButton rec={rec} header={header} steps={steps} proximos={proximos} />
 
           <DiplomaSection
             rec={rec}

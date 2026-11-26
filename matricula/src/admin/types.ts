@@ -23,6 +23,8 @@ export interface PanelData {
   usuarios?: { nome: string; login: string; papel: Role; ativo: boolean }[];
   /** Configuração do diploma salva (null: ainda não salva; vale o padrão do modelo). */
   diploma?: unknown;
+  /** Texto dos próximos passos do comprovante. */
+  proximos?: string;
 }
 
 /** Executa uma ação no Apps Script; com sucesso, o painel recarrega os dados. */
