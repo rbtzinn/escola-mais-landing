@@ -13,8 +13,9 @@ Formulário de matrícula da **ETE Chico Science**, feito para substituir o Goog
 - **Perguntas que se adaptam:**
   - mãe ou pai falecido ou "não consta na certidão" pula os dados dele;
   - o responsável só pede dados se for "outra pessoa";
+  - para menores de idade, RG (e órgão expedidor) da mãe e do pai vivos é obrigatório;
   - "Outro" sempre abre um campo de texto.
-- **Opções arrumadas:** sexo com as duas opções, cor/raça no padrão do Censo Escolar, tipo sanguíneo num campo só e faixas de renda pelo salário mínimo do ano.
+- **Opções arrumadas:** gênero (Feminino, Masculino ou Outro), como no formulário da escola, cor/raça no padrão do Censo Escolar, tipo sanguíneo num campo só e faixas de renda pelo salário mínimo do ano.
 - **Rascunho:** o que foi digitado fica salvo no aparelho até enviar. A revisão final tem "Editar" em cada etapa.
 
 ## Configuração anual

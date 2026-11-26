@@ -160,14 +160,15 @@ function family(
       showIf: show,
       differentFrom: ['aluno_cpf', 'mae_cpf', 'pai_cpf'].filter((id) => id !== `${prefix}_cpf`),
     },
-    { id: `${prefix}_rg`, label: `RG ${who}`, kind: 'rg', required: false, showIf: show },
+    // RG da mãe e do pai: obrigatório para menores (como no formulário da escola); do responsável, opcional.
+    { id: `${prefix}_rg`, label: `RG ${who}`, kind: 'rg', required: prefix === 'resp' ? false : req, showIf: show },
     {
       id: `${prefix}_rg_orgao`,
       label: `Órgão expedidor do RG ${who}`,
       kind: 'select',
       options: ORGAOS,
       other: true,
-      required: false,
+      required: prefix === 'resp' ? false : req,
       showIf: (v) => show(v) && !!str(v, `${prefix}_rg`),
     },
     { id: `${prefix}_celular`, label: `Celular (WhatsApp) ${who}`, kind: 'cellphone', required: req, showIf: show },
@@ -245,7 +246,7 @@ export function buildSteps(config: Config): Step[] {
       short: 'Você',
       fields: [
         { id: 'aluno_nome', label: 'Seu nome completo', kind: 'name', hint: 'Igual ao do RG ou da certidão.', autoComplete: 'name' },
-        { id: 'aluno_sexo', label: 'Sexo', kind: 'choice', options: ['Feminino', 'Masculino'] },
+        { id: 'aluno_sexo', label: 'Gênero', kind: 'choice', options: ['Feminino', 'Masculino', 'Outro'] },
         {
           id: 'aluno_cor',
           label: 'Cor ou raça',

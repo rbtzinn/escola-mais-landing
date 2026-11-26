@@ -168,6 +168,18 @@ describe('etapas e validação', () => {
       'resp_nome',
     );
   });
+  it('RG da mãe e do pai: obrigatório para menores; gênero tem "Outro"', () => {
+    const menor: Values = { aluno_nascimento: '10/01/2010', mae_situacao: 'Viva' };
+    expect(validateStep(step('mae'), menor, TODAY)).toHaveProperty('mae_rg');
+    expect(validateStep(step('mae'), { ...menor, mae_rg: '1234567' }, TODAY)).toHaveProperty('mae_rg_orgao');
+    expect(validateStep(step('mae'), { ...menor, aluno_nascimento: '10/01/2000' }, TODAY)).not.toHaveProperty('mae_rg');
+    const resp = validateStep(step('responsavel'), { ...menor, resp_quem: 'Outra pessoa' }, TODAY);
+    expect(resp).not.toHaveProperty('resp_rg');
+    expect(step('aluno').fields.find((f) => f.id === 'aluno_sexo')).toMatchObject({
+      label: 'Gênero',
+      options: ['Feminino', 'Masculino', 'Outro'],
+    });
+  });
   it('erros de CPF, data e "Outro"', () => {
     const docs = step('documentos');
     const cpf = step('identificacao').fields.find((f) => f.id === 'aluno_cpf')!;
