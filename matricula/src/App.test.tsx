@@ -147,10 +147,16 @@ describe('formulário de matrícula', () => {
     expect(await screen.findByText(/Muitas tentativas agora/)).toBeInTheDocument();
     expect(localStorage.getItem('matricula:rascunho')).toContain('529.982.247-25');
 
-    send.mockResolvedValueOnce({ status: 'ok', protocolo: 'MAT-2026-0001' });
+    send.mockResolvedValueOnce({
+      status: 'ok',
+      protocolo: 'MAT-2026-0001',
+      enviadoEm: '26/11/2026 10:00',
+      proximos: 'Leve o RG na secretaria.',
+    });
     await user.click(screen.getByRole('button', { name: /Enviar matrícula/ }));
     expect(await screen.findByRole('heading', { name: 'Matrícula enviada!' })).toBeInTheDocument();
     expect(screen.getByText('MAT-2026-0001')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Baixar comprovante (PDF)' })).toBeInTheDocument();
     expect(screen.getByText(/\*\*\*\.982\.247-\*\*/)).toBeInTheDocument();
     await act(async () => {});
     expect(localStorage.getItem('matricula:rascunho')).toBeNull();

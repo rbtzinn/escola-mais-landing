@@ -235,10 +235,14 @@ describe('planilha, rascunho e envio', () => {
   });
   it('envio: ok, CPF repetido, erro e sem configuração', async () => {
     const payload = { token: 't', cpf: '529.982.247-25', columns: ['a'], row: ['b'] };
-    const ok = vi.fn(() => json({ status: 'ok', protocolo: 'MAT-1' }));
+    const ok = vi.fn(() =>
+      json({ status: 'ok', protocolo: 'MAT-1', enviadoEm: '26/11/2026 10:00', proximos: 'Leve o RG.' }),
+    );
     expect(await submitMatricula('https://x', payload, ok as unknown as typeof fetch)).toEqual({
       status: 'ok',
       protocolo: 'MAT-1',
+      enviadoEm: '26/11/2026 10:00',
+      proximos: 'Leve o RG.',
     });
     expect(
       JSON.parse((ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string).cpf,

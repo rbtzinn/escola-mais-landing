@@ -35,6 +35,12 @@ const IDENT_FIELDS = ['aluno_cpf', 'aluno_nascimento'];
 const identKey = (v: Values) =>
   `${onlyDigits(String(v.aluno_cpf ?? ''))}|${String(v.aluno_nascimento ?? '').trim()}`;
 
+/** Data e hora de agora ("26/11/2026 10:30"), caso a planilha não devolva a do envio. */
+function nowStamp(d = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 /** Valor legível de um campo, para a revisão. */
 function display(f: Field, v: Values): string {
   const t = (id: string) => (typeof v[id] === 'string' ? (v[id] as string).trim() : '');
@@ -87,6 +93,9 @@ export default function App() {
   const [returnToReview, setReturnToReview] = useState(false);
   const [sending, setSending] = useState<Sending>('idle');
   const [protocolo, setProtocolo] = useState('');
+  /** Do envio, para o comprovante: data e hora e os próximos passos da escola. */
+  const [recibo, setRecibo] = useState({ enviadoEm: '', proximos: '' });
+  const [pdf, setPdf] = useState<'' | 'gerando' | 'erro'>('');
   const [confirmReset, setConfirmReset] = useState(false);
   const [checking, setChecking] = useState(false);
   const [checkMsg, setCheckMsg] = useState('');
@@ -203,10 +212,32 @@ export default function App() {
     });
     if (r.status === 'ok') {
       setProtocolo(r.protocolo);
+      setRecibo({ enviadoEm: r.enviadoEm || nowStamp(), proximos: r.proximos });
       clearDraft();
       setPhase('done');
       setSending('idle');
     } else setSending(r);
+  };
+
+  /** Comprovante em PDF (o código do PDF só é baixado aqui, no clique). */
+  const baixarComprovante = async () => {
+    setPdf('gerando');
+    try {
+      const { downloadComprovante, fromValues, logoPng } = await import('@/lib/comprovante');
+      await downloadComprovante(
+        fromValues(STEPS, values, {
+          cabecalho: CONFIG.cabecalho,
+          ano: CONFIG.ano,
+          protocolo,
+          enviadoEm: recibo.enviadoEm,
+          proximos: recibo.proximos,
+          logo: await logoPng(CONFIG.logo),
+        }),
+      );
+      setPdf('');
+    } catch {
+      setPdf('erro');
+    }
   };
 
   const reset = () => {
@@ -532,9 +563,24 @@ export default function App() {
                 Protocolo <strong className="font-mono">{protocolo}</strong>
               </p>
               <p className="text-fg-muted">
-                CPF {hideCpf(String(values.aluno_cpf ?? ''))}. Tire um print desta tela. Se precisar
-                corrigir algo, procure a secretaria.
+                CPF {hideCpf(String(values.aluno_cpf ?? ''))}. Baixe o comprovante e guarde: ele tem
+                todas as suas respostas. Se precisar corrigir algo, procure a secretaria.
               </p>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void baixarComprovante()}
+                  disabled={pdf === 'gerando'}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-6 font-semibold text-on-primary hover:brightness-110 disabled:opacity-60"
+                >
+                  <Icon name={pdf === 'gerando' ? 'refresh' : 'download'} size={20} />
+                  {pdf === 'gerando' ? 'Gerando comprovante…' : 'Baixar comprovante (PDF)'}
+                </button>
+                <p role="status" aria-live="polite" className="text-sm">
+                  {pdf === 'erro' &&
+                    'Não foi possível gerar o comprovante agora. Tente de novo ou tire um print desta tela.'}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={reset}

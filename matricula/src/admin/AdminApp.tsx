@@ -21,6 +21,7 @@ import { DiplomaSettings } from './DiplomaSettings';
 import { Exceptions } from './Exceptions';
 import { Login } from './Login';
 import { Overview } from './Overview';
+import { NextSteps } from './NextSteps';
 import { Period } from './Period';
 import { StudentSheet } from './StudentSheet';
 import { Students } from './Students';
@@ -253,12 +254,15 @@ export default function AdminApp() {
                 />
               )}
               {current === 'periodo' && (
-                <Period
-                  key={`${data.periodo.inicio}|${data.periodo.fim}`}
-                  periodo={data.periodo}
-                  hoje={data.hoje}
-                  run={run}
-                />
+                <div className="space-y-6">
+                  <Period
+                    key={`${data.periodo.inicio}|${data.periodo.fim}`}
+                    periodo={data.periodo}
+                    hoje={data.hoje}
+                    run={run}
+                  />
+                  <NextSteps key={data.proximos ?? ''} texto={data.proximos ?? ''} run={run} />
+                </div>
               )}
               {current === 'excecoes' && (
                 <Exceptions list={data.excecoes ?? []} hoje={data.hoje} run={run} />
@@ -307,6 +311,7 @@ export default function AdminApp() {
           onClose={() => setOpen(null)}
           diploma={diploma}
           registrosUsados={registros}
+          proximos={data.proximos ?? ''}
         />
       )}
     </div>

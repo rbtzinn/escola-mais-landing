@@ -451,6 +451,7 @@ var ADMIN_ACTIONS = [
   'status',
   'diploma_aluno',
   'diploma_config',
+  'comprovante',
   'periodo',
   'aprovados_add',
   'aprovados_remover',
@@ -615,7 +616,8 @@ function save_(data) {
   var header = ensureHeader_(sheet, data.columns);
   var dataRows = Math.max(sheet.getLastRow() - 1, 0);
   var protocolo = makeProtocol(new Date().getFullYear(), dataRows + 1);
-  var row = buildRow(header, data, protocolo, stamp_(), lista);
+  var enviadoEm = stamp_();
+  var row = buildRow(header, data, protocolo, enviadoEm, lista);
   sheet.getRange(dataRows + 2, 1, 1, row.length).setNumberFormat('@').setValues([row]);
   // Mesmo CPF enviou de novo: vale o último envio e os anteriores viram Cancelado.
   cancelPrevious_(sheet, header, data.cpf, dataRows + 2, protocolo);
@@ -628,7 +630,8 @@ function save_(data) {
       made.exceptions.getRange(g.exception.linha, usedCol).setNumberFormat('@').setValue(stamp_() + ' · ' + protocolo);
   }
   writeSummary_(made.summary, sheet);
-  return { status: 'ok', protocolo: protocolo };
+  // Para o comprovante: data e hora do envio e os próximos passos que a escola escreveu.
+  return { status: 'ok', protocolo: protocolo, enviadoEm: enviadoEm, proximos: readNextSteps_(made.config) };
 }
 
 /** Cabeçalho com as colunas fixas e as novas do formulário; reescreve e formata se mudou. */
@@ -735,6 +738,8 @@ function runAction_(made, session, data) {
       return setDiplomaConfig_(made, data);
     case 'periodo':
       return setPeriod_(made, data);
+    case 'comprovante':
+      return setNextSteps_(made, data);
     case 'aprovados_add':
       return addApproved_(made, data);
     case 'aprovados_remover':
@@ -790,6 +795,7 @@ function painel_(made, session) {
     cabecalho: values[0],
     linhas: values.slice(1),
     periodo: { inicio: formatKey(period.start), fim: formatKey(period.end) },
+    proximos: readNextSteps_(made.config),
     diploma: readDiplomaConfig_(made.diploma),
   };
   if (session.papel === 'direcao') {
@@ -1089,6 +1095,35 @@ function readApprovedSheet_(sheet) {
 }
 
 /** Início e fim da matrícula na aba Config (linhas "Início da matrícula" e "Fim da matrícula"). */
+var NEXT_STEPS_LABEL = 'Próximos passos (comprovante)';
+var MAX_NEXT_STEPS = 1500;
+
+/** Texto dos próximos passos do comprovante (aba Config). */
+function readNextSteps_(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) return '';
+  var rows = sheet.getRange(1, 1, lastRow, 2).getDisplayValues();
+  for (var i = 0; i < rows.length; i++)
+    if (normText(rows[i][0]) === normText(NEXT_STEPS_LABEL)) return String(rows[i][1] || '');
+  return '';
+}
+
+function setNextSteps_(made, data) {
+  var texto = String(data.texto || '').trim();
+  if (texto.length > MAX_NEXT_STEPS) return { status: 'erro', message: 'Texto longo demais.' };
+  var sheet = made.config;
+  if (sheet.getLastRow() === 0) setupConfig_(sheet);
+  var rows = sheet.getRange(1, 1, sheet.getLastRow(), 1).getValues();
+  var line = -1;
+  for (var i = 0; i < rows.length; i++) if (normText(rows[i][0]) === normText(NEXT_STEPS_LABEL)) line = i + 1;
+  if (line < 0) {
+    line = sheet.getLastRow() + 1;
+    sheet.getRange(line, 1).setValue(NEXT_STEPS_LABEL);
+  }
+  sheet.getRange(line, 2).setNumberFormat('@').setWrap(true).setValue(safeCell(texto));
+  return { status: 'ok' };
+}
+
 function readPeriod_(sheet) {
   var lastRow = sheet.getLastRow();
   var out = { start: '', end: '' };

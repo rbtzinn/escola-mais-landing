@@ -7,7 +7,10 @@ export type Blocked =
   | { status: 'sem_configuracao' }
   | { status: 'erro'; message: string };
 
-export type SubmitResult = { status: 'ok'; protocolo: string } | Blocked;
+/** Envio gravado: protocolo, data e hora e os próximos passos (para o comprovante). */
+export type SubmitResult =
+  | { status: 'ok'; protocolo: string; enviadoEm: string; proximos: string }
+  | Blocked;
 
 /** A matrícula está aberta para esse aluno (no período ou com exceção). */
 export type CheckResult = { status: 'ok' } | Blocked;
@@ -22,6 +25,8 @@ export interface Payload {
 export type Reply = {
   status?: string;
   protocolo?: string;
+  enviadoEm?: string;
+  proximos?: string;
   message?: string;
   inicio?: string;
   fim?: string;
@@ -93,7 +98,13 @@ export async function submitMatricula(
 ): Promise<SubmitResult> {
   if (!url) return { status: 'sem_configuracao' };
   const data = await post(url, { ...payload, cpf: onlyDigits(payload.cpf) }, fetcher);
-  if (data?.status === 'ok' && data.protocolo) return { status: 'ok', protocolo: data.protocolo };
+  if (data?.status === 'ok' && data.protocolo)
+    return {
+      status: 'ok',
+      protocolo: data.protocolo,
+      enviadoEm: data.enviadoEm ?? '',
+      proximos: data.proximos ?? '',
+    };
   return blocked(data);
 }
 
