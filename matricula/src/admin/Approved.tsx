@@ -1,13 +1,12 @@
 import clsx from 'clsx';
 import { useState } from 'react';
 import { FieldLabel, fieldClasses } from '@/components/ui/Field';
-import { TextField } from '@/components/ui/TextField';
 import { replyMessage } from '@/lib/adminApi';
 import { parseAprovados } from '@/lib/adminData';
 import { hideCpf, onlyDigits } from '@/lib/cpf';
 import { normalizeText } from '@/lib/text';
 import type { PanelData, Run } from './types';
-import { Button, Card, ConfirmButton, Notice } from './ui';
+import { Button, Card, ConfirmButton, Notice, TextField } from './ui';
 
 export function Approved({ list, run }: { list: NonNullable<PanelData['aprovados']>; run: Run }) {
   const [text, setText] = useState('');

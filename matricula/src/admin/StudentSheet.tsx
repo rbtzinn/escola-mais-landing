@@ -68,10 +68,22 @@ export function StudentSheet({
         aria-labelledby="ficha-titulo"
         className="sheet-enter sheet-enter-side relative flex h-full w-full max-w-2xl flex-col overflow-y-auto bg-bg shadow-2xl"
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-fg/10 bg-bg/95 px-5 py-4 backdrop-blur">
-          <div className="min-w-0">
+        <div className="sticky top-0 z-10 flex items-start gap-2 border-b border-fg/10 bg-bg/95 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur sm:justify-between sm:gap-3 sm:px-5 sm:py-4">
+          {/* No celular a ficha é uma tela: volta pela seta à esquerda. */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Voltar para a lista"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-muted sm:hidden"
+          >
+            <Icon name="back" />
+          </button>
+          <div className="min-w-0 flex-1">
             <p className="font-mono text-sm text-fg-muted">{rec.protocolo}</p>
-            <h2 id="ficha-titulo" className="font-display text-3xl leading-tight font-extrabold">
+            <h2
+              id="ficha-titulo"
+              className="font-display text-2xl leading-tight font-extrabold text-balance sm:text-3xl"
+            >
               {rec.nome || '(sem nome)'}
             </h2>
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
@@ -87,13 +99,13 @@ export function StudentSheet({
             type="button"
             onClick={onClose}
             aria-label="Fechar ficha"
-            className="flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-muted"
+            className="hidden size-11 shrink-0 items-center justify-center rounded-full hover:bg-muted sm:flex"
           >
             <Icon name="close" />
           </button>
         </div>
 
-        <div className="space-y-6 px-5 py-5">
+        <div className="space-y-6 px-4 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-5">
           <section
             aria-labelledby="status-titulo"
             className="space-y-3 rounded-2xl border-2 border-fg/15 bg-surface p-4"
@@ -101,7 +113,11 @@ export function StudentSheet({
             <h3 id="status-titulo" className="font-display text-xl font-extrabold">
               Status da matrícula
             </h3>
-            <div role="radiogroup" aria-labelledby="status-titulo" className="flex flex-wrap gap-2">
+            <div
+              role="radiogroup"
+              aria-labelledby="status-titulo"
+              className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap"
+            >
               {STATUS.map((s) => (
                 <button
                   key={s}
@@ -110,7 +126,7 @@ export function StudentSheet({
                   aria-checked={status === s}
                   onClick={() => setStatus(s)}
                   className={clsx(
-                    'min-h-11 rounded-xl border-2 px-4 font-semibold',
+                    'min-h-12 rounded-xl border-2 px-2 font-semibold sm:min-h-11 sm:px-4',
                     status === s
                       ? 'border-primary bg-primary text-on-primary'
                       : 'border-fg/25 bg-surface hover:border-fg',
@@ -137,10 +153,12 @@ export function StudentSheet({
               </div>
             )}
             <Notice tone={msg?.tone}>{msg?.text}</Notice>
+            {/* No celular, com mudança por salvar, o botão vai para a barra fixa embaixo. */}
             <Button
               onClick={() => void save()}
               disabled={busy || !changed}
               icon={busy ? 'refresh' : 'check'}
+              className={clsx(changed && 'max-sm:hidden')}
             >
               {busy ? 'Salvando…' : 'Salvar status'}
             </Button>
@@ -158,7 +176,7 @@ export function StudentSheet({
           {sections.map((s) => (
             <section key={s.title}>
               <h3 className="mb-2 font-display text-xl font-extrabold">{s.title}</h3>
-              <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+              <dl className="grid gap-x-6 gap-y-3 rounded-2xl border-2 border-fg/10 p-4 sm:grid-cols-2 sm:border-0 sm:p-0">
                 {s.items.map((it) => (
                   <div key={it.label} className="min-w-0">
                     <dt className="text-xs text-fg-muted">{it.label}</dt>
@@ -169,6 +187,18 @@ export function StudentSheet({
             </section>
           ))}
         </div>
+        {changed && (
+          <div className="sticky bottom-0 z-10 mt-auto border-t border-fg/10 bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
+            <Button
+              onClick={() => void save()}
+              disabled={busy}
+              icon={busy ? 'refresh' : 'check'}
+              className="w-full"
+            >
+              {busy ? 'Salvando…' : `Salvar status: ${status}`}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -93,6 +93,22 @@ describe('painel administrativo', () => {
     expect(screen.getByRole('button', { name: /João Ávila/ })).toBeInTheDocument();
   });
 
+  it('celular: barra de baixo com as principais e o resto em "Mais"', async () => {
+    const user = userEvent.setup();
+    await entrar(user);
+    const bar = screen.getByRole('navigation', { name: 'Atalhos do painel' });
+    expect(
+      within(bar)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['Visão geral', 'Matrículas', 'Diploma', 'Mais']);
+    await user.click(within(bar).getByRole('button', { name: 'Mais' }));
+    const mais = screen.getByRole('dialog', { name: 'Mais' });
+    await user.click(within(mais).getByRole('button', { name: /^Período/ }));
+    expect(screen.queryByRole('dialog', { name: 'Mais' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Período' })).toBeInTheDocument();
+  });
+
   it('coordenação só vê visão geral e matrículas', async () => {
     const user = userEvent.setup();
     await entrar(user, 'coordenacao');
@@ -107,7 +123,11 @@ describe('painel administrativo', () => {
   it('marcar Pendente exige motivo e grava o status', async () => {
     const user = userEvent.setup();
     await entrar(user);
-    await user.click(screen.getByRole('button', { name: 'Matrículas' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Seções do painel' })).getByRole('button', {
+        name: 'Matrículas',
+      }),
+    );
     await user.click(screen.getByRole('button', { name: /^Ana Souza/ }));
     const ficha = screen.getByRole('region', { name: 'Ana Souza' });
     await user.click(within(ficha).getByRole('radio', { name: 'Pendente' }));
@@ -133,7 +153,11 @@ describe('painel administrativo', () => {
       action === 'status' ? { status: 'ok', painel: updated } : panel('direcao'),
     );
     api.mockClear();
-    await user.click(screen.getByRole('button', { name: 'Matrículas' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Seções do painel' })).getByRole('button', {
+        name: 'Matrículas',
+      }),
+    );
     await user.click(screen.getByRole('button', { name: /^Ana Souza/ }));
     const ficha = screen.getByRole('region', { name: 'Ana Souza' });
     await user.click(within(ficha).getByRole('radio', { name: 'Cancelado' }));
@@ -149,7 +173,11 @@ describe('painel administrativo', () => {
   it('cria exceção para um aluno', async () => {
     const user = userEvent.setup();
     await entrar(user);
-    await user.click(screen.getByRole('button', { name: 'Exceções' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Seções do painel' })).getByRole('button', {
+        name: 'Exceções',
+      }),
+    );
     await user.type(screen.getByLabelText('CPF do aluno'), '52998224725');
     await user.type(screen.getByLabelText('Data de nascimento'), '15032010');
     await user.click(screen.getByRole('button', { name: 'Criar exceção' }));
@@ -167,14 +195,20 @@ describe('painel administrativo', () => {
   it('aba Diploma: cada curso com seu modelo e sua data de conclusão', async () => {
     const user = userEvent.setup();
     await entrar(user);
-    await user.click(screen.getByRole('button', { name: 'Diploma' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Seções do painel' })).getByRole('button', {
+        name: 'Diploma',
+      }),
+    );
     const data = screen.getByLabelText('Data de conclusão da turma');
     await user.clear(data);
     await user.type(data, '31122028');
     expect(screen.getByText(/No diploma: 31 de dezembro de 2028\./)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Salvar configuração do diploma' }));
     const call = api.mock.calls.find((c: unknown[]) => c[0] === 'diploma_config')!;
-    type Saved = { cursos: Record<string, { modelo: string; conclusao: string; blocos: { itens: unknown[] }[] }> };
+    type Saved = {
+      cursos: Record<string, { modelo: string; conclusao: string; blocos: { itens: unknown[] }[] }>;
+    };
     const config = (call[1] as { config: Saved }).config;
     const first = Object.values(config.cursos)[0];
     expect(first.conclusao).toBe('31/12/2028');
@@ -185,7 +219,11 @@ describe('painel administrativo', () => {
   it('botão Diploma da lista abre a ficha quando falta o SISTEC', async () => {
     const user = userEvent.setup();
     await entrar(user);
-    await user.click(screen.getByRole('button', { name: 'Matrículas' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Seções do painel' })).getByRole('button', {
+        name: 'Matrículas',
+      }),
+    );
     await user.click(screen.getByRole('button', { name: 'Diploma de Ana Souza' }));
     expect(await screen.findByRole('heading', { name: 'Diploma' })).toBeInTheDocument();
     expect(screen.getByText(/código SISTEC/)).toBeInTheDocument();

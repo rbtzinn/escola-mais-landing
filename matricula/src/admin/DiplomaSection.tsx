@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { TextField } from '@/components/ui/TextField';
 import { replyMessage } from '@/lib/adminApi';
 import type { Rec } from '@/lib/adminData';
 import {
@@ -20,7 +19,7 @@ import { MODELOS, type DiplomaConfig } from '@/lib/diplomaConfig';
 import { maskDate, parseDate } from '@/lib/masks';
 import type { Step } from '@/lib/schema';
 import type { Run } from './types';
-import { Button, Notice } from './ui';
+import { Button, Notice, TextField } from './ui';
 
 /** "87,5" e "87.5" viram "87,50"; o resto fica como foi digitado. */
 const formatFreq = (s: string) => {
@@ -55,10 +54,14 @@ export function DiplomaSection({
   const saved = savedDiploma(header, rec.row);
   const nMod = modelo?.frequencia ? (curso?.blocos.length ?? 0) : 0;
   const savedMods = parseModulos(saved.modulos);
-  const sugerido = saved.registro ? '' : String(nextRegistro(registrosUsados, cfg.primeiroRegistro));
+  const sugerido = saved.registro
+    ? ''
+    : String(nextRegistro(registrosUsados, cfg.primeiroRegistro));
   const [sistec, setSistec] = useState(saved.sistec);
   const [registro, setRegistro] = useState(saved.registro || sugerido);
-  const [folha, setFolha] = useState(saved.folha || folhaOf(saved.registro || sugerido, cfg.porFolha));
+  const [folha, setFolha] = useState(
+    saved.folha || folhaOf(saved.registro || sugerido, cfg.porFolha),
+  );
   const [livro, setLivro] = useState(saved.livro || cfg.livro);
   const [conclusao, setConclusao] = useState(saved.conclusao || curso?.conclusao || '');
   const [mods, setMods] = useState<ModuloFreq[]>(() =>
@@ -70,7 +73,9 @@ export function DiplomaSection({
 
   // A data igual à do curso não é guardada no aluno: se a direção mudar a do curso, ele acompanha.
   const conclusaoAluno = conclusao.trim() === (curso?.conclusao ?? '') ? '' : conclusao.trim();
-  const modulos = formatModulos(mods.map((m) => ({ semestre: m.semestre, freq: formatFreq(m.freq) })));
+  const modulos = formatModulos(
+    mods.map((m) => ({ semestre: m.semestre, freq: formatFreq(m.freq) })),
+  );
   const changed =
     sistec.trim() !== saved.sistec ||
     registro.trim() !== saved.registro ||
@@ -126,7 +131,10 @@ export function DiplomaSection({
       await downloadDiploma(fill, fill.values.nome || rec.nome);
       setMsg({ tone: 'ok', text: 'Diploma baixado. Confira no Word antes de imprimir.' });
     } catch (e) {
-      setMsg({ tone: 'error', text: e instanceof Error ? e.message : 'Não foi possível gerar o diploma.' });
+      setMsg({
+        tone: 'error',
+        text: e instanceof Error ? e.message : 'Não foi possível gerar o diploma.',
+      });
     }
     setBusy('');
   };
@@ -146,35 +154,41 @@ export function DiplomaSection({
             : 'O curso deste aluno não tem modelo de diploma configurado.'}
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField
-          id="dip-sistec"
-          label="Código SISTEC"
-          value={sistec}
-          onChange={setSistec}
-          placeholder="Ex.: 49279/109068309CM"
-        />
-        <TextField
-          id="dip-conclusao"
-          label="Data de conclusão"
-          value={conclusao}
-          inputMode="numeric"
-          placeholder="dd/mm/aaaa"
-          error={conclusaoErr}
-          hint={
-            conclusao && !conclusaoErr
-              ? `No diploma: ${longDate(conclusao)}${conclusaoAluno ? ' (só deste aluno)' : ' (a do curso)'}.`
-              : 'Em branco: usa a do curso (aba Diploma).'
-          }
-          onChange={(v) => setConclusao(maskDate(v))}
-        />
+      <div className="grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-4">
+        <div className="col-span-2 sm:col-span-1">
+          <TextField
+            id="dip-sistec"
+            label="Código SISTEC"
+            value={sistec}
+            onChange={setSistec}
+            placeholder="Ex.: 49279/109068309CM"
+          />
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <TextField
+            id="dip-conclusao"
+            label="Data de conclusão"
+            value={conclusao}
+            inputMode="numeric"
+            placeholder="dd/mm/aaaa"
+            error={conclusaoErr}
+            hint={
+              conclusao && !conclusaoErr
+                ? `No diploma: ${longDate(conclusao)}${conclusaoAluno ? ' (só deste aluno)' : ' (a do curso)'}.`
+                : 'Em branco: usa a do curso (aba Diploma).'
+            }
+            onChange={(v) => setConclusao(maskDate(v))}
+          />
+        </div>
         <TextField
           id="dip-registro"
           label="Registro escolar nº"
           value={registro}
           inputMode="numeric"
           error={registroErr}
-          hint={!saved.registro && registro === sugerido ? 'Próximo número livre do livro.' : undefined}
+          hint={
+            !saved.registro && registro === sugerido ? 'Próximo número livre do livro.' : undefined
+          }
           onChange={(v) => {
             setRegistro(v);
             if (!folhaManual) setFolha(folhaOf(v, cfg.porFolha));
@@ -201,18 +215,31 @@ export function DiplomaSection({
             const roman = curso?.blocos[i]?.sigla || String(i + 1);
             const sugestao = i > 0 ? nextSemestre(mods[i - 1].semestre) : '';
             return (
-              <div key={i} className="grid grid-cols-[3rem_1fr_1fr] items-end gap-3">
-                <span className="pb-3 text-center font-display text-xl font-extrabold">{roman}</span>
+              <div
+                key={i}
+                className="grid grid-cols-[2rem_1fr_1fr] items-end gap-2 sm:grid-cols-[3rem_1fr_1fr] sm:gap-3"
+              >
+                <span className="pb-3 text-center font-display text-xl font-extrabold">
+                  {roman}
+                </span>
                 <TextField
                   id={`dip-sem-${i}`}
-                  label={`Semestre do módulo ${roman}`}
+                  label={
+                    <>
+                      Semestre<span className="sr-only"> do módulo {roman}</span>
+                    </>
+                  }
                   value={m.semestre}
                   placeholder={sugestao ? `ex.: ${sugestao}` : 'ex.: 2024.1'}
                   onChange={(v) => setMod(i, { semestre: v })}
                 />
                 <TextField
                   id={`dip-freq-${i}`}
-                  label="% de frequência"
+                  label={
+                    <>
+                      % de frequência<span className="sr-only"> no módulo {roman}</span>
+                    </>
+                  }
                   value={m.freq}
                   inputMode="decimal"
                   placeholder="ex.: 87,50"
@@ -231,13 +258,17 @@ export function DiplomaSection({
         </div>
       )}
       <Notice tone={msg?.tone}>{msg?.text}</Notice>
-      <div className="flex flex-wrap gap-3">
+      <div className="grid gap-3 sm:flex sm:flex-wrap">
         <Button
           icon="download"
           onClick={() => void download()}
           disabled={!!busy || rec.status === 'Cancelado' || !curso}
         >
-          {busy === 'docx' ? 'Gerando…' : changed ? 'Salvar e baixar diploma' : 'Baixar diploma (.docx)'}
+          {busy === 'docx'
+            ? 'Gerando…'
+            : changed
+              ? 'Salvar e baixar diploma'
+              : 'Baixar diploma (.docx)'}
         </Button>
         <Button
           variant="ghost"
