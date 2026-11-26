@@ -226,7 +226,8 @@ describe('painel administrativo', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Diploma de Ana Souza' }));
     expect(await screen.findByRole('heading', { name: 'Diploma' })).toBeInTheDocument();
-    expect(screen.getByText(/código SISTEC/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'código SISTEC' }));
+    expect(screen.getByLabelText('Código SISTEC')).toHaveFocus();
   });
 
   it('sessão vencida volta para o login', async () => {

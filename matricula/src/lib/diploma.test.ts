@@ -72,6 +72,21 @@ describe('diploma', () => {
     expect(f.missing).toEqual([]);
     const sem = diplomaFill(answers, { sistec: '', registro: '', folha: '', livro: '', cpf: '' }, withDefaults({}, CONFIG.cursos));
     expect(sem.missing).toEqual(expect.arrayContaining(['código SISTEC', 'registro escolar']));
+    expect(sem.pendencias.find((p) => p.label === 'código SISTEC')).toEqual({
+      label: 'código SISTEC',
+      origem: 'escola',
+      campo: 'dip-sistec',
+    });
+    const enf = diplomaFill(
+      { ...answers, modalidade: 'Subsequente', curso: 'Enfermagem' },
+      { sistec: '', registro: '', folha: '', livro: '', cpf: '', modulos: [{ semestre: '2024.1', freq: '90' }] },
+      cfg,
+    );
+    expect(enf.pendencias.find((p) => p.label.startsWith('semestre'))).toEqual({
+      label: 'semestre e frequência (módulos II, III e IV)',
+      origem: 'escola',
+      campo: 'dip-sem-1',
+    });
     // Sem data salva, o Integrado conclui em 31/12 do ano corrente; o aluno pode ter outra.
     expect(withDefaults({}, CONFIG.cursos, new Date(2027, 5, 1)).cursos['Integrado · Farmácia'].conclusao).toBe('31/12/2027');
     const outra = diplomaFill(answers, { sistec: '', registro: '', folha: '', livro: '', cpf: '', conclusao: '15/01/2029' }, cfg);
