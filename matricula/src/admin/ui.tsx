@@ -1,7 +1,13 @@
 import clsx from 'clsx';
-import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useState, type ButtonHTMLAttributes, type ComponentProps, type ReactNode } from 'react';
+import { TextField as BaseTextField } from '@/components/ui/TextField';
 import { Icon, type IconName } from '@/components/icons';
 import { useTheme } from '@/hooks/useTheme';
+
+/** Campo de texto do painel: a ajuda vai abaixo, para os campos lado a lado ficarem alinhados. */
+export function TextField(props: ComponentProps<typeof BaseTextField>) {
+  return <BaseTextField hintPlacement="below" {...props} />;
+}
 
 type Variant = 'primary' | 'ghost' | 'danger' | 'pink';
 

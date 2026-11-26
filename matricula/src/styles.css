@@ -244,3 +244,20 @@ html {
   }
 }
 
+
+/* Painel: espaço da barra de baixo do celular (as barras fixas de salvar ficam acima dela). */
+:root {
+  --nav-space: calc(4rem + 1px + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  :root {
+    --nav-space: 0px;
+  }
+}
+
+/* Ficha do aluno no celular: entra pela direita, como uma tela nova. */
+@media (max-width: 639px) {
+  .sheet-enter-side {
+    animation: sheet-right 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}

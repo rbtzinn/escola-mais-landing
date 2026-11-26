@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { TextField } from '@/components/ui/TextField';
 import { api, replyMessage, type Session } from '@/lib/adminApi';
-import { Button, Notice } from './ui';
+import { Button, Notice, TextField } from './ui';
 
 export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
   const [login, setLogin] = useState('');

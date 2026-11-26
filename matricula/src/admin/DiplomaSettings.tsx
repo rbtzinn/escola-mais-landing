@@ -1,8 +1,8 @@
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { Icon } from '@/components/icons';
 import { FieldLabel, fieldClasses } from '@/components/ui/Field';
 import { Listbox } from '@/components/ui/Listbox';
-import { TextField } from '@/components/ui/TextField';
 import { replyMessage } from '@/lib/adminApi';
 import { longDate } from '@/lib/diploma';
 import {
@@ -18,7 +18,7 @@ import {
 } from '@/lib/diplomaConfig';
 import { maskDate, parseDate } from '@/lib/masks';
 import type { Run } from './types';
-import { Button, Card, Notice } from './ui';
+import { Button, Notice, TextField } from './ui';
 
 function TextArea({
   id,
@@ -41,11 +41,6 @@ function TextArea({
   return (
     <div>
       <FieldLabel id={id}>{label}</FieldLabel>
-      {hint && (
-        <p id={`${id}-hint`} className="-mt-0.5 mb-1.5 text-sm text-fg-muted">
-          {hint}
-        </p>
-      )}
       <textarea
         id={id}
         rows={rows}
@@ -54,7 +49,57 @@ function TextArea({
         aria-describedby={hint ? `${id}-hint` : undefined}
         className={clsx(fieldClasses(false), 'resize-y', mono && 'font-mono text-sm')}
       />
+      {hint && (
+        <p id={`${id}-hint`} className="mt-1.5 text-sm text-fg-muted">
+          {hint}
+        </p>
+      )}
     </div>
+  );
+}
+
+type FoldId = 'livro' | 'escola' | 'assinaturas' | 'curso';
+
+/** Bloco que abre e fecha: o título resume o que tem dentro para não precisar abrir. */
+function Fold({
+  id,
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  id: FoldId;
+  title: string;
+  summary: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border-2 border-fg/15 bg-surface">
+      <h2>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`fold-${id}`}
+          onClick={onToggle}
+          className="flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-muted/60 sm:px-5"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-2xl font-extrabold">{title}</span>
+            <span className="block truncate text-sm text-fg-muted">{summary}</span>
+          </span>
+          <Icon
+            name="chevron"
+            className={clsx('shrink-0 text-fg-muted transition-transform', open && 'rotate-180')}
+          />
+        </button>
+      </h2>
+      <div id={`fold-${id}`} hidden={!open} className="px-4 pt-1 pb-5 sm:px-5">
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -78,8 +123,21 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
   );
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const [folds, setFolds] = useState<Set<FoldId>>(() => new Set(['curso']));
+  const fold = (id: FoldId) => ({
+    id,
+    open: folds.has(id),
+    onToggle: () =>
+      setFolds((f) => {
+        const n = new Set(f);
+        if (n.has(id)) n.delete(id);
+        else n.add(id);
+        return n;
+      }),
+  });
 
-  const set = <K extends keyof DiplomaConfig>(k: K, v: DiplomaConfig[K]) => setCfg((c) => ({ ...c, [k]: v }));
+  const set = <K extends keyof DiplomaConfig>(k: K, v: DiplomaConfig[K]) =>
+    setCfg((c) => ({ ...c, [k]: v }));
   const setCab = (k: keyof DiplomaConfig['cabecalho'], v: string) =>
     setCfg((c) => ({ ...c, cabecalho: { ...c.cabecalho, [k]: v } }));
   const setSigner = (who: 'secretaria' | 'diretor', k: keyof Signer, v: string) =>
@@ -87,7 +145,10 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
   const curso = cfg.cursos[cursoKey];
   const text = texts[cursoKey];
   const setCurso = (patch: Partial<DiplomaCourse>) =>
-    setCfg((c) => ({ ...c, cursos: { ...c.cursos, [cursoKey]: { ...c.cursos[cursoKey], ...patch } } }));
+    setCfg((c) => ({
+      ...c,
+      cursos: { ...c.cursos, [cursoKey]: { ...c.cursos[cursoKey], ...patch } },
+    }));
   const setBloco = (i: number, k: 'sigla' | 'titulo' | 'total', v: string) =>
     setCurso({ blocos: curso.blocos.map((b, j) => (j === i ? { ...b, [k]: v } : b)) });
   const setText = (patch: Partial<CourseText>) =>
@@ -107,13 +168,18 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
     };
   };
   const warnings = curso ? courseWarnings(parsed(cursoKey)) : [];
-  const conclusaoErr = curso?.conclusao && !parseDate(curso.conclusao) ? 'Data inválida.' : undefined;
+  const conclusaoErr =
+    curso?.conclusao && !parseDate(curso.conclusao) ? 'Data inválida.' : undefined;
   const modelo = curso ? MODELOS[curso.modelo] : undefined;
+  const rascunhos = keys.filter((k) => !cfg.cursos[k].revisado).length;
 
   const save = async () => {
-    const badDate = keys.find((k) => cfg.cursos[k].conclusao && !parseDate(cfg.cursos[k].conclusao));
+    const badDate = keys.find(
+      (k) => cfg.cursos[k].conclusao && !parseDate(cfg.cursos[k].conclusao),
+    );
     if (badDate) {
       setCursoKey(badDate);
+      setFolds((f) => new Set(f).add('curso'));
       setMsg({ tone: 'error', text: `Data de conclusão inválida em ${badDate}.` });
       return;
     }
@@ -136,7 +202,12 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
     <fieldset className="space-y-3">
       <legend className="mb-2 font-display text-lg font-extrabold">{title}</legend>
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField id={`${who}-nome`} label="Nome" value={cfg[who].nome} onChange={(v) => setSigner(who, 'nome', v)} />
+        <TextField
+          id={`${who}-nome`}
+          label="Nome"
+          value={cfg[who].nome}
+          onChange={(v) => setSigner(who, 'nome', v)}
+        />
         <TextField
           id={`${who}-cargo`}
           label="Cargo (como sai no diploma)"
@@ -173,9 +244,13 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
         e.preventDefault();
         if (!busy) void save();
       }}
-      className="space-y-6"
+      className="space-y-4"
     >
-      <Card title="Local e livro de registro">
+      <Fold
+        {...fold('livro')}
+        title="Local e livro de registro"
+        summary={`${cfg.cidade || 'Sem cidade'} · Livro ${cfg.livro || '?'} · ${cfg.porFolha || '?'} registros por folha`}
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
             id="dip-cidade"
@@ -198,11 +273,20 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
             onChange={(v) => set('porFolha', v.replace(/\D/g, ''))}
             inputMode="numeric"
           />
-          <TextField id="dip-livro" label="Livro atual" value={cfg.livro} onChange={(v) => set('livro', v)} />
+          <TextField
+            id="dip-livro"
+            label="Livro atual"
+            value={cfg.livro}
+            onChange={(v) => set('livro', v)}
+          />
         </div>
-      </Card>
+      </Fold>
 
-      <Card title="Escola">
+      <Fold
+        {...fold('escola')}
+        title="Escola"
+        summary={cfg.escolaNome || 'Nome e cabeçalho do diploma'}
+      >
         <div className="space-y-4">
           <TextField
             id="dip-escola-nome"
@@ -243,17 +327,28 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
             onChange={(v) => setCab('atos', v)}
           />
         </div>
-      </Card>
+      </Fold>
 
-      <Card title="Assinaturas">
+      <Fold
+        {...fold('assinaturas')}
+        title="Assinaturas"
+        summary={
+          [cfg.secretaria.nome, cfg.diretor.nome].filter(Boolean).join(' e ') ||
+          'Secretaria e direção'
+        }
+      >
         <div className="space-y-6">
           {signer('secretaria', 'Secretaria escolar')}
           {signer('diretor', 'Direção')}
         </div>
-      </Card>
+      </Fold>
 
       {curso && text && (
-        <Card title="Curso">
+        <Fold
+          {...fold('curso')}
+          title="Cursos"
+          summary={`${keys.length} curso${keys.length === 1 ? '' : 's'}${rascunhos ? ` · ${rascunhos} para conferir` : ''}`}
+        >
           <div className="space-y-4">
             <Listbox
               id="dip-curso"
@@ -280,7 +375,12 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
                 onChange={(v) => setCurso({ titulo: v })}
                 placeholder="Técnico em Farmácia"
               />
-              <TextField id="dip-eixo" label="Eixo tecnológico" value={curso.eixo} onChange={(v) => setCurso({ eixo: v })} />
+              <TextField
+                id="dip-eixo"
+                label="Eixo tecnológico"
+                value={curso.eixo}
+                onChange={(v) => setCurso({ eixo: v })}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Listbox
@@ -289,7 +389,10 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
                 label="Modelo do diploma"
                 value={curso.modelo}
                 onChange={(v) => setCurso(fitBlocks({ ...curso, modelo: v as ModeloId }))}
-                options={(Object.keys(MODELOS) as ModeloId[]).map((id) => ({ value: id, label: MODELOS[id].nome }))}
+                options={(Object.keys(MODELOS) as ModeloId[]).map((id) => ({
+                  value: id,
+                  label: MODELOS[id].nome,
+                }))}
               />
               <TextField
                 id="dip-conclusao"
@@ -323,7 +426,9 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
             {curso.blocos.map((b, i) => (
               <fieldset key={i} className="space-y-3 rounded-xl border-2 border-fg/10 p-3">
                 <legend className="px-1 font-display text-lg font-extrabold">
-                  {curso.modelo === 'integrado' ? `Bloco ${i + 1} do verso` : `Módulo ${['I', 'II', 'III', 'IV'][i]}`}
+                  {curso.modelo === 'integrado'
+                    ? `Bloco ${i + 1} do verso`
+                    : `Módulo ${['I', 'II', 'III', 'IV'][i]}`}
                 </legend>
                 {modelo?.totais && (
                   <div className="grid gap-4 sm:grid-cols-[1fr_2fr_8rem]">
@@ -355,7 +460,9 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
                   rows={Math.min(14, Math.max(4, (text.blocos[i] ?? '').split('\n').length + 1))}
                   hint="Uma por linha: nome ; carga horária. Dá para colar duas colunas da planilha."
                   value={text.blocos[i] ?? ''}
-                  onChange={(v) => setText({ blocos: text.blocos.map((t, j) => (j === i ? v : t)) })}
+                  onChange={(v) =>
+                    setText({ blocos: text.blocos.map((t, j) => (j === i ? v : t)) })
+                  }
                 />
               </fieldset>
             ))}
@@ -391,7 +498,9 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
             />
             {warnings.length > 0 && (
               <div className="rounded-xl border-2 border-accent/60 bg-accent/15 px-4 py-3 text-sm">
-                <p className="font-semibold">Confira as contas (o diploma sai como está escrito):</p>
+                <p className="font-semibold">
+                  Confira as contas (o diploma sai como está escrito):
+                </p>
                 <ul className="mt-1 list-disc pl-5">
                   {warnings.map((w) => (
                     <li key={w}>{w}</li>
@@ -400,14 +509,23 @@ export function DiplomaSettings({ cfg: initial, run }: { cfg: DiplomaConfig; run
               </div>
             )}
           </div>
-        </Card>
+        </Fold>
       )}
 
-      <div className="sticky bottom-0 z-10 -mx-1 space-y-3 bg-bg/95 px-1 py-3 backdrop-blur">
-        <Notice tone={msg?.tone}>{msg?.text}</Notice>
-        <Button type="submit" disabled={busy} icon="check">
-          {busy ? 'Salvando…' : 'Salvar configuração do diploma'}
-        </Button>
+      <div className="sticky bottom-(--nav-space) z-20 -mx-4 border-t border-fg/10 bg-bg/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border-2 sm:border-fg/15 sm:px-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <Notice tone={msg?.tone}>{msg?.text}</Notice>
+            {!msg && (
+              <p className="hidden text-sm text-fg-muted sm:block">
+                Vale para os próximos diplomas que o painel gerar.
+              </p>
+            )}
+          </div>
+          <Button type="submit" disabled={busy} icon="check" className="max-sm:w-full">
+            {busy ? 'Salvando…' : 'Salvar configuração do diploma'}
+          </Button>
+        </div>
       </div>
     </form>
   );

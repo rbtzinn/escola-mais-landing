@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Listbox } from '@/components/ui/Listbox';
-import { TextField } from '@/components/ui/TextField';
 import { hideCpf } from '@/lib/cpf';
 import { courseKey, filterRecords, STATUS, toCsv, type Rec } from '@/lib/adminData';
-import { Button, StatusBadge } from './ui';
+import { Button, StatusBadge, TextField } from './ui';
 
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
@@ -96,7 +95,7 @@ export function Students({
         <ul className="overflow-hidden rounded-2xl border-2 border-fg/15 bg-surface">
           <li
             aria-hidden="true"
-            className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)_8rem_7rem_9rem] gap-3 border-b-2 border-fg/10 px-4 py-2 text-xs lg:pr-[4.5rem] font-bold text-fg-muted uppercase lg:grid"
+            className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)_8rem_7rem_9rem] gap-3 border-b-2 border-fg/10 px-4 py-2 text-xs font-bold text-fg-muted uppercase lg:grid lg:pr-[4.5rem]"
           >
             <span>Aluno</span>
             <span>Curso</span>
@@ -105,7 +104,10 @@ export function Students({
             <span>Enviado em</span>
           </li>
           {list.map((r) => (
-            <li key={r.protocolo} className="flex items-stretch border-b border-fg/10 last:border-0">
+            <li
+              key={r.protocolo}
+              className="flex items-stretch border-b border-fg/10 last:border-0"
+            >
               <button
                 type="button"
                 onClick={() => onOpen(r)}
@@ -129,6 +131,13 @@ export function Students({
                   <Icon name="arrow" size={16} className="lg:hidden" />
                 </span>
               </button>
+              {onDiploma && r.status === 'Cancelado' && (
+                // Mantém a largura da coluna do diploma para as colunas da tabela ficarem alinhadas.
+                <span
+                  aria-hidden="true"
+                  className="hidden w-14 shrink-0 border-l border-fg/10 lg:block"
+                />
+              )}
               {onDiploma && r.status !== 'Cancelado' && (
                 <button
                   type="button"

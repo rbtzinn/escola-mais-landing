@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { ChoiceFieldset, ChoiceOption } from '@/components/Choices';
-import { TextField } from '@/components/ui/TextField';
 import { replyMessage, type Role } from '@/lib/adminApi';
 import type { PanelData, Run } from './types';
-import { Button, Card, Notice } from './ui';
+import { Button, Card, Notice, TextField } from './ui';
 
 const ROLE_LABEL: Record<Role, string> = {
   direcao: 'Direção (tudo)',

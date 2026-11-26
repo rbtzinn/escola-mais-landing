@@ -2,6 +2,7 @@ import type { SVGProps } from 'react';
 
 const PATHS = {
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  menu: 'M4 7h16M4 12h16M4 17h16',
   download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
   logout: 'M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l-5-5 5-5M5 12h11',
   plus: 'M12 5v14M5 12h14',
