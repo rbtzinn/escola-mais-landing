@@ -22,12 +22,11 @@ import {
   buildSteps,
   isStepVisible,
   isVisible,
-  matchOption,
   optionsOf,
   rendaOptions,
   type Values,
 } from './schema';
-import { blockedMessage, checkAprovado, submitMatricula, warmUp } from './submit';
+import { blockedMessage, checkInicio, submitMatricula, warmUp } from './submit';
 import { fieldError, firstInvalidStep, validateStep } from './validate';
 
 const TODAY = new Date(2026, 10, 23);
@@ -156,11 +155,14 @@ describe('CEP e IBGE', () => {
 });
 
 describe('etapas e validação', () => {
-  it('mãe falecida esconde os dados dela; responsável "Outra pessoa" pede os dados', () => {
+  it('mãe falecida: só o nome (vai para o diploma); responsável "Outra pessoa" pede os dados', () => {
     const nome = step('mae').fields.find((f) => f.id === 'mae_nome')!;
-    expect(isVisible(nome, { mae_situacao: 'Falecida' })).toBe(false);
+    const cpf = step('mae').fields.find((f) => f.id === 'mae_cpf')!;
+    expect(isVisible(nome, { mae_situacao: 'Falecida' })).toBe(true);
+    expect(isVisible(cpf, { mae_situacao: 'Falecida' })).toBe(false);
     expect(isVisible(nome, { mae_situacao: 'Viva' })).toBe(true);
-    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual([]);
+    expect(isVisible(nome, { mae_situacao: 'Não consta na certidão' })).toBe(false);
+    expect(Object.keys(validateStep(step('mae'), { mae_situacao: 'Falecida' }, TODAY))).toEqual(['mae_nome']);
     expect(Object.keys(validateStep(step('responsavel'), { resp_quem: 'Mãe' }, TODAY))).toEqual([]);
     expect(validateStep(step('responsavel'), { resp_quem: 'Outra pessoa' }, TODAY)).toHaveProperty(
       'resp_nome',
@@ -206,7 +208,7 @@ describe('planilha, rascunho e envio', () => {
       aluno_nome: 'Ana Souza',
       aluno_rg_orgao: 'Outro',
       aluno_rg_orgao_outro: 'SSP-BA',
-      mae_situacao: 'Falecida',
+      mae_situacao: 'Não consta na certidão',
       mae_nome: 'Não deveria ir',
       mora_com: ['Mãe', 'Outro'],
       mora_com_outro: 'Madrinha',
@@ -241,19 +243,15 @@ describe('planilha, rascunho e envio', () => {
     expect(
       JSON.parse((ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string).cpf,
     ).toBe('52998224725');
-    const dup = vi.fn(() => json({ status: 'cpf_duplicado' }));
-    expect(await submitMatricula('https://x', payload, dup as unknown as typeof fetch)).toEqual({
-      status: 'cpf_duplicado',
+    const many = vi.fn(() => json({ status: 'muitas_tentativas' }));
+    expect(await submitMatricula('https://x', payload, many as unknown as typeof fetch)).toEqual({
+      status: 'muitas_tentativas',
     });
     const down = vi.fn(() => Promise.reject(new Error('rede')));
     expect(
       (await submitMatricula('https://x', payload, down as unknown as typeof fetch)).status,
     ).toBe('erro');
     expect(await submitMatricula('', payload)).toEqual({ status: 'sem_configuracao' });
-    const curso = vi.fn(() => json({ status: 'curso_diferente' }));
-    expect(await submitMatricula('https://x', payload, curso as unknown as typeof fetch)).toEqual({
-      status: 'curso_diferente',
-    });
   });
   it('aquecimento: manda só um ping, sem dados, e ignora falhas', async () => {
     const ok = vi.fn(() => json({ status: 'ok' }));
@@ -268,13 +266,11 @@ describe('planilha, rascunho e envio', () => {
     warmUp('', none as unknown as typeof fetch);
     expect(none).not.toHaveBeenCalled();
   });
-  it('conferência na lista de aprovados e mensagens', async () => {
+  it('conferência do começo (período) e mensagens', async () => {
     const input = { token: 't', cpf: '529.982.247-25', nascimento: '15/03/2010' };
-    const ok = vi.fn(() => json({ status: 'ok', modalidade: 'Integrado', curso: '' }));
-    expect(await checkAprovado('https://x', input, ok as unknown as typeof fetch)).toEqual({
+    const ok = vi.fn(() => json({ status: 'ok' }));
+    expect(await checkInicio('https://x', input, ok as unknown as typeof fetch)).toEqual({
       status: 'ok',
-      modalidade: 'Integrado',
-      curso: '',
     });
     const body = JSON.parse(
       (ok.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
@@ -283,16 +279,11 @@ describe('planilha, rascunho e envio', () => {
     const fora = vi.fn(() =>
       json({ status: 'fora_do_periodo', inicio: '01/02/2027', fim: '10/02/2027' }),
     );
-    const r = await checkAprovado('https://x', input, fora as unknown as typeof fetch);
+    const r = await checkInicio('https://x', input, fora as unknown as typeof fetch);
     expect(r.status !== 'ok' && blockedMessage(r)).toBe(
       'As matrículas estão fechadas. O período é de 01/02/2027 a 10/02/2027.',
     );
-    const nao = vi.fn(() => json({ status: 'nao_encontrado' }));
-    const r2 = await checkAprovado('https://x', input, nao as unknown as typeof fetch);
-    expect(r2.status !== 'ok' && blockedMessage(r2)).toMatch(/lista de aprovados/);
-    expect(await checkAprovado('', input)).toEqual({ status: 'sem_configuracao' });
-    expect(matchOption(' farmacia ', ['Nutrição e Dietética', 'Farmácia'])).toBe('Farmácia');
-    expect(matchOption('', ['Farmácia'])).toBe('');
+    expect(await checkInicio('', input)).toEqual({ status: 'sem_configuracao' });
   });
 });
 
@@ -337,6 +328,21 @@ describe('modalidade, curso e maioridade', () => {
         { em_uf: 'PE' },
       ),
     ).toBe(true);
+  });
+  it('Integrado: etapa do ensino fundamental (vai para o diploma)', () => {
+    expect(isStepVisible(step('fundamental'), { modalidade: 'Integrado' })).toBe(true);
+    expect(isStepVisible(step('fundamental'), { modalidade: 'Subsequente' })).toBe(false);
+    expect(validateStep(step('fundamental'), { modalidade: 'Integrado' }, TODAY)).toHaveProperty('ef_escola');
+    const { columns, row } = toRow(steps, {
+      modalidade: 'Integrado',
+      ef_escola: 'Colégio 2001',
+      ef_uf: 'PE',
+      ef_cidade: 'Olinda',
+      ef_ano: '2025',
+    });
+    expect(row[columns.indexOf('Escola onde terminou o ensino fundamental')]).toBe('Colégio 2001');
+    expect(row[columns.indexOf('Cidade da escola do fundamental')]).toBe('Olinda');
+    expect(columns).toContain('Estado da escola'); // a do ensino médio continua com o mesmo nome
   });
   it('etapa escondida vai vazia para a planilha', () => {
     const { columns, row } = toRow(steps, {

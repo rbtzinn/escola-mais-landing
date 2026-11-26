@@ -12,9 +12,12 @@ import {
   type Session,
 } from '@/lib/adminApi';
 import { stats, toRecords, type Rec } from '@/lib/adminData';
+import { downloadDiploma, fillFromSaved } from '@/lib/diploma';
+import { withDefaults } from '@/lib/diplomaConfig';
 import { buildSteps } from '@/lib/schema';
 import { warmUp } from '@/lib/submit';
 import { Approved } from './Approved';
+import { DiplomaSettings } from './DiplomaSettings';
 import { Exceptions } from './Exceptions';
 import { Login } from './Login';
 import { Overview } from './Overview';
@@ -27,13 +30,14 @@ import { Users } from './Users';
 
 const STEPS = buildSteps(CONFIG);
 
-type Tab = 'geral' | 'alunos' | 'periodo' | 'excecoes' | 'aprovados' | 'usuarios';
+type Tab = 'geral' | 'alunos' | 'periodo' | 'excecoes' | 'aprovados' | 'diploma' | 'usuarios';
 const TABS: { id: Tab; label: string; icon: IconName; direcao?: boolean }[] = [
   { id: 'geral', label: 'Visão geral', icon: 'chart' },
   { id: 'alunos', label: 'Matrículas', icon: 'users' },
   { id: 'periodo', label: 'Período', icon: 'calendar', direcao: true },
   { id: 'excecoes', label: 'Exceções', icon: 'shield', direcao: true },
   { id: 'aprovados', label: 'Aprovados', icon: 'file', direcao: true },
+  { id: 'diploma', label: 'Diploma', icon: 'school', direcao: true },
   { id: 'usuarios', label: 'Usuários', icon: 'user', direcao: true },
 ];
 
@@ -107,6 +111,11 @@ export default function AdminApp() {
 
   const recs = useMemo(() => (data ? toRecords(data.cabecalho, data.linhas) : []), [data]);
   const st = useMemo(() => stats(recs), [recs]);
+  const diploma = useMemo(() => withDefaults(data?.diploma, CONFIG.cursos), [data]);
+  const registros = useMemo(() => {
+    const i = data?.cabecalho.indexOf('Registro escolar') ?? -1;
+    return i >= 0 ? recs.map((r) => String(r.row[i] ?? '')) : [];
+  }, [data, recs]);
   const direcao = session?.papel === 'direcao';
   const tabs = TABS.filter((t) => !t.direcao || direcao);
   const current = tabs.some((t) => t.id === tab) ? tab : 'geral';
@@ -225,7 +234,21 @@ export default function AdminApp() {
               <Overview stats={st} recs={recs} onOpen={(r) => setOpen(r.protocolo)} />
             )}
             {current === 'alunos' && (
-              <Students recs={recs} header={data.cabecalho} onOpen={(r) => setOpen(r.protocolo)} />
+              <Students
+                recs={recs}
+                header={data.cabecalho}
+                onOpen={(r) => setOpen(r.protocolo)}
+                onDiploma={async (r) => {
+                  const fill = fillFromSaved(STEPS, data.cabecalho, r.row, r.cpf, diploma);
+                  // Falta algo (ex.: SISTEC)? A ficha abre mostrando o quê.
+                  if (fill.missing.length) return setOpen(r.protocolo);
+                  try {
+                    await downloadDiploma(fill, fill.values.nome || r.nome);
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'Não foi possível gerar o diploma.');
+                  }
+                }}
+              />
             )}
             {current === 'periodo' && (
               <Period
@@ -239,6 +262,9 @@ export default function AdminApp() {
               <Exceptions list={data.excecoes ?? []} hoje={data.hoje} run={run} />
             )}
             {current === 'aprovados' && <Approved list={data.aprovados ?? []} run={run} />}
+            {current === 'diploma' && (
+              <DiplomaSettings key={JSON.stringify(data.diploma ?? null)} cfg={diploma} run={run} />
+            )}
             {current === 'usuarios' && <Users list={data.usuarios ?? []} run={run} />}
           </>
         )}
@@ -252,6 +278,8 @@ export default function AdminApp() {
           steps={STEPS}
           run={run}
           onClose={() => setOpen(null)}
+          diploma={diploma}
+          registrosUsados={registros}
         />
       )}
     </div>

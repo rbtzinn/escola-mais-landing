@@ -62,33 +62,30 @@ describe('formulário de matrícula', () => {
     expect(await screen.findByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
   });
 
-  it('fora da lista de aprovados não passa da identificação, com mensagem genérica', async () => {
+  it('fora do período não passa da identificação; mudar o CPF apaga o aviso', async () => {
     const user = userEvent.setup();
     saveDraft({ values: fullValues(), step: at('identificacao') });
-    const check = vi.spyOn(submitModule, 'checkAprovado').mockResolvedValue({ status: 'nao_encontrado' });
+    const check = vi
+      .spyOn(submitModule, 'checkInicio')
+      .mockResolvedValue({ status: 'fora_do_periodo', inicio: '01/02/2027', fim: '10/02/2027' });
     render(<App />);
     await continuar(user);
-    expect(await screen.findByText(/Não encontramos seus dados na lista de aprovados/)).toBeInTheDocument();
+    expect(await screen.findByText(/As matrículas estão fechadas/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Confirme quem é você' })).toBeInTheDocument();
     expect(check).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ nascimento: '15/03/2010' }));
-    // Mudar o CPF apaga o aviso.
     await user.type(screen.getByLabelText('Seu CPF'), '1');
-    expect(screen.queryByText(/Não encontramos/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/As matrículas estão fechadas/)).not.toBeInTheDocument();
   });
 
-  it('aprovado com curso na lista: curso já escolhido e único; não confere de novo', async () => {
+  it('matrícula aberta: todos os cursos aparecem e não confere de novo', async () => {
     const user = userEvent.setup();
     saveDraft({ values: { ...fullValues(), modalidade: '', curso: '' }, step: at('identificacao') });
-    const check = vi
-      .spyOn(submitModule, 'checkAprovado')
-      .mockResolvedValue({ status: 'ok', modalidade: 'subsequente', curso: 'ENFERMAGEM' });
+    const check = vi.spyOn(submitModule, 'checkInicio').mockResolvedValue({ status: 'ok' });
     render(<App />);
     await continuar(user);
     expect(await screen.findByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Integrado')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Subsequente')).toBeChecked();
-    expect(screen.getByLabelText('Enfermagem')).toBeChecked();
-    expect(screen.queryByLabelText('Farmácia')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Integrado')).toBeInTheDocument();
+    expect(screen.getByLabelText('Subsequente')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Voltar/ }));
     await continuar(user);
     expect(await screen.findByRole('heading', { name: 'Seu curso' })).toBeInTheDocument();
@@ -110,14 +107,16 @@ describe('formulário de matrícula', () => {
     expect(screen.getByLabelText('Bairro')).toHaveValue('Boa Vista');
   });
 
-  it('mãe falecida esconde os dados dela; o estado filtra as cidades', async () => {
+  it('mãe falecida pede só o nome', async () => {
     const user = userEvent.setup();
     saveDraft({ values: { ...fullValues(), mae_situacao: '' }, step: at('mae') });
     render(<App />);
     await user.click(screen.getByLabelText('Viva'));
     expect(screen.getByLabelText('Nome completo da mãe')).toBeInTheDocument();
+    expect(screen.getByLabelText('CPF da mãe')).toBeInTheDocument();
     await user.click(screen.getByLabelText('Falecida'));
-    expect(screen.queryByLabelText('Nome completo da mãe')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nome completo da mãe')).toBeInTheDocument();
+    expect(screen.queryByLabelText('CPF da mãe')).not.toBeInTheDocument();
   });
 
   it('cidades vêm do estado escolhido (PE já vem no site)', async () => {
@@ -134,18 +133,18 @@ describe('formulário de matrícula', () => {
     expect(screen.getByRole('option', { name: 'Jaboatão dos Guararapes' })).toBeInTheDocument();
   });
 
-  it('revisão mostra os dados; CPF repetido avisa e mantém o rascunho; sucesso mostra o protocolo', async () => {
+  it('revisão mostra os dados; recusa avisa e mantém o rascunho; sucesso mostra o protocolo', async () => {
     const user = userEvent.setup();
     saveDraft({ values: fullValues(), step: STEPS.length - 1 });
     const send = vi.spyOn(submitModule, 'submitMatricula');
-    send.mockResolvedValueOnce({ status: 'cpf_duplicado' });
+    send.mockResolvedValueOnce({ status: 'muitas_tentativas' });
     render(<App />);
     await continuar(user);
     expect(screen.getByRole('heading', { name: 'Confira antes de enviar' })).toBeInTheDocument();
     const docs = screen.getByRole('heading', { name: 'Confirme quem é você' }).closest('section')!;
     expect(within(docs).getByText('529.982.247-25')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Enviar matrícula/ }));
-    expect(await screen.findByText(/Esse CPF já foi matriculado/)).toBeInTheDocument();
+    expect(await screen.findByText(/Muitas tentativas agora/)).toBeInTheDocument();
     expect(localStorage.getItem('matricula:rascunho')).toContain('529.982.247-25');
 
     send.mockResolvedValueOnce({ status: 'ok', protocolo: 'MAT-2026-0001' });

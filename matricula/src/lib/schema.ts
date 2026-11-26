@@ -66,24 +66,17 @@ export interface Step {
 export const OUTRO = 'Outro';
 
 /**
- * Respostas guardadas pela conferência na lista de aprovados (não viram coluna da planilha):
- * a chave "cpf|nascimento" já conferida e o curso da aprovação, quando a lista diz.
+ * Guardada pela conferência do começo (período da matrícula), não vira coluna da planilha:
+ * a chave "cpf|nascimento" já conferida.
  */
-export const APROVADO_CHAVE = '_aprovado';
-export const APROVADO_MODALIDADE = '_aprovado_modalidade';
-export const APROVADO_CURSO = '_aprovado_curso';
-
-/** Opção da configuração que corresponde ao texto da lista ("farmacia" → "Farmácia"), ou "". */
-export function matchOption(text: string, options: string[]): string {
-  const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
-  const t = norm(text);
-  return t ? (options.find((o) => norm(o) === t) ?? '') : '';
-}
+export const CONFERIDO_CHAVE = '_conferido';
 
 const str = (v: Values, id: string) => (typeof v[id] === 'string' ? (v[id] as string) : '');
 
 /** Modalidade Subsequente (quem já terminou o ensino médio; pode ser adulto). */
 export const subsequente = (v: Values) => str(v, 'modalidade') === 'Subsequente';
+/** Modalidade Integrado (ensino médio junto com o técnico). */
+export const integrado = (v: Values) => str(v, 'modalidade') === 'Integrado';
 
 /** Idade pela data de nascimento digitada (null enquanto a data está incompleta ou inválida). */
 export function ageOf(v: Values, today = new Date()): number | null {
@@ -153,9 +146,11 @@ function family(
   extra: Field[] = [],
   /** Os dados além do nome são obrigatórios? (mãe e pai: só para menores de idade). */
   req: (v: Values) => boolean = () => true,
+  /** Quando pedir o nome (mãe e pai: também se falecidos, porque vai para o diploma). */
+  showName: (v: Values) => boolean = show,
 ): Field[] {
   return [
-    { id: `${prefix}_nome`, label: `Nome completo ${who}`, kind: 'name', showIf: show, autoComplete: 'off' },
+    { id: `${prefix}_nome`, label: `Nome completo ${who}`, kind: 'name', showIf: showName, autoComplete: 'off' },
     ...extra,
     {
       id: `${prefix}_cpf`,
@@ -184,6 +179,8 @@ function family(
 
 const maeViva = (v: Values) => str(v, 'mae_situacao') === 'Viva';
 const paiVivo = (v: Values) => str(v, 'pai_situacao') === 'Vivo';
+const maeConsta = (v: Values) => maeViva(v) || str(v, 'mae_situacao') === 'Falecida';
+const paiConsta = (v: Values) => paiVivo(v) || str(v, 'pai_situacao') === 'Falecido';
 const outraPessoa = (v: Values) => str(v, 'resp_quem') === 'Outra pessoa';
 const brasil = (v: Values) => str(v, 'nasc_pais') === 'Brasil';
 
@@ -209,7 +206,7 @@ export function buildSteps(config: Config): Step[] {
       id: 'identificacao',
       title: 'Confirme quem é você',
       short: 'Identidade',
-      description: 'A escola confere seu CPF e sua data de nascimento na lista de aprovados antes de você continuar.',
+      description: 'Com seu CPF e sua data de nascimento, a escola confere se a matrícula está aberta para você.',
       fields: [
         {
           id: 'aluno_cpf',
@@ -230,8 +227,6 @@ export function buildSteps(config: Config): Step[] {
           label: 'Modalidade',
           kind: 'choice',
           options: Object.keys(config.cursos),
-          // Se a lista de aprovados diz a modalidade, só ela aparece.
-          optionsFrom: (v) => (str(v, APROVADO_MODALIDADE) ? [str(v, APROVADO_MODALIDADE)] : Object.keys(config.cursos)),
           clears: ['curso'],
           hint: 'Integrado: junto com o ensino médio. Subsequente: para quem já terminou o ensino médio.',
         },
@@ -239,11 +234,7 @@ export function buildSteps(config: Config): Step[] {
           id: 'curso',
           label: 'Curso',
           kind: 'choice',
-          optionsFrom: (v) => {
-            const cursos = config.cursos[str(v, 'modalidade')] ?? [];
-            const aprovado = str(v, APROVADO_CURSO);
-            return aprovado && cursos.includes(aprovado) ? [aprovado] : cursos;
-          },
+          optionsFrom: (v) => config.cursos[str(v, 'modalidade')] ?? [],
           showIf: (v) => !!str(v, 'modalidade'),
         },
       ],
@@ -318,6 +309,24 @@ export function buildSteps(config: Config): Step[] {
       ],
     },
     {
+      id: 'fundamental',
+      title: 'Seu ensino fundamental',
+      short: 'Fundamental',
+      description: 'Esses dados vão para o seu diploma: escreva o nome da escola como está no histórico.',
+      showIf: integrado,
+      fields: [
+        { id: 'ef_escola', label: 'Escola onde terminou o ensino fundamental', kind: 'text', placeholder: 'Ex.: Escola Municipal Maria da Silva' },
+        { id: 'ef_uf', label: 'Estado da escola do fundamental', kind: 'uf', clears: ['ef_cidade'] },
+        { id: 'ef_cidade', label: 'Cidade da escola do fundamental', kind: 'city', ufField: 'ef_uf', showIf: (v) => !!str(v, 'ef_uf') },
+        {
+          id: 'ef_ano',
+          label: 'Ano em que terminou o ensino fundamental',
+          kind: 'select',
+          options: Array.from({ length: 15 }, (_, i) => String(config.ano - i)),
+        },
+      ],
+    },
+    {
       id: 'contato',
       title: 'Contato e endereço',
       short: 'Endereço',
@@ -376,7 +385,7 @@ export function buildSteps(config: Config): Step[] {
       short: 'Mãe',
       fields: [
         { id: 'mae_situacao', label: 'Sua mãe', kind: 'choice', options: ['Viva', 'Falecida', 'Não consta na certidão'] },
-        ...family('mae', 'da mãe', maeViva, [], menor),
+        ...family('mae', 'da mãe', maeViva, [], menor, maeConsta),
       ],
     },
     {
@@ -385,7 +394,7 @@ export function buildSteps(config: Config): Step[] {
       short: 'Pai',
       fields: [
         { id: 'pai_situacao', label: 'Seu pai', kind: 'choice', options: ['Vivo', 'Falecido', 'Não consta na certidão'] },
-        ...family('pai', 'do pai', paiVivo, [], menor),
+        ...family('pai', 'do pai', paiVivo, [], menor, paiConsta),
       ],
     },
     {

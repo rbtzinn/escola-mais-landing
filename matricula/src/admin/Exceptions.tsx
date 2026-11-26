@@ -1,19 +1,11 @@
 import clsx from 'clsx';
 import { useState } from 'react';
 import { TextField } from '@/components/ui/TextField';
-import { ChoiceFieldset, ChoiceOption } from '@/components/Choices';
 import { replyMessage } from '@/lib/adminApi';
 import { hideCpf, isValidCpf, maskCpf } from '@/lib/cpf';
 import { maskDate, parseDate } from '@/lib/masks';
 import type { Exception, Run } from './types';
 import { Button, Card, ConfirmButton, Notice, plusDays } from './ui';
-
-const KINDS = [
-  { id: 'periodo', label: 'Fora do período', hint: 'matricula mesmo com as datas fechadas' },
-  { id: 'lista', label: 'Fora da lista', hint: 'matricula sem estar nos aprovados' },
-  { id: 'reenvio', label: 'Reenviar', hint: 'manda de novo; a matrícula antiga vira Cancelado' },
-] as const;
-type Kind = (typeof KINDS)[number]['id'];
 
 const dayKey = (s: string) => {
   const d = parseDate(s);
@@ -30,7 +22,6 @@ export function Exceptions({ list, hoje, run }: { list: Exception[]; hoje: strin
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [nasc, setNasc] = useState('');
-  const [kinds, setKinds] = useState<Set<Kind>>(new Set(['periodo']));
   const [validade, setValidade] = useState(plusDays(2));
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -44,17 +35,8 @@ export function Exceptions({ list, hoje, run }: { list: Exception[]; hoje: strin
       : dayKey(validade) < dayKey(hoje)
         ? 'Tem que ser hoje ou depois.'
         : undefined,
-    kinds: kinds.size === 0 ? 'Escolha pelo menos uma.' : undefined,
   };
   const show = (k: keyof typeof errors) => (tried ? errors[k] : undefined);
-
-  const toggle = (k: Kind) =>
-    setKinds((s) => {
-      const n = new Set(s);
-      if (n.has(k)) n.delete(k);
-      else n.add(k);
-      return n;
-    });
 
   const create = async () => {
     setTried(true);
@@ -66,9 +48,7 @@ export function Exceptions({ list, hoje, run }: { list: Exception[]; hoje: strin
       cpf,
       nascimento: nasc,
       validade,
-      periodo: kinds.has('periodo'),
-      lista: kinds.has('lista'),
-      reenvio: kinds.has('reenvio'),
+      periodo: true,
     });
     setBusy(false);
     if (r.status === 'ok') {
@@ -91,7 +71,9 @@ export function Exceptions({ list, hoje, run }: { list: Exception[]; hoje: strin
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <Card title="Nova exceção">
-        <p className="mb-4 text-fg-muted">Libera um aluno específico, uma vez só, até o prazo.</p>
+        <p className="mb-4 text-fg-muted">
+          Libera um aluno específico a se matricular fora do período, uma vez só, até o prazo.
+        </p>
         <form
           noValidate
           onSubmit={(e) => {
@@ -125,25 +107,6 @@ export function Exceptions({ list, hoje, run }: { list: Exception[]; hoje: strin
               error={show('nasc')}
             />
           </div>
-          <ChoiceFieldset id="exc-tipos" label="O que libera" error={show('kinds')}>
-            {KINDS.map((k) => (
-              <ChoiceOption
-                key={k.id}
-                name="exc-tipos"
-                type="checkbox"
-                label={k.label}
-                checked={kinds.has(k.id)}
-                onChange={() => toggle(k.id)}
-              />
-            ))}
-          </ChoiceFieldset>
-          <ul className="space-y-0.5 text-sm text-fg-muted">
-            {KINDS.map((k) => (
-              <li key={k.id}>
-                <strong className="text-fg">{k.label}:</strong> {k.hint}.
-              </li>
-            ))}
-          </ul>
           <TextField
             id="exc-validade"
             label="Vale até"
@@ -186,16 +149,7 @@ export function Exceptions({ list, hoje, run }: { list: Exception[]; hoje: strin
                       {state}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm">
-                    {[
-                      e.periodo && 'Fora do período',
-                      e.lista && 'Fora da lista',
-                      e.reenvio && 'Reenviar',
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
-                  <p className="text-sm text-fg-muted">
+                  <p className="mt-1 text-sm text-fg-muted">
                     CPF {hideCpf(e.cpf)} · nasc. {e.nasc} · até {e.validade}
                     {e.criadaPor && ` · criada por ${e.criadaPor}`}
                     {e.usadaEm && ` · usada em ${e.usadaEm}`}

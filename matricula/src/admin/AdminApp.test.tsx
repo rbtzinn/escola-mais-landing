@@ -108,7 +108,7 @@ describe('painel administrativo', () => {
     const user = userEvent.setup();
     await entrar(user);
     await user.click(screen.getByRole('button', { name: 'Matrículas' }));
-    await user.click(screen.getByRole('button', { name: /Ana Souza/ }));
+    await user.click(screen.getByRole('button', { name: /^Ana Souza/ }));
     const ficha = screen.getByRole('region', { name: 'Ana Souza' });
     await user.click(within(ficha).getByRole('radio', { name: 'Pendente' }));
     await user.click(within(ficha).getByRole('button', { name: 'Salvar status' }));
@@ -134,7 +134,7 @@ describe('painel administrativo', () => {
     );
     api.mockClear();
     await user.click(screen.getByRole('button', { name: 'Matrículas' }));
-    await user.click(screen.getByRole('button', { name: /Ana Souza/ }));
+    await user.click(screen.getByRole('button', { name: /^Ana Souza/ }));
     const ficha = screen.getByRole('region', { name: 'Ana Souza' });
     await user.click(within(ficha).getByRole('radio', { name: 'Cancelado' }));
     await user.click(within(ficha).getByRole('button', { name: 'Salvar status' }));
@@ -152,7 +152,6 @@ describe('painel administrativo', () => {
     await user.click(screen.getByRole('button', { name: 'Exceções' }));
     await user.type(screen.getByLabelText('CPF do aluno'), '52998224725');
     await user.type(screen.getByLabelText('Data de nascimento'), '15032010');
-    await user.click(screen.getByLabelText('Reenviar'));
     await user.click(screen.getByRole('button', { name: 'Criar exceção' }));
     expect(api).toHaveBeenCalledWith(
       'excecao_add',
@@ -160,11 +159,36 @@ describe('painel administrativo', () => {
         cpf: '529.982.247-25',
         nascimento: '15/03/2010',
         periodo: true,
-        lista: false,
-        reenvio: true,
       }),
       's',
     );
+  });
+
+  it('aba Diploma: cada curso com seu modelo e sua data de conclusão', async () => {
+    const user = userEvent.setup();
+    await entrar(user);
+    await user.click(screen.getByRole('button', { name: 'Diploma' }));
+    const data = screen.getByLabelText('Data de conclusão da turma');
+    await user.clear(data);
+    await user.type(data, '31122028');
+    expect(screen.getByText(/No diploma: 31 de dezembro de 2028\./)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Salvar configuração do diploma' }));
+    const call = api.mock.calls.find((c: unknown[]) => c[0] === 'diploma_config')!;
+    type Saved = { cursos: Record<string, { modelo: string; conclusao: string; blocos: { itens: unknown[] }[] }> };
+    const config = (call[1] as { config: Saved }).config;
+    const first = Object.values(config.cursos)[0];
+    expect(first.conclusao).toBe('31/12/2028');
+    expect(first.blocos[0].itens.length).toBe(12);
+    expect(config.cursos['Subsequente · Enfermagem'].modelo).toBe('enfermagem-subsequente');
+  });
+
+  it('botão Diploma da lista abre a ficha quando falta o SISTEC', async () => {
+    const user = userEvent.setup();
+    await entrar(user);
+    await user.click(screen.getByRole('button', { name: 'Matrículas' }));
+    await user.click(screen.getByRole('button', { name: 'Diploma de Ana Souza' }));
+    expect(await screen.findByRole('heading', { name: 'Diploma' })).toBeInTheDocument();
+    expect(screen.getByText(/código SISTEC/)).toBeInTheDocument();
   });
 
   it('sessão vencida volta para o login', async () => {

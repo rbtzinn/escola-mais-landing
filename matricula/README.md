@@ -28,7 +28,9 @@ Em [`src/config.ts`](./src/config.ts):
 
 ## Integrado e Subsequente
 
-O aluno escolhe a modalidade e só vê os cursos dela. No **Subsequente**, para quem já terminou o ensino médio:
+O aluno escolhe a modalidade e só vê os cursos dela. No **Integrado** aparece a etapa "Seu ensino fundamental" (escola, cidade, estado e ano de conclusão), que vai para o diploma.
+
+No **Subsequente**, para quem já terminou o ensino médio:
 
 - a idade aceita vai até 70 anos;
 - aparece a etapa "Seu ensino médio": escola, pública ou particular, cidade e ano de conclusão.
@@ -39,6 +41,23 @@ Para **maiores de 18 anos**, em qualquer modalidade:
 - dos dados da mãe e do pai, só o nome é obrigatório.
 
 A aba "Resumo por curso" da planilha conta por modalidade e curso.
+
+## Diploma
+
+O painel gera o diploma em Word (.docx) no modelo do curso do aluno, sem a coordenação digitar os dados dele. Cada curso usa o modelo enviado pela escola (em `public/`):
+
+| Curso | Modelo |
+| --- | --- |
+| Farmácia e Nutrição e Dietética (Integrado) | `diploma-integrado.docx` (4 blocos: FGB, IF-AC e dois IF-EPT) |
+| Farmácia (Subsequente) | `diploma-farmacia-subsequente.docx` (3 módulos com total) |
+| Enfermagem (Subsequente) | `diploma-enfermagem-subsequente.docx` (4 módulos com semestre e frequência, quadro de estágio) |
+
+- **Do formulário:** nome, filiação (o nome da mãe e do pai é pedido mesmo se falecidos), naturalidade, nacionalidade, nascimento, RG e órgão, CPF, curso e a escola anterior (ensino fundamental no Integrado, ensino médio no Subsequente). Tudo sai no mesmo formato em todos os cursos: nacionalidade BRASILEIRA, órgão como o aluno escreveu (ex.: SDS-PE) e nascimento em dd/mm/aaaa.
+- **Na ficha do aluno (painel), o que só a escola tem:** código SISTEC, registro escolar, folha e livro (o registro vem sugerido e a folha calculada, 3 por folha; registro repetido é recusado), a data de conclusão (vem a do curso; dá para trocar só para aquele aluno) e, em Enfermagem, semestre e % de frequência de cada módulo. "Salvar e baixar diploma" grava e baixa de uma vez.
+- **Um clique na lista:** o botão "Diploma" em cada matrícula baixa direto quando os dados da escola já estão salvos; se faltar algo, abre a ficha mostrando o quê.
+- **Na aba Diploma (direção):** cidade, cabeçalho, secretária e diretor, numeração do livro e, por curso, o modelo, a data de conclusão da turma, o texto da conclusão, a portaria, as disciplinas com C.H., os totais, o perfil e (Enfermagem) o quadro de estágio. Contas que não fecham geram aviso. Curso novo, sem modelo, começa como rascunho.
+
+Os modelos foram gerados dos arquivos da escola por `scripts/diploma_modelo.py` (troca a mala direta por marcadores `{{chave}}` e tira os objetos OLE de ~7 MB). Se a escola trocar um modelo, rode o script de novo (instruções no topo dele).
 
 ## Rodar
 
@@ -66,8 +85,9 @@ Crie um **projeto novo** na Vercel a partir deste mesmo repositório, com **Root
   - `validate`: erros por etapa;
   - `row`: linha da planilha;
   - `draft`: rascunho no aparelho;
-  - `submit`: envio e conferência na lista de aprovados;
-  - `adminApi`, `adminData`: sessão, chamadas e números do painel.
+  - `submit`: envio e conferência do período;
+  - `adminApi`, `adminData`: sessão, chamadas e números do painel;
+  - `diploma`, `diplomaConfig`: dados, numeração e preenchimento do diploma.
 - `src/admin/`: o painel `/admin` (carregado à parte; quem só se matricula não baixa).
 - `src/components/`: `FieldView` (desenha cada tipo de campo), `Choices` (opções em botões) e `ui/` (lista e busca acessíveis, copiadas do Escola+).
 - `apps-script/Code.js`: o script da planilha (cole no editor do Google).

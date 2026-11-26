@@ -1,4 +1,5 @@
 import { isValidCpf, onlyDigits } from './cpf';
+import { DIPLOMA_COLUMNS } from './diploma';
 import { parseDate } from './masks';
 import { toRow } from './row';
 import type { Step } from './schema';
@@ -212,7 +213,8 @@ export function ficha(steps: Step[], header: string[], row: string[]): FichaSect
     if (!sections.has(title)) sections.set(title, { title, items: [] });
     sections.get(title)!.items.push({ label, value });
   };
-  const SKIP = new Set(['Status', 'Observação', 'Alterado por', 'Alterado em']);
+  // Status e diploma têm seções próprias na ficha.
+  const SKIP = new Set<string>(['Status', 'Observação', 'Alterado por', 'Alterado em', ...DIPLOMA_COLUMNS]);
   header.forEach((col, i) => {
     const value = String(row[i] ?? '').trim();
     if (!col || !value || SKIP.has(col)) return;
